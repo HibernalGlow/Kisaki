@@ -26,6 +26,7 @@ rayon = "1.10"
 fs_extra = "1.3" # TODO replace with less buggy library
 fast_image_resize = { version = "6.0.0", features = ["image"] }
 num_enum = "0.7.5"
+regex = "1.11"
 
 # Translations
 i18n-embed = { version = "0.16", features = ["fluent-system", "desktop-requester"] }
@@ -55,8 +56,14 @@ winresource = "0.1"
 
 [features]
 default = ["winit_femtovg", "winit_software"]
+
+# Audio support
 audio = ["rodio"]
+
+# Bundles windows icon into executable
 add_windows_icon = []
+
+# Renderers
 skia_opengl = ["slint/renderer-skia-opengl"]
 skia_vulkan = ["slint/renderer-skia-vulkan"]
 software = ["slint/renderer-software"]
@@ -67,9 +74,11 @@ winit_skia_opengl = ["slint/renderer-winit-skia-opengl"]
 winit_skia_vulkan = ["slint/renderer-winit-skia-vulkan"]
 winit_software = ["slint/renderer-winit-software"]
 
+# Additional features
 heif = ["czkawka_core/heif"]
 libraw = ["czkawka_core/libraw"]
 libavif = ["czkawka_core/libavif"]
+
 # Allows to use trash on Linux when using xdg-portal, needed by e.g. flatpak where normal trash access always fails
 # No-op on other OSes, it is slower and provides less helpful error messages
 xdg_portal_trash = ["czkawka_core/xdg_portal_trash"]

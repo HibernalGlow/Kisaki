@@ -14,6 +14,7 @@ import { PopupNewDirectories } from "popup_new_directories.slint";
 import { PopupDelete } from "popup_delete.slint";
 import { PopupMoveFolders } from "popup_move_folders.slint";
 import { PopupSelectResults } from "popup_select_results.slint";
+import { PopupCustomSelect } from "popup_custom_select.slint";
 import { PopupRenameBadExtensions } from "popup_rename_bad_extensions.slint";
 import { PopupRenameBadFileNames } from "popup_rename_bad_file_names.slint";
 import { PopupSave } from "popup_save.slint";
@@ -237,6 +238,16 @@ export component MainWindow inherits Window {
         y: parent.y + y_offset - self.all_items_height - 5px;
         height: root.height;
         width: root.width;
+        open_custom_select_popup() => {
+            custom_select_popup_window.show_popup();
+        }
+    }
+
+    custom_select_popup_window := PopupCustomSelect {
+        height: root.height;
+        width: root.width;
+        x: parent.x + (root.width - self.popup_width) / 2.0;
+        y: parent.y + (parent.height - self.popup_height) / 2.0;
     }
 
     delete_popup_window := PopupDelete {
@@ -369,6 +380,46 @@ export component MainWindow inherits Window {
         action_confirmed => {
             Callabler.softlink_items();
         }
+    }
+
+    if GuiState.file_dialog_open: Rectangle {
+        x: 0;
+        y: 0;
+        width: root.width;
+        height: root.height;
+        background: #808080cc;
+        z: 1000;
+
+        // Absorb all keyboard events so nothing behind the overlay can be triggered
+        fs := FocusScope {
+            x: 0; y: 0;
+            width: parent.width;
+            height: parent.height;
+            enabled: true;
+            key-pressed(event) => { EventResult.accept }
+            key-released(event) => { EventResult.accept }
+        }
+
+        // Absorb all pointer/mouse events so nothing behind the overlay can be clicked
+        TouchArea {
+            x: 0; y: 0;
+            width: parent.width;
+            height: parent.height;
+            mouse-cursor: MouseCursor.default;
+        }
+
+        Text {
+            width: parent.width;
+            height: parent.height;
+            text: Translations.file_dialog_open_text;
+            font-size: FontSizes.header;
+            color: #ffffff;
+            vertical-alignment: center;
+            horizontal-alignment: center;
+            wrap: TextWrap.word-wrap;
+        }
+
+        init => { fs.focus(); }
     }
 
     scan_ended(scan_text) => {

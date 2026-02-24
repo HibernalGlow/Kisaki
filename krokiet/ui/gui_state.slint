@@ -1,4 +1,4 @@
-import { ActiveTab, BottomPanelVisibility, CacheCleaningProgress, CacheCleaningResult, SelectMode, SelectModel, SortMode, SortModel } from "common.slint";
+import { ActiveTab, BottomPanelVisibility, CacheCleaningProgress, CacheCleaningResult, CustomSelectColumnModel, SelectMode, SelectModel, SortMode, SortModel } from "common.slint";
 import { Translations } from "translations.slint";
 
 // State Gui state that shows the current state of the GUI
@@ -14,7 +14,6 @@ export global GuiState {
 
     in-out property <bool> audio_feature_enabled: false;
 
-    in-out property <length> left_panel_width: 120px;
 
     in-out property <float> maximum_threads: 40;
 
@@ -30,6 +29,8 @@ export global GuiState {
         { data: SelectMode.SelectAll, name: Translations.selection_all_text },
         { data: SelectMode.UnselectAll, name: Translations.selection_deselect_all_text },
     ];
+
+    in-out property <[CustomSelectColumnModel]> custom_select_columns: [];
 
     in-out property <[SortModel]> sort_results_list: [
         { data: SortMode.FullName, name: Translations.sort_by_full_name_text },
@@ -101,6 +102,8 @@ export global GuiState {
     in-out property <[int]> exif_remover_data_idx: [2, 1, -1, -1];
     in-out property <[int]> video_optimizer_data_idx: [2, 1, 8, -1];
     in-out property <[int]> bad_names_data_idx: [2, 1, -1, -1];
+
+    in-out property <bool> file_dialog_open: false;
 
     in-out property <bool> cache_cleaning_is_cleaning: false;
     in-out property <bool> cache_cleaning_finished: false;

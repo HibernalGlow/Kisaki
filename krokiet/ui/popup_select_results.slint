@@ -1,5 +1,5 @@
 import { Button } from "std-widgets.slint";
-import { SelectModel } from "common.slint";
+import { SelectMode, SelectModel } from "common.slint";
 import { Callabler } from "callabler.slint";
 import { ColorPalette } from "color_palette.slint";
 import { GuiState } from "gui_state.slint";
@@ -7,6 +7,7 @@ import { GuiState } from "gui_state.slint";
 export component PopupSelectResults inherits Rectangle {
     callback show_popup();
     callback close_popup();
+    callback open_custom_select_popup();
     property <[SelectModel]> model: GuiState.select_results_list;
     property <length> item_height: 30px;
     out property <length> item_width;
@@ -27,7 +28,11 @@ export component PopupSelectResults inherits Rectangle {
                     text: i.name;
                     height: item_height;
                     clicked => {
-                        Callabler.select_items(i.data);
+                        if (i.data == SelectMode.SelectCustom) {
+                            root.open_custom_select_popup();
+                        } else {
+                            Callabler.select_items(i.data);
+                        }
                         popup_window.close();
                     }
                 }

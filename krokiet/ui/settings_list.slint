@@ -200,6 +200,7 @@ component HintText inherits Text {
     font-size: FontSizes.small;
     color: ColorPalette.hint_color;
     text: root.hint_text;
+    wrap: word-wrap;
 }
 
 component HeaderText inherits Text {
@@ -462,6 +463,10 @@ export component SettingsList inherits VerticalLayout {
             CheckBoxComponent {
                 name <=> Translations.settings_similar_videos_preview_text;
                 model <=> Settings.video_thumbnails_preview;
+            }
+
+            HintText {
+                hint_text <=> Translations.settings_similar_videos_preview_hint_text;
             }
 
 

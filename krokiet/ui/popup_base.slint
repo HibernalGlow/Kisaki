@@ -42,6 +42,7 @@ export component PopupBase inherits PopupWindow {
                 Button {
                     enabled <=> enabled_ok_button;
                     text <=> ok_text;
+                    primary: true;
                     clicked => {
                         root.close();
                         ok_clicked();

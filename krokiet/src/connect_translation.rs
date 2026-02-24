@@ -9,125 +9,100 @@ use crate::{ActiveTab, Callabler, GuiState, MainWindow, SelectMode, Settings, So
 pub struct Language {
     pub long_name: &'static str,
     pub short_name: &'static str,
-    pub left_panel_size: f32, // Currently don't know how to automatically calculate this, so each language has its own size
 }
 
-// When changing, do not forget to update languages_list inside slint file
 pub const LANGUAGE_LIST: &[Language] = &[
     Language {
         long_name: "English",
         short_name: "en",
-        left_panel_size: 130.0,
     },
     Language {
         long_name: "Polski (Polish)",
         short_name: "pl",
-        left_panel_size: 160.0,
     },
     Language {
         long_name: "Français (French)",
         short_name: "fr",
-        left_panel_size: 190.0,
     },
     Language {
         long_name: "Italiano (Italian)",
         short_name: "it",
-        left_panel_size: 155.0,
     },
     Language {
         long_name: "Русский (Russian)",
         short_name: "ru",
-        left_panel_size: 195.0,
     },
     Language {
         long_name: "український (Ukrainian)",
         short_name: "uk",
-        left_panel_size: 195.0,
     },
     Language {
         long_name: "한국어 (Korean)",
         short_name: "ko",
-        left_panel_size: 155.0,
     },
     Language {
         long_name: "Česky (Czech)",
         short_name: "cs",
-        left_panel_size: 180.0,
     },
     Language {
         long_name: "Deutsch (German)",
         short_name: "de",
-        left_panel_size: 165.0,
     },
     Language {
         long_name: "日本語 (Japanese)",
         short_name: "ja",
-        left_panel_size: 165.0,
     },
     Language {
         long_name: "Português (Portuguese)",
         short_name: "pt-PT",
-        left_panel_size: 175.0,
     },
     Language {
         long_name: "Português Brasileiro (Brazilian Portuguese)",
         short_name: "pt-BR",
-        left_panel_size: 205.0,
     },
     Language {
         long_name: "简体中文 (Simplified Chinese)",
         short_name: "zh-CN",
-        left_panel_size: 125.0,
     },
     Language {
         long_name: "繁體中文 (Traditional Chinese)",
         short_name: "zh-TW",
-        left_panel_size: 145.0,
     },
     Language {
         long_name: "Español (Spanish)",
         short_name: "es-ES",
-        left_panel_size: 175.0,
     },
     Language {
         long_name: "Norsk (Norwegian)",
         short_name: "no",
-        left_panel_size: 145.0,
     },
     Language {
         long_name: "Svenska (Swedish)",
         short_name: "sv-SE",
-        left_panel_size: 140.0,
     },
     Language {
         long_name: "العربية (Arabic)",
         short_name: "ar",
-        left_panel_size: 145.0,
     },
     Language {
         long_name: "Български (Bulgarian)",
         short_name: "bg",
-        left_panel_size: 205.0,
     },
     Language {
         long_name: "Ελληνικά (Greek)",
         short_name: "el",
-        left_panel_size: 170.0,
     },
     Language {
         long_name: "Nederlands (Dutch)",
         short_name: "nl",
-        left_panel_size: 175.0,
     },
     Language {
         long_name: "Română (Romanian)",
         short_name: "ro",
-        left_panel_size: 150.0,
     },
     Language {
         long_name: "Türkçe (Turkish)",
         short_name: "tr",
-        left_panel_size: 160.0,
     },
 ];
 
@@ -176,7 +151,6 @@ pub(crate) fn change_language(app: &MainWindow) {
         }
     }
 
-    app.global::<GuiState>().set_left_panel_width(lang_items.left_panel_size);
     translate_items(app);
 }
 
@@ -190,6 +164,7 @@ fn translate_items(app: &MainWindow) {
     translation.set_cancel_button_text(flk!("cancel_button").into());
     translation.set_do_you_want_to_continue_text(flk!("do_you_want_to_continue").into());
     translation.set_main_window_title_text(flk!("main_window_title").into());
+    translation.set_file_dialog_open_text(flk!("file_dialog_open").into());
     translation.set_scan_button_text(flk!("scan_button").into());
     translation.set_stop_button_text(flk!("stop_button").into());
     translation.set_select_button_text(flk!("select_button").into());
@@ -330,6 +305,7 @@ fn translate_items(app: &MainWindow) {
     translation.set_settings_restart_required_text(flk!("settings_restart_required").into());
     translation.set_settings_duplicate_image_preview_text(flk!("settings_duplicate_image_preview").into());
     translation.set_settings_similar_videos_preview_text(flk!("settings_video_thumbnails_preview").into());
+    translation.set_settings_similar_videos_preview_hint_text(flk!("settings_similar_videos_preview_hint").into());
     translation.set_settings_application_scale_text(flk!("settings_application_scale_text").into());
     translation.set_settings_application_scale_hint_text(flk!("settings_application_scale_hint_text").into());
     translation.set_settings_restart_required_scale_text(flk!("settings_restart_required_scale_text").into());
@@ -402,6 +378,16 @@ fn translate_items(app: &MainWindow) {
     translation.set_popup_clean_cache_finished_text(flk!("popup_clean_cache_finished_text").into());
     translation.set_popup_clean_cache_error_details_text(flk!("popup_clean_cache_error_details_text").into());
     translation.set_popup_clean_cache_files_with_errors(flk!("popup_clean_cache_files_with_errors").into());
+    translation.set_popup_custom_select_title_text(flk!("popup_custom_select_title_text").into());
+    translation.set_popup_custom_select_button_text(flk!("popup_custom_select_button_text").into());
+    translation.set_popup_custom_unselect_button_text(flk!("popup_custom_unselect_button_text").into());
+    translation.set_popup_custom_column_name_header_text(flk!("popup_custom_column_name_header_text").into());
+    translation.set_popup_custom_filter_value_header_text(flk!("popup_custom_filter_value_header_text").into());
+    translation.set_popup_custom_hint_str_text(flk!("popup_custom_hint_str_text").into());
+    translation.set_popup_custom_hint_int_text(flk!("popup_custom_hint_int_text").into());
+    translation.set_popup_custom_hint_date_text(flk!("popup_custom_hint_date_text").into());
+    translation.set_popup_custom_case_sensitive_text(flk!("popup_custom_case_sensitive_text").into());
+    translation.set_popup_custom_leave_one_in_group_text(flk!("popup_custom_leave_one_in_group_text").into());
 
     let tools_model: [(SharedString, ActiveTab); TOOLS_NUMBER] = [
         (flk!("tool_duplicate_files").into(), ActiveTab::DuplicateFiles),
@@ -499,6 +485,7 @@ pub(crate) fn translate_select_mode(select_mode: SelectMode) -> SharedString {
         SelectMode::SelectOldest => flk!("selection_oldest").into(),
         SelectMode::SelectShortestPath => flk!("selection_shortest_path").into(),
         SelectMode::SelectLongestPath => flk!("selection_longest_path").into(),
+        SelectMode::SelectCustom => flk!("selection_custom_select_unselect").into(),
     }
 }
 

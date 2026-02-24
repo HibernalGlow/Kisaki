@@ -1,5 +1,6 @@
 use std::sync::{Arc, Mutex};
 
+use czkawka_core::common::tool_data::CommonData;
 use czkawka_core::common::traits::PrintResults;
 use czkawka_core::tools::bad_extensions::BadExtensions;
 use czkawka_core::tools::bad_names::BadNames;
@@ -88,5 +89,30 @@ impl SharedModels {
             Ok(()) => Ok(()),
             Err(e) => Err(format!("Failed to save results to folder \"{current_path}\", reason {e}")),
         }
+    }
+
+    pub(crate) fn get_use_reference_folders(&self, active_tab: ActiveTab) -> bool {
+        let used_reference_folder = match active_tab {
+            ActiveTab::DuplicateFiles => self.shared_duplication_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::EmptyFolders => self.shared_empty_folders_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::EmptyFiles => self.shared_empty_files_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::TemporaryFiles => self.shared_temporary_files_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::BigFiles => self.shared_big_files_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::SimilarImages => self.shared_similar_images_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::SimilarVideos => self.shared_similar_videos_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::SimilarMusic => self.shared_same_music_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::InvalidSymlinks => self.shared_same_invalid_symlinks.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::BrokenFiles => self.shared_broken_files_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::BadExtensions => self.shared_bad_extensions_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::BadNames => self.shared_bad_names_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::ExifRemover => self.shared_exif_remover_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::VideoOptimizer => self.shared_video_optimizer_state.as_ref().map(|e| e.get_use_reference_folders()),
+            ActiveTab::Settings | ActiveTab::About => panic!("Cannot get use reference folders for settings or about tab"),
+        }
+        .unwrap_or(false);
+
+        let tab_can_use_reference_folders = active_tab.get_is_header_mode();
+
+        tab_can_use_reference_folders && used_reference_folder
     }
 }

@@ -85,11 +85,30 @@ export enum SelectMode {
     SelectOldest,
     SelectShortestPath,
     SelectLongestPath,
+    SelectCustom,
 }
 
 export struct SelectModel {
     data: SelectMode,
     name: string
+}
+
+export enum ColumnType {
+    Str,
+    Int,
+    Date,
+    FullPath,
+}
+
+export struct CustomSelectColumnModel {
+    column_name: string,
+    column_idx: int,
+    column_type: ColumnType,
+    // For ColumnType.Int: true means the value is stored as a (Part1, Part2) u64 pair
+    // in val_int (e.g. Size, Bitrate); false means it is a plain i32.
+    is_pair: bool,
+    enabled: bool,
+    filter_value: string,
 }
 
 export enum SortMode {

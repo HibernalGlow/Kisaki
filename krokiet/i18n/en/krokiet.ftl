@@ -156,12 +156,14 @@ column_codec = Codec
 column_duration = Duration
 column_exif_tags = EXIF Tags
 column_new_name = New Name
+column_full_path = Full Path
 
 # Slint translations
 ok_button = Ok
 cancel_button = Cancel
 do_you_want_to_continue = Do you want to continue?
 main_window_title = Krokiet - Data Cleaner
+file_dialog_open = Close the dialog window to continue
 scan_button = Scan
 stop_button = Stop
 stop_text = Stop
@@ -209,6 +211,7 @@ selection_newest = Select newest
 selection_oldest = Select oldest
 selection_shortest_path = Select the shortest path
 selection_longest_path = Select the longest path
+selection_custom_select_unselect = Custom Select/Unselect
 stage_current = Current Stage:
 stage_all = All Stages:
 subsettings = Subsettings
@@ -281,6 +284,7 @@ settings_duplicate_minimal_hash_cache_size = Minimal size of cached files - Hash
 settings_duplicate_use_prehash = Use prehash
 settings_duplicate_minimal_prehash_cache_size = Minimal size of cached files - Prehash (KB)
 settings_similar_images_show_image_preview = Image preview
+settings_similar_videos_preview_hint = Preview is visible only when "Generate thumbnails" is enabled, or when a thumbnail has already been generated.
 settings_application_scale_text = Application scale
 settings_application_scale_hint_text = When manual scale is enabled, this allows you to choose a custom scale factor, but completely disables automatic scaling based on the monitor’s DPI.
 settings_restart_required_scale_text = ---You need to restart app to apply changes in scale---
@@ -380,3 +384,14 @@ hardlink_confirmation_text = Are you sure you want to create hardlinks for the s
 softlink_button_text = Softlink
 softlink_text = Create softlinks
 softlink_confirmation_text = Are you sure you want to create softlinks (symlinks) for the selected items?
+popup_custom_select_title_text = Custom Select / Unselect
+popup_custom_select_button_text = Select
+popup_custom_unselect_button_text = Unselect
+popup_custom_column_name_header_text = Column
+popup_custom_filter_value_header_text = Filter value (wildcard / regex)
+popup_custom_case_sensitive_text = Case sensitive
+popup_custom_leave_one_in_group_text = Select all items except one, in each group
+popup_custom_hint_str_text = Text columns: wildcards  *name*  /home/*  *.rs
+popup_custom_hint_int_text = Size [KB] / numeric columns: >= 2048  < 512  = 0  (operators: >=  <=  >  <  =)
+popup_custom_hint_date_text = Date columns: DD-MM-YYYY or YYYY-MM-DD, optional time HH:MM:SS  e.g.  >= 2020-01-01  or  < 31-12-2022 23:59:59
+

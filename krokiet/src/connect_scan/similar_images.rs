@@ -132,6 +132,7 @@ fn prepare_data_model_similar_images(fe: ImagesEntry, hash_size: u8) -> (ModelRc
         fe.width as i32,
         fe.height as i32,
         (fe.width as u64 * fe.height as u64) as i32, // Limited to 2000MP, but using u64, because in cache it can exceed i32
+        fe.difference as i32,
     ];
     let data_model_int = VecModel::from_slice(&data_model_int_arr);
     (data_model_str, data_model_int)

@@ -55,6 +55,7 @@ mod connect_clean_cache;
 mod connect_directories_changes;
 mod connect_open;
 mod connect_progress_receiver;
+mod connect_rfd;
 mod connect_row_selection;
 mod connect_save;
 mod connect_scan;
@@ -139,7 +140,7 @@ fn main() {
     connect_show_preview(&app, Arc::clone(&shared_models));
     connect_translations(&app);
     connect_changing_settings_preset(&app);
-    connect_select(&app);
+    connect_select(&app, &shared_models);
     connect_move(&app, progress_sender.clone(), stop_flag.clone());
     connect_rename(&app, progress_sender.clone(), stop_flag.clone());
     connect_optimize_video(&app, progress_sender.clone(), stop_flag.clone());

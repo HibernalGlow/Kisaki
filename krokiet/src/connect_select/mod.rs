@@ -1,17 +1,24 @@
+pub(crate) mod custom_select;
+
+use std::sync::{Arc, Mutex};
+
+use regex::Regex;
 use slint::{ComponentHandle, Model, ModelRc, VecModel};
 
-use crate::common::connect_i32_into_u64;
+use crate::common::{connect_i32_into_u64, create_model_from_model_vec};
 use crate::connect_row_selection::checker::change_number_of_enabled_items;
 use crate::connect_translation::translate_select_mode;
-use crate::{ActiveTab, Callabler, GuiState, MainWindow, SelectMode, SelectModel, SingleMainListModel};
+use crate::shared_models::SharedModels;
+use crate::{ActiveTab, Callabler, CustomSelectColumnModel, GuiState, MainWindow, SelectMode, SelectModel, SingleMainListModel};
 
 type SelectionResult = (u64, u64, ModelRc<SingleMainListModel>);
 
 // TODO optimize this, not sure if it is possible to not copy entire model to just select item
 // https://github.com/slint-ui/slint/discussions/4595
-pub(crate) fn connect_select(app: &MainWindow) {
+pub(crate) fn connect_select(app: &MainWindow, shared_models: &Arc<Mutex<SharedModels>>) {
     set_select_buttons(app);
 
+    let shared_models = shared_models.clone();
     let a = app.as_weak();
     app.global::<Callabler>().on_select_items(move |select_mode| {
         let app = a.upgrade().expect("Failed to upgrade app :(");
@@ -30,10 +37,55 @@ pub(crate) fn connect_select(app: &MainWindow) {
             SelectMode::SelectOldest => select_by_property(&current_model, active_tab, Property::Date, false),
             SelectMode::SelectShortestPath => select_by_property(&current_model, active_tab, Property::PathLength, false),
             SelectMode::SelectLongestPath => select_by_property(&current_model, active_tab, Property::PathLength, true),
+
+            SelectMode::SelectCustom => return,
         };
         active_tab.set_tool_model(&app, new_model);
         change_number_of_enabled_items(&app, active_tab, checked_items as i64 - unchecked_items as i64);
     });
+
+    app.global::<Callabler>().on_validate_regex(|regex_str| {
+        if regex_str.is_empty() {
+            return true;
+        }
+        Regex::new(regex_str.as_str()).is_ok()
+    });
+
+    let a = app.as_weak();
+    app.global::<Callabler>().on_populate_custom_select_columns(move || {
+        let app = a.upgrade().expect("Failed to upgrade app :(");
+        let active_tab = app.global::<GuiState>().get_active_tab();
+        let columns = custom_select::build_custom_select_columns(active_tab);
+        app.global::<GuiState>().set_custom_select_columns(create_model_from_model_vec(&columns));
+    });
+
+    let a = app.as_weak();
+    app.global::<Callabler>().on_update_custom_select_column(move |idx, enabled, filter_value| {
+        let app = a.upgrade().expect("Failed to upgrade app :(");
+        let model = app.global::<GuiState>().get_custom_select_columns();
+        let idx = idx as usize;
+        if let Some(mut col) = model.row_data(idx) {
+            col.enabled = enabled;
+            col.filter_value = filter_value;
+            model.set_row_data(idx, col);
+        }
+    });
+
+    let a = app.as_weak();
+    app.global::<Callabler>()
+        .on_select_items_custom_columns(move |select_mode, case_sensitive, leave_one_in_group| {
+            let app = a.upgrade().expect("Failed to upgrade app :(");
+            let active_tab = app.global::<GuiState>().get_active_tab();
+            let current_model = active_tab.get_tool_model(&app);
+            let columns: Vec<CustomSelectColumnModel> = app.global::<GuiState>().get_custom_select_columns().iter().collect();
+
+            let leave_one_in_group = leave_one_in_group && (active_tab.get_is_header_mode() && !shared_models.lock().expect("Lock poisoned").get_use_reference_folders(active_tab));
+
+            let (checked_items, unchecked_items, new_model) =
+                custom_select::select_custom_columns(&current_model, active_tab, select_mode, &columns, case_sensitive, leave_one_in_group);
+            active_tab.set_tool_model(&app, new_model);
+            change_number_of_enabled_items(&app, active_tab, checked_items as i64 - unchecked_items as i64);
+        });
 }
 
 #[derive(Clone, Copy)]
@@ -46,7 +98,7 @@ enum Property {
 
 pub(crate) fn set_select_buttons(app: &MainWindow) {
     let active_tab = app.global::<GuiState>().get_active_tab();
-    let mut base_buttons = vec![SelectMode::SelectAll, SelectMode::UnselectAll, SelectMode::InvertSelection];
+    let mut base_buttons = vec![SelectMode::SelectCustom, SelectMode::SelectAll, SelectMode::UnselectAll, SelectMode::InvertSelection];
 
     let additional_buttons = match active_tab {
         ActiveTab::DuplicateFiles | ActiveTab::SimilarVideos | ActiveTab::SimilarMusic => vec![
@@ -249,7 +301,7 @@ mod tests {
         find_header_idx_and_deselect_all(&mut model);
 
         assert!(!model[0].checked);
-        assert!(model[1].checked); // header row
+        assert!(model[1].checked);
         assert!(!model[2].checked);
         assert!(!model[3].checked);
         assert!(!model[4].checked);
@@ -266,7 +318,7 @@ mod tests {
         assert_eq!(checked_items, 4);
         assert_eq!(unchecked_items, 0);
         assert!(new_model.row_data(0).unwrap().checked);
-        assert!(!new_model.row_data(1).unwrap().checked); // header row
+        assert!(!new_model.row_data(1).unwrap().checked);
         assert!(new_model.row_data(2).unwrap().checked);
         assert!(new_model.row_data(3).unwrap().checked);
         assert!(new_model.row_data(4).unwrap().checked);
@@ -304,7 +356,7 @@ mod tests {
         assert_eq!(checked_items, 3);
         assert_eq!(unchecked_items, 1);
         assert!(!new_model.row_data(0).unwrap().checked);
-        assert!(!new_model.row_data(1).unwrap().checked); // header row
+        assert!(!new_model.row_data(1).unwrap().checked);
         assert!(new_model.row_data(2).unwrap().checked);
         assert!(new_model.row_data(3).unwrap().checked);
         assert!(new_model.row_data(4).unwrap().checked);
