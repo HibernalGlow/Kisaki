@@ -19,7 +19,7 @@ use czkawka_core::tools::bad_names::{BadNames, BadNamesParameters, NameFixerPara
 use czkawka_core::tools::big_file::{BigFile, BigFileParameters, SearchMode};
 use czkawka_core::tools::broken_files::{BrokenFiles, BrokenFilesParameters, CheckedTypes};
 use czkawka_core::tools::duplicate::{DuplicateFinder, DuplicateFinderParameters};
-use czkawka_core::tools::empty_files::EmptyFiles;
+use czkawka_core::tools::empty_files::{EmptyFiles, EmptyFilesParameters};
 use czkawka_core::tools::empty_folder::EmptyFolder;
 use czkawka_core::tools::exif_remover::{ExifRemover, ExifRemoverParameters, ExifTagsFixerParams};
 use czkawka_core::tools::invalid_symlinks::InvalidSymlinks;
@@ -35,7 +35,7 @@ use log::{debug, error, info};
 
 use crate::commands::{
     Args, BadExtensionsArgs, BadNamesArgs, BiggestFilesArgs, BrokenFilesArgs, CommonCliItems, DMethod, DuplicatesArgs, EmptyFilesArgs, EmptyFoldersArgs, ExifRemoverArgs,
-    InvalidSymlinksArgs, SDMethod, SameMusicArgs, SimilarImagesArgs, SimilarVideosArgs, TemporaryArgs, VideoOptimizerArgs,
+    InvalidSymlinksArgs, SDMethod, SameMusicArgs, SimilarImagesArgs, SimilarVideosArgs, TemporaryArgs, VideoOptimizerArgs, validate_file_sizes,
 };
 use crate::progress::connect_progress;
 
@@ -131,6 +131,8 @@ fn duplicates(duplicates: DuplicatesArgs, stop_flag: &Arc<AtomicBool>, progress_
         use_prehash_cache,
     } = duplicates;
 
+    validate_file_sizes(minimal_file_size, maximal_file_size);
+
     let params = DuplicateFinderParameters::new(
         search_method,
         hash_type,
@@ -186,9 +188,18 @@ fn biggest_files(biggest_files: BiggestFilesArgs, stop_flag: &Arc<AtomicBool>, p
 }
 
 fn empty_files(empty_files: EmptyFilesArgs, stop_flag: &Arc<AtomicBool>, progress_sender: &Sender<ProgressData>) -> CliOutput {
-    let EmptyFilesArgs { common_cli_items, delete_method } = empty_files;
+    let EmptyFilesArgs {
+        common_cli_items,
+        delete_method,
+        zero_byte_content,
+        non_printable_content,
+    } = empty_files;
 
-    let mut tool = EmptyFiles::new();
+    let params = EmptyFilesParameters {
+        search_zero_byte_content_files: zero_byte_content || non_printable_content,
+        search_non_printable_content_files: non_printable_content,
+    };
+    let mut tool = EmptyFiles::new(params);
 
     set_common_settings(&mut tool, &common_cli_items, None);
     set_simple_delete(&mut tool, delete_method);
@@ -236,6 +247,8 @@ fn similar_images(similar_images: SimilarImagesArgs, stop_flag: &Arc<AtomicBool>
         ignore_same_resolution,
     } = similar_images;
 
+    validate_file_sizes(minimal_file_size, maximal_file_size);
+
     let params = SimilarImagesParameters::new(
         max_difference,
         hash_size,
@@ -271,6 +284,8 @@ fn same_music(same_music: SameMusicArgs, stop_flag: &Arc<AtomicBool>, progress_s
         approximate_comparison,
         compare_fingerprints_only_with_similar_titles,
     } = same_music;
+
+    validate_file_sizes(minimal_file_size, maximal_file_size);
 
     let params = SameMusicParameters::new(
         music_similarity,
@@ -337,22 +352,39 @@ fn similar_videos(similar_videos: SimilarVideosArgs, stop_flag: &Arc<AtomicBool>
         delete_method,
         allow_hard_links,
         ignore_same_size,
+        ignore_same_resolution,
         skip_forward_amount,
         crop_detect,
         scan_duration,
+        generate_thumbnails,
+        thumbnail_video_percentage_from_start,
+        generate_thumbnail_grid,
+        thumbnail_grid_tiles_per_side,
+        check_audio_content,
+        audio_similarity_percent,
+        audio_maximum_difference,
+        audio_length_ratio,
+        audio_min_duration_seconds,
     } = similar_videos;
+
+    validate_file_sizes(minimal_file_size, maximal_file_size);
 
     let params = SimilarVideosParameters::new(
         tolerance,
         ignore_same_size.ignore_same_size,
-        false, // TODO - add exclude same resolution
+        ignore_same_resolution.ignore_same_resolution,
         skip_forward_amount,
         scan_duration,
         crop_detect,
-        false, // creating thumbnails in CLI, makes almost no sense
-        10,    // creating thumbnails in CLI, makes almost no sense
-        false, // creating thumbnails in CLI, makes almost no sense
-        2,     // creating thumbnails in CLI, makes almost no sense
+        generate_thumbnails,
+        thumbnail_video_percentage_from_start,
+        generate_thumbnail_grid,
+        thumbnail_grid_tiles_per_side,
+        check_audio_content,
+        audio_similarity_percent,
+        audio_maximum_difference,
+        audio_length_ratio,
+        audio_min_duration_seconds,
     );
     let mut tool = SimilarVideos::new(params);
 

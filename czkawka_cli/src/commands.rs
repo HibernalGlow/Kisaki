@@ -10,8 +10,13 @@ use czkawka_core::common::tool_data::DeleteMethod;
 use czkawka_core::re_exported::{Cropdetect, FilterType, HashAlg};
 use czkawka_core::tools::broken_files::CheckedTypes;
 use czkawka_core::tools::same_music::MusicSimilarity;
-use czkawka_core::tools::similar_videos::{ALLOWED_SKIP_FORWARD_AMOUNT, ALLOWED_VID_HASH_DURATION, DEFAULT_SKIP_FORWARD_AMOUNT, crop_detect_from_str_opt};
+use czkawka_core::tools::similar_videos::{
+    ALLOWED_AUDIO_LENGTH_RATIO, ALLOWED_AUDIO_SIMILARITY_PERCENT, ALLOWED_SKIP_FORWARD_AMOUNT, ALLOWED_VID_HASH_DURATION, DEFAULT_AUDIO_LENGTH_RATIO,
+    DEFAULT_AUDIO_MAXIMUM_DIFFERENCE, DEFAULT_AUDIO_MIN_DURATION_SECONDS, DEFAULT_AUDIO_SIMILARITY_PERCENT, DEFAULT_SKIP_FORWARD_AMOUNT, DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE,
+    DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL, crop_detect_from_str_opt,
+};
 use czkawka_core::tools::video_optimizer::{NoiseReductionMethod, VideoCodec};
+use log::error;
 
 #[cfg(not(feature = "no_colors"))]
 pub const CLAP_STYLING: Styles = Styles::styled()
@@ -160,8 +165,8 @@ pub struct DuplicatesArgs {
         long,
         value_parser = parse_minimal_file_size,
         default_value = "257144",
-        help = "Minimum cached file size in bytes",
-        long_help = "Minimum size of cached files in bytes, assigning bigger value may speed up the scan but loading the cache will be slower, assigning smaller value may slow down the scan and some files may need to be hashed again but loading the cache will be faster"
+        help = "Minimum size of files stored in the hash cache (bytes)",
+        long_help = "Minimum file size (in bytes) to be included in the hash cache. A higher value produces a smaller cache file, making cache loading faster, but more files will be excluded from the cache and must be re-hashed on each scan. A lower value stores more files in the cache, making the scan faster at the cost of a larger cache file and slower cache loading."
     )]
     pub minimal_cached_file_size: u64,
     #[clap(
@@ -227,6 +232,18 @@ pub struct EmptyFilesArgs {
     pub common_cli_items: CommonCliItems,
     #[clap(flatten)]
     pub delete_method: SDMethod,
+    #[clap(
+        long,
+        help = "Also find files filled entirely with null bytes",
+        long_help = "Also find non-empty files whose entire content consists of null bytes (0x00). These files take disk space but carry no meaningful data."
+    )]
+    pub zero_byte_content: bool,
+    #[clap(
+        long,
+        help = "Also find files filled entirely with non-printable characters",
+        long_help = "Also find non-empty files whose entire content consists of non-printable ASCII characters: null (0x00), tab (0x09), LF (0x0A), VT (0x0B), FF (0x0C), CR (0x0D), space (0x20). Implies --zero-byte-content."
+    )]
+    pub non_printable_content: bool,
 }
 
 #[derive(Debug, clap::Args)]
@@ -390,18 +407,21 @@ pub struct SameMusicArgs {
         value_parser = parse_maximum_difference,
         default_value = "2.0",
         help = "Maximum difference between audio segments",
-        long_help = "Maximum allowed difference between audio segments (0.0-10.0). Value 0.0 will find only identical segments, while 10.0 will find segments that are barely similar. Lower values mean stricter matching."
+        long_help = "Maximum allowed difference between audio segments (0.0-10.0, inclusive). Value close to 0.0 will find only nearly identical segments, while 10.0 will find segments that are barely similar. Lower values mean stricter matching."
     )]
     pub maximum_difference: f64,
 }
+
+/// Values above this threshold are practically meaningless for audio segment matching
+const MAX_SAME_MUSIC_DIFFERENCE: f64 = 10.0;
 
 fn parse_maximum_difference(src: &str) -> Result<f64, String> {
     match src.parse::<f64>() {
         Ok(maximum_difference) => {
             if maximum_difference <= 0.0 {
                 Err("Maximum difference must be bigger than 0".to_string())
-            } else if maximum_difference >= 10.0 {
-                Err("Maximum difference must be smaller than 10.0".to_string())
+            } else if maximum_difference > MAX_SAME_MUSIC_DIFFERENCE {
+                Err(format!("Maximum difference must be at most {MAX_SAME_MUSIC_DIFFERENCE}"))
             } else {
                 Ok(maximum_difference)
             }
@@ -441,10 +461,10 @@ pub struct BrokenFilesArgs {
     #[clap(
         short,
         long,
-        default_value = "PDF",
+        default_values = ["PDF", "AUDIO", "IMAGE", "ARCHIVE", "FONT", "MARKUP"],
         value_parser = parse_broken_files,
-        help = "Checking file types (PDF, AUDIO, IMAGE, ARCHIVE, VIDEO_FFPROBE, VIDEO_FFMPEG)",
-        long_help = "Methods to search files - default PDF.\nPDF - finds broken PDF files,\nAUDIO - finds broken audio files,\nIMAGE - finds broken image files,\nARCHIVE - finds broken archive files,\nVIDEO_FFPROBE - quick video check using ffprobe (header validation),\nVIDEO_FFMPEG - deep video check using ffmpeg (full decode)"
+        help = "Checking file types (PDF, AUDIO, IMAGE, ARCHIVE, FONT, MARKUP, VIDEO_FFPROBE, VIDEO_FFMPEG)",
+        long_help = "Methods to search files - by default all types except video are checked (VIDEO_FFPROBE and VIDEO_FFMPEG require ffmpeg to be installed).\nPDF - finds broken PDF files,\nAUDIO - finds broken audio files,\nIMAGE - finds broken image files,\nARCHIVE - finds broken archive files (zip, 7z, gz, tar, zst, bz2, xz),\nFONT - finds broken font files (ttf, otf, ttc),\nMARKUP - finds broken JSON/XML/TOML/YAML/SVG files,\nVIDEO_FFPROBE - quick video check using ffprobe (header validation),\nVIDEO_FFMPEG - deep video check using ffmpeg (full decode)"
     )]
     pub checked_types: Vec<CheckedTypes>,
 }
@@ -461,6 +481,8 @@ pub struct SimilarVideosArgs {
     pub allow_hard_links: AllowHardLinks,
     #[clap(flatten)]
     pub ignore_same_size: IgnoreSameSize,
+    #[clap(flatten)]
+    pub ignore_same_resolution: IgnoreSameResolution,
     #[clap(
         short,
         long,
@@ -515,6 +537,69 @@ pub struct SimilarVideosArgs {
         long_help = "Duration of video scanning in seconds. Longer duration provides more accurate results but takes more time. Allowed values are predefined in the application."
     )]
     pub scan_duration: u32,
+    #[clap(
+        long,
+        help = "Generate thumbnails for found similar videos",
+        long_help = "Generate thumbnails for found similar videos. Thumbnail preview is only available in GUI (krokiet/cedinia), but generating them via CLI can pre-populate the cache for later GUI usage."
+    )]
+    pub generate_thumbnails: bool,
+    #[clap(
+        long,
+        default_value_t = DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL,
+        help = "Percentage of video duration to seek for thumbnail (0-100)",
+        long_help = "Percentage of video duration from the start at which the thumbnail frame is captured. Thumbnail preview is only available in GUI, but generating them via CLI can pre-populate the cache for later GUI usage."
+    )]
+    pub thumbnail_video_percentage_from_start: u8,
+    #[clap(
+        long,
+        help = "Generate grid thumbnail instead of single frame",
+        long_help = "When enabled, generates a grid of multiple frames instead of a single thumbnail frame. Thumbnail preview is only available in GUI, but generating them via CLI can pre-populate the cache for later GUI usage."
+    )]
+    pub generate_thumbnail_grid: bool,
+    #[clap(
+        long,
+        default_value_t = DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE,
+        help = "Number of tiles per side in grid thumbnail (e.g. 2 = 2x2 grid)",
+        long_help = "Number of tiles per side when generating a grid thumbnail (e.g. 2 means a 2x2 = 4-frame grid). Thumbnail preview is only available in GUI, but generating them via CLI can pre-populate the cache for later GUI usage."
+    )]
+    pub thumbnail_grid_tiles_per_side: u8,
+    #[clap(
+        long,
+        help = "Compare videos by audio fingerprint (WARNING: very resource-intensive)",
+        long_help = "When enabled, videos are also compared by their audio fingerprint. This is very resource-intensive and significantly slows down scanning."
+    )]
+    pub check_audio_content: bool,
+    #[clap(
+        long,
+        default_value_t = DEFAULT_AUDIO_SIMILARITY_PERCENT,
+        value_parser = parse_audio_similarity_percent,
+        help = "Minimum percentage of matching audio content (0.0-100.0)",
+        long_help = "Minimum percentage of audio duration that must match between two videos to consider them similar. Allowed range: 0.0-100.0."
+    )]
+    pub audio_similarity_percent: f64,
+    #[clap(
+        long,
+        default_value_t = DEFAULT_AUDIO_MAXIMUM_DIFFERENCE,
+        value_parser = parse_audio_maximum_difference,
+        help = "Maximum allowed audio fingerprint segment difference (0.0-10.0)",
+        long_help = "Maximum score difference allowed for matched audio segments. Lower values mean stricter matching. Allowed range: 0.0-10.0."
+    )]
+    pub audio_maximum_difference: f64,
+    #[clap(
+        long,
+        default_value_t = DEFAULT_AUDIO_LENGTH_RATIO,
+        value_parser = parse_audio_length_ratio,
+        help = "Minimum ratio of shorter to longer audio duration (0.0-1.0)",
+        long_help = "Minimum ratio between the shorter and longer audio duration. Videos where the shorter is less than this fraction of the longer are skipped. Allowed range: 0.0-1.0."
+    )]
+    pub audio_length_ratio: f64,
+    #[clap(
+        long,
+        default_value_t = DEFAULT_AUDIO_MIN_DURATION_SECONDS,
+        help = "Minimum audio duration in seconds for comparison",
+        long_help = "Videos with audio duration shorter than this value are excluded from audio comparison."
+    )]
+    pub audio_min_duration_seconds: u32,
 }
 
 #[derive(Debug, clap::Args)]
@@ -1069,6 +1154,45 @@ impl JsonPrettyFileToSave {
     }
 }
 
+fn parse_audio_similarity_percent(src: &str) -> Result<f64, String> {
+    match src.parse::<f64>() {
+        Ok(v) => {
+            if ALLOWED_AUDIO_SIMILARITY_PERCENT.contains(&v) {
+                Ok(v)
+            } else {
+                Err(format!("Audio similarity percent must be in range {ALLOWED_AUDIO_SIMILARITY_PERCENT:?}"))
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+fn parse_audio_maximum_difference(src: &str) -> Result<f64, String> {
+    match src.parse::<f64>() {
+        Ok(v) => {
+            if v >= 0.0 {
+                Ok(v)
+            } else {
+                Err("Audio maximum difference must be >= 0.0".to_string())
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
+fn parse_audio_length_ratio(src: &str) -> Result<f64, String> {
+    match src.parse::<f64>() {
+        Ok(v) => {
+            if ALLOWED_AUDIO_LENGTH_RATIO.contains(&v) {
+                Ok(v)
+            } else {
+                Err(format!("Audio length ratio must be in range {ALLOWED_AUDIO_LENGTH_RATIO:?}"))
+            }
+        }
+        Err(e) => Err(e.to_string()),
+    }
+}
+
 fn parse_scan_duration(s: &str) -> Result<u32, String> {
     match s.parse::<u32>() {
         Ok(scan_duration) => {
@@ -1141,7 +1265,9 @@ fn parse_broken_files(src: &str) -> Result<CheckedTypes, &'static str> {
         "archive" => Ok(CheckedTypes::ARCHIVE),
         "video_ffprobe" => Ok(CheckedTypes::VIDEO_FFPROBE),
         "video_ffmpeg" => Ok(CheckedTypes::VIDEO_FFMPEG),
-        _ => Err("Couldn't parse the broken files type (allowed: PDF, AUDIO, IMAGE, ARCHIVE, VIDEO_FFPROBE, VIDEO_FFMPEG)"),
+        "font" => Ok(CheckedTypes::FONT),
+        "markup" => Ok(CheckedTypes::MARKUP),
+        _ => Err("Couldn't parse the broken files type (allowed: PDF, AUDIO, IMAGE, ARCHIVE, FONT, MARKUP, VIDEO_FFPROBE, VIDEO_FFMPEG)"),
     }
 }
 
@@ -1210,8 +1336,20 @@ fn parse_minimal_file_size(src: &str) -> Result<u64, String> {
 
 fn parse_maximal_file_size(src: &str) -> Result<u64, String> {
     match src.parse::<u64>() {
-        Ok(maximal_file_size) => Ok(maximal_file_size),
+        Ok(maximal_file_size) => {
+            if maximal_file_size == 0 {
+                Err("Maximum file size must be at least 1 byte".to_string())
+            } else {
+                Ok(maximal_file_size)
+            }
+        }
         Err(e) => Err(e.to_string()),
+    }
+}
+
+pub fn validate_file_sizes(minimal: u64, maximal: u64) {
+    if maximal < minimal {
+        error!("WARNING: Maximum file size ({maximal}) is smaller than minimum file size ({minimal}), no files will match.");
     }
 }
 

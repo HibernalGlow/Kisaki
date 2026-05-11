@@ -36,8 +36,8 @@ use gtk4::Application;
 use gtk4::gio::ApplicationFlags;
 use gtk4::prelude::*;
 use gui_structs::gui_data::{
-    CZK_ICON_ADD, CZK_ICON_COMPARE, CZK_ICON_DELETE, CZK_ICON_HARDLINK, CZK_ICON_HIDE_DOWN, CZK_ICON_HIDE_UP, CZK_ICON_INFO, CZK_ICON_LEFT, CZK_ICON_MANUAL_ADD, CZK_ICON_MOVE,
-    CZK_ICON_RIGHT, CZK_ICON_SAVE, CZK_ICON_SEARCH, CZK_ICON_SELECT, CZK_ICON_SETTINGS, CZK_ICON_STOP, CZK_ICON_SYMLINK, CZK_ICON_TRASH, GuiData,
+    CZK_ICON_ADD, CZK_ICON_COMPARE, CZK_ICON_DELETE, CZK_ICON_HARDLINK, CZK_ICON_HIDE_DOWN, CZK_ICON_HIDE_UP, CZK_ICON_INFO, CZK_ICON_KROKIET, CZK_ICON_LEFT, CZK_ICON_MANUAL_ADD,
+    CZK_ICON_MOVE, CZK_ICON_RIGHT, CZK_ICON_SAVE, CZK_ICON_SEARCH, CZK_ICON_SELECT, CZK_ICON_SETTINGS, CZK_ICON_STOP, CZK_ICON_SYMLINK, CZK_ICON_TRASH, GuiData,
 };
 use log::info;
 
@@ -75,8 +75,10 @@ pub const CZKAWKA_GTK_TOOL_NUMBER: usize = TOOLS_NUMBER - 3; // Missing exif, vi
 fn main() {
     register_image_decoding_hooks();
     let config_cache_path_set_result = set_config_cache_path("Czkawka", "Czkawka");
+
+    // To remove info dialog about deprecated czkawka, remove exists_krokiet_info_file and set needs_to_open_dialog_about_krokiet to false
     let exists_krokiet_info_file = get_config_cache_path().is_some_and(|cache_config| {
-        let file_path = cache_config.cache_folder.join("krokiet_info_dialog_seen.txt");
+        let file_path = cache_config.cache_folder.join("krokiet_info_dialog_seen2.txt");
         let exists = file_path.exists();
         if !exists {
             let _ = std::fs::write(

@@ -9,17 +9,13 @@ general_ok_button = Ok
 general_close_button = Close
 
 # Krokiet info dialog
-krokiet_info_title = Introducing Krokiet - New version of Czkawka
+krokiet_info_title = Deprecation Notice
 krokiet_info_message =
-        Krokiet is the new, improved, faster and more reliable version of the Czkawka GTK GUI!
+        Czkawka GTK 12.0 is the final release. No further updates, features, or bug fixes are planned.
 
-        It’s easier to run and more resilient to system changes, as it depends only on core libraries available on most systems by default.
+        Most features from Czkawka GTK are available in Krokiet, usually in a simpler, faster, and more stable form. Krokiet also adds new features and improvements that were not possible in the GTK version.
 
-        Krokiet also brings features that Czkawka lacks, including thumbnails in video comparison mode, an EXIF cleaner, file move/copy/delete progress or extended sorting options.
-
-        Give it a try and see the difference!
-
-        Czkawka will continue to receive bug fixes and minor updates from me, but all new features will be developed exclusively for Krokiet, and anyone is free to contribute new features add missing modes or extend Czkawka further.
+        If you are still using Czkawka GTK, switching to Krokiet should be easy, since it has a similar interface, fewer dependencies, and better cross-platform support.
 
         PS: This message should appear only once. If it shows up again, set the CZKAWKA_DONT_ANNOY_ME environment variable to any non-empty value.
 
@@ -355,6 +351,22 @@ about_translation_button = Translation
 # Header
 header_setting_button_tooltip = Opens settings dialog.
 header_about_button_tooltip = Opens dialog with info about app.
+header_krokiet_button_tooltip = Try Krokiet - the new and improved version!
+
+# Krokiet promo dialog
+krokiet_promo_title = Meet Krokiet!
+krokiet_promo_message =
+        Hello there, brave Czkawka user!
+
+        The Force is clearly with you, but Krokiet is not - a newer, faster, lighter, and significantly more handsome (assuming apps can actually be handsome) duplicate cleaner.
+
+        Krokiet includes everything people liked about Czkawka. It is completely free, open source, has a unique and simple UI (both praised and hated by many), introduces a lot of new features, uses fewer dependencies, and works far more reliably across different platforms.
+
+        And if you somehow missed it, there is already an even newer app than Krokiet - Cedinia, designed primarily for Android devices and touchscreen usage.
+
+        Czkawka GTK served us well, but its watch has ended.
+krokiet_promo_link_download = Download Krokiet/Cedinia
+krokiet_promo_link_project = Project page
 
 # Settings
 ## General
