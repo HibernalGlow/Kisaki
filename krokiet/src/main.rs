@@ -26,6 +26,7 @@ use log::{error, info};
 use slint::VecModel;
 
 use crate::clear_outdated_video_thumbnails::clear_outdated_video_thumbnails;
+use crate::connect_build_info::{apply_build_info, connect_build_info, start_build_info_background_probes};
 use crate::connect_clean_cache::connect_clean_cache;
 use crate::connect_compare::connect_compare;
 use crate::connect_directories_changes::connect_add_remove_directories;
@@ -53,6 +54,7 @@ use crate::shared_models::SharedModels;
 mod audio_player;
 mod clear_outdated_video_thumbnails;
 mod common;
+mod connect_build_info;
 mod connect_clean_cache;
 mod connect_compare;
 mod connect_directories_changes;
@@ -142,6 +144,9 @@ fn main() {
     let original_preset_idx = base_settings.default_preset;
     set_initial_settings_to_gui(&app, &base_settings, &custom_settings, cli_args, preset_to_load);
     update_available_hardware_encoders(&app);
+    apply_build_info(&app);
+    connect_build_info(&app);
+    start_build_info_background_probes(&app);
 
     connect_delete_button(&app, progress_sender.clone(), stop_flag.clone());
     connect_trash_button(&app, progress_sender.clone(), stop_flag.clone());
