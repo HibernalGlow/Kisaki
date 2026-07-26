@@ -321,6 +321,16 @@ about_repository_button = Depo
 about_donation_button = Bağış
 about_instruction_button = Yönerge
 about_translation_button = Çeviri
+about_other_apps_button = Diğer Uygulamalar
+about_other_apps_dialog_title = qarmin'den diğer uygulamalar
+about_other_apps_open_source_note = Listelenen tüm uygulamalar ücretsizdir ve açık kaynaklıdır.
+about_other_apps_open_button = Açık
+about_other_apps_szyszka_desc = Hızlı ve güçlü bir dosya yeniden adlandırma aracı.
+about_other_apps_mykrut_desc = Basit, hızlı ve belirli bir amaca yönelik bir Linux dosya yöneticisi.
+about_other_apps_dcmki_viewer_desc = Basit bir DICOM görüntüleyici.
+about_other_apps_video_thumbnailer_desc = Czkawka'da kullanılan video küçük resim oluşturucu için geliştirilmiş bir katman.
+about_other_apps_space_finder_desc = Sisteminizdeki en büyük dosyaları kolayca bulmanızı sağlayan basit bir araç.
+about_other_apps_system_info_collector_desc = İşletim sisteminden RAM/CPU kullanım verilerini toplar ve bunları grafikler halinde gösterir.
 # Header
 header_setting_button_tooltip = Ayarlar iletişim kutusunu açar.
 header_about_button_tooltip = Czkawka hakkında bilgi içeren iletişim kutusunu açar.

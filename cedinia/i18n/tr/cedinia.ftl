@@ -1,7 +1,6 @@
 # Cedinia - English (fallback)
 
 # App / top bar titles
-app_name = Cedinia
 tool_duplicate_files = Eş Dosyalar
 tool_empty_folders = Boş Klasörler
 tool_similar_images = Benzer Resimler
@@ -37,7 +36,7 @@ press_start = TARAMAYA başlamak için START düğmesine basın
 select_label = Selam.
 deselect_label = Desel.
 list_label = Liste
-gallery_label = Gal
+gallery_label = Galaksi
 # Selection popup
 selection_popup_title = Seç
 select_all = Tümünü Seç
@@ -266,7 +265,7 @@ option_similarity_high = Yüksek
 option_similarity_medium = Orta
 option_similarity_low = Düşük
 option_similarity_very_low = Çok Düşük
-option_similarity_minimal = Min
+option_similarity_minimal = En az
 option_check_method_hash = Karma
 option_check_method_name = Ad Karşılaştırma
 option_check_method_size_and_name = Beden+İsim
@@ -309,9 +308,9 @@ ctx_open_folder = Üst klasörü aç
 dir_open_folder = Klasörü aç
 # Compare view
 compare_label = Karşılaştır
-compare_loading = Resimleri yükleniyor…
-compare_cancelling = İptal ediliyor…
-compare_computing = Farkları hesaplanıyor…
+compare_loading = Resimleri yükleniyor...
+compare_cancelling = İptal ediliyor...
+compare_computing = Değişiklikleri hesaplanıyor...
 compare_mode_normal = Yan
 compare_mode_split = Böl
 compare_mode_overlay = Üst katman

@@ -173,7 +173,7 @@ upper_add_included_button_tooltip = دایرکتوری جدید به جستجو 
 upper_remove_included_button_tooltip = پوشه را از جستجو حذف کنید.
 upper_manual_add_excluded_button_tooltip =
     نام دایرکتوری مستثنی را به صورت دستی اضافه کنید.
-
+    
     برای اضافه کردن چندین مسیر همزمان، آن‌ها را با ؛ جدا کنید;
     /home/roman;/home/krokiet دو دایرکتوری /home/roman و /home/krokiet را اضافه خواهد کرد
 upper_add_excluded_button_tooltip = پوشه‌ای برای جستجوی مورد بندی خارج شود.
@@ -300,6 +300,16 @@ about_repository_button = آرشیو
 about_donation_button = تبرعات
 about_instruction_button = ارتباطات
 about_translation_button = ترجمه:
+about_other_apps_button = برنامه‌های دیگر
+about_other_apps_dialog_title = سایر برنامه‌های شرکت qarmin
+about_other_apps_open_source_note = تمام نرم‌افزارهای ذکر شده، رایگان و متن‌باز هستند.
+about_other_apps_open_button = باز
+about_other_apps_szyszka_desc = یک ابزار تغییر نام فایل، سریع و قدرتمند.
+about_other_apps_mykrut_desc = مدیریت فایل لینوکس، ساده، سریع و با رویکرد خاص.
+about_other_apps_dcmki_viewer_desc = یک نمایشگر ساده برای فایل‌های DICOM.
+about_other_apps_video_thumbnailer_desc = لایه‌ نمایانگر (Wrapper) برای تولیدکننده تصاویر کوچک ویدیو که در Czkawka استفاده می‌شود.
+about_other_apps_space_finder_desc = یافتن سریع و آسان بزرگترین فایل‌ها در سیستم شما.
+about_other_apps_system_info_collector_desc = مصرف حافظه RAM و پردازنده CPU را از سیستم عامل جمع‌آوری کرده و آن را به صورت نمودار نمایش می‌دهد.
 # Header
 header_setting_button_tooltip = دیالوگ تنظیمات را باز می‌کند.
 header_about_button_tooltip = پنجره دیالوگ با اطلاعات دربارهٔ اپ را باز می‌کند.

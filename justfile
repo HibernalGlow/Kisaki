@@ -88,7 +88,7 @@ clip:
     cargo clippy --fix --allow-dirty --allow-staged --no-default-features --features winit_software --all-targets
 
 fix:
-    grep -rl --null -F --include='*.rs' --include='*.slint' --include='*.md' --include='*.ftl' --exclude='AGENTS.md' --exclude='justfile' --exclude-dir='.git' --exclude-dir='target' -e '─' -e '–' -e '—' . | xargs -0 -r perl -CSD -i -pe 's/[\x{2500}\x{2013}\x{2014}]/-/g' || true
+    grep -rl --null -F --include='*.rs' --include='*.slint' --include='*.md' --include='*.ftl' --exclude='AGENTS.md' --exclude='justfile' --exclude-dir='.git' --exclude-dir='target' -e '─' -e '–' -e '—' -e '…' . | xargs -0 -r perl -CSD -i -pe 's/[\x{2500}\x{2013}\x{2014}]/-/g; s/\x{2026}\.?/.../g' || true
     cp misc/pyproject.toml .
     uv sync
 
@@ -376,7 +376,6 @@ translate:
     uv run misc/ai_translate/translate.py czkawka_core/i18n
     uv run misc/ai_translate/translate.py krokiet/i18n
     uv run misc/ai_translate/translate.py cedinia/i18n
-    just pack_translations
 
 validate_translations *args: # Available --fix argument, which removes invalid translations
     uv run misc/ai_translate/validate_translations.py czkawka_gui/i18n {{args}}

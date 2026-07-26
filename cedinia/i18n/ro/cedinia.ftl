@@ -1,7 +1,6 @@
 # Cedinia - English (fallback)
 
 # App / top bar titles
-app_name = Cedinia
 tool_duplicate_files = Duplicate
 tool_empty_folders = Golire dosare
 tool_similar_images = Imagini similare
@@ -309,9 +308,9 @@ ctx_open_folder = Deschide dosarul părinte
 dir_open_folder = Deschide dosarul
 # Compare view
 compare_label = Compară
-compare_loading = Se încarcă imaginile…
-compare_cancelling = Se anulează…
-compare_computing = Calculare diff…
+compare_loading = Încărcare imagini...
+compare_cancelling = Anulare...
+compare_computing = Calculare diff...
 compare_mode_normal = Lateral
 compare_mode_split = Împarte
 compare_mode_overlay = Suprapunere

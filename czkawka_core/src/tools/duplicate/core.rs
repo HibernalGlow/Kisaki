@@ -82,7 +82,7 @@ impl DuplicateFinder {
                     })
                     .collect();
 
-                // Reference - only use in size, because later hash will be counted differently
+                // Apply reference-folder filtering for name-based duplicate groups
                 if self.common_data.use_reference_folders {
                     let vec = self
                         .common_data
@@ -164,7 +164,7 @@ impl DuplicateFinder {
                     })
                     .collect();
 
-                // Reference - only use in size, because later hash will be counted differently
+                // Apply reference-folder filtering for size+name-based duplicate groups
                 if self.common_data.use_reference_folders {
                     let vec = self
                         .common_data
@@ -586,12 +586,9 @@ impl DuplicateFinder {
 
                         match hash_calculation(buffer, &file_entry, check_type, progress_handler.size_counter(), stop_flag) {
                             Ok(hash_string) => {
-                                if let Some(hash_string) = hash_string {
-                                    file_entry.hash = hash_string.clone();
-                                    hashmap_with_hash.entry(hash_string).or_default().push(file_entry);
-                                } else {
-                                    return None;
-                                }
+                                let hash_string = hash_string?;
+                                file_entry.hash = hash_string.clone();
+                                hashmap_with_hash.entry(hash_string).or_default().push(file_entry);
                             }
                             Err(s) => errors.push(s),
                         }
