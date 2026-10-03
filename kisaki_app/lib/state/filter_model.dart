@@ -579,16 +579,18 @@ FilterResult applyFilters({
   );
 }
 
+/// Groups rows the way the engine grouped them: `groupSize` is what the scanner reported, so a
+/// single-member result never merges with an unrelated neighbour just because the selected tool
+/// happens to be a grouped one. Group ids may repeat per tool, so rows travel in scan order.
 List<List<ScanRow>> _groupsOf(List<ScanRow> rows, ToolSpec? tool) {
-  if (tool != null && !tool.grouped) {
-    return rows.map((ScanRow row) => <ScanRow>[row]).toList();
-  }
-  final Map<int, List<ScanRow>> blocks = <int, List<ScanRow>>{};
+  final Map<Object, List<ScanRow>> blocks = <Object, List<ScanRow>>{};
   for (final ScanRow row in rows) {
-    blocks.putIfAbsent(row.groupIndex, () => <ScanRow>[]).add(row);
+    final Object key = row.groupSize > 1
+        ? 'group-${row.groupIndex}'
+        : 'row-${row.path}';
+    blocks.putIfAbsent(key, () => <ScanRow>[]).add(row);
   }
-  final List<int> order = blocks.keys.toList()..sort();
-  return order.map((int key) => blocks[key]!).toList();
+  return blocks.values.toList();
 }
 
 bool _matchesGroupRanges(List<ScanRow> group, FilterState state) {
