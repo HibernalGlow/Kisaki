@@ -367,6 +367,63 @@ void main() {
   );
 
   test(
+    'the bridge cleans EXIF into a side file and leaves the original alone',
+    () async {
+      final fixture = File('../czkawka_core/test_resources/images/normal.jpg');
+      expect(
+        fixture.existsSync(),
+        isTrue,
+        reason: 'the engine EXIF fixture moved: ${fixture.absolute.path}',
+      );
+      final root = await Directory.systemTemp.createTemp('kisaki_exif_');
+      addTearDown(() => root.delete(recursive: true));
+      final photo = File('${root.path}/photo.jpg');
+      await photo.writeAsBytes(await fixture.readAsBytes());
+      final canonicalPhoto = await photo.resolveSymbolicLinks();
+      final before = await photo.readAsBytes();
+
+      final dry = await g_actions.cleanExif(
+        request: _exif(canonicalPhoto, root.path, dryRun: true),
+      );
+      expect(
+        (dry.planned, dry.stripped, dry.candidates, dry.failed),
+        (1, 0, 0, 0),
+        reason: '${dry.items}',
+      );
+      expect(dry.items.single.tagsRemoved, greaterThan(0));
+      expect(
+        File('${root.path}/photo.czkawka_cleaned_exif.jpg').existsSync(),
+        isFalse,
+        reason: 'a dry run writes nothing',
+      );
+
+      final cleaned = await g_actions.cleanExif(
+        request: _exif(canonicalPhoto, root.path, dryRun: false),
+      );
+      expect(
+        (cleaned.candidates, cleaned.failed),
+        (1, 0),
+        reason: '${cleaned.items}',
+      );
+      expect(
+        cleaned.items.single.target,
+        canonicalPhoto.replaceFirst('.jpg', '.czkawka_cleaned_exif.jpg'),
+      );
+      expect(
+        File(canonicalPhoto).readAsBytesSync(),
+        before,
+        reason: 'the original keeps its metadata',
+      );
+      expect(
+        File('${root.path}/photo.czkawka_cleaned_exif.jpg').existsSync(),
+        isTrue,
+        reason: 'the cleaned copy should be on disk',
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+
+  test(
     'the bridge moves a selection and never overwrites by default',
     () async {
       final root = await Directory.systemTemp.createTemp('kisaki_move_');
@@ -525,6 +582,30 @@ g.RenameRequest _rename(
       fields: const [],
     ),
     paths: paths,
+    dryRun: dryRun,
+  );
+}
+
+/// An EXIF request for one photo. The engine re-reads the tags itself, so the request only carries
+/// the folder and the choice of writing a side file or replacing the original.
+g.ExifRequest _exif(String photoPath, String rootPath, {required bool dryRun}) {
+  return g.ExifRequest(
+    scan: g.ScanRequest(
+      tool: 'exif_remover',
+      included: [rootPath],
+      reference: const [],
+      excludedPaths: const [],
+      excludedItems: const [],
+      allowedExtensions: const [],
+      excludedExtensions: const [],
+      recursive: true,
+      useCache: false,
+      minSizeKib: '',
+      maxSizeKib: '',
+      fields: const [],
+    ),
+    paths: [photoPath],
+    overrideFile: false,
     dryRun: dryRun,
   );
 }

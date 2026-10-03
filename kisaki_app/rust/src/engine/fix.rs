@@ -79,7 +79,7 @@ fn extension_plan(from: &Path, proper: &HashMap<PathBuf, String>) -> Plan {
 
 /// The engine reports paths with symlinks resolved, so a selection that spells the same file
 /// differently - "/tmp" against "/private/tmp" on macOS - is still recognised.
-fn resolved(path: &Path) -> PathBuf {
+pub(crate) fn resolved(path: &Path) -> PathBuf {
     fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
@@ -108,7 +108,7 @@ fn extension_of(request: &ScanRequest, store: &FieldStore, paths: &[String]) -> 
 }
 
 /// Distinct folders of a selection, as strings the engine can use as scan roots.
-fn parent_dirs(paths: &[String]) -> Vec<String> {
+pub(crate) fn parent_dirs(paths: &[String]) -> Vec<String> {
     let mut dirs: Vec<String> = paths
         .iter()
         .filter_map(|path| Path::new(path).parent().map(|parent| parent.to_string_lossy().into_owned()))
