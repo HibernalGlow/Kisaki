@@ -1,4 +1,3 @@
-
 /// One user-facing scanner, described so Dart can render it without hardcoding a table per tool.
 #[derive(Debug, Clone, PartialEq)]
 pub struct ToolSpec {

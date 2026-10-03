@@ -1,8 +1,8 @@
 use flutter_rust_bridge::frb;
-use crate::frb_generated::StreamSink;
 
 use crate::api::types::{ScanEvent, ScanRequest};
 use crate::engine::runner;
+use crate::frb_generated::StreamSink;
 
 /// Starts a scan and streams every engine progress tick, ending with exactly one terminal event.
 #[frb]

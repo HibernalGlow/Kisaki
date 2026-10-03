@@ -136,7 +136,11 @@ fn remove_row(row: &ScanRow, folders: bool, to_trash: bool) -> Result<(), String
     if folders {
         return remove_folder_if_contains_only_empty_folders(&text, to_trash);
     }
-    if path.is_dir() { remove_single_folder(&text, to_trash) } else { remove_single_file(path, to_trash) }
+    if path.is_dir() {
+        remove_single_folder(&text, to_trash)
+    } else {
+        remove_single_file(path, to_trash)
+    }
 }
 
 /// Turns per-row decisions into the reported outcome: one log line per row, in request order.
@@ -498,11 +502,22 @@ mod tests {
     }
 
     fn delete_request(rows: Vec<ScanRow>, dry_run: bool, to_trash: bool) -> DeleteRequest {
-        DeleteRequest { tool: "duplicate_files".to_string(), rows, delete_to_trash: to_trash, dry_run }
+        DeleteRequest {
+            tool: "duplicate_files".to_string(),
+            rows,
+            delete_to_trash: to_trash,
+            dry_run,
+        }
     }
 
     fn export_request(rows: Vec<ScanRow>, path: &str, format: &str, grouped: bool) -> ExportRequest {
-        ExportRequest { tool: "duplicate_files".to_string(), rows, path: path.to_string(), format: format.to_string(), grouped }
+        ExportRequest {
+            tool: "duplicate_files".to_string(),
+            rows,
+            path: path.to_string(),
+            format: format.to_string(),
+            grouped,
+        }
     }
 
     #[test]
@@ -536,7 +551,10 @@ mod tests {
         assert_eq!(outcome.affected, 2, "reference rows are counted, not deleted");
         assert_eq!(outcome.reclaimed_bytes, 700);
         assert_eq!(outcome.errors, 0);
-        assert_eq!(outcome.log, vec!["Would delete a".to_string(), "Would delete b".to_string(), "Skipped reference ref".to_string()]);
+        assert_eq!(
+            outcome.log,
+            vec!["Would delete a".to_string(), "Would delete b".to_string(), "Skipped reference ref".to_string()]
+        );
     }
 
     #[test]
@@ -571,8 +589,13 @@ mod tests {
 
     #[test]
     fn unknown_scanner_is_reported_with_its_name() {
-        let error = delete(DeleteRequest { tool: "nope".to_string(), rows: Vec::new(), delete_to_trash: false, dry_run: true })
-            .expect_err("unknown scanner must fail");
+        let error = delete(DeleteRequest {
+            tool: "nope".to_string(),
+            rows: Vec::new(),
+            delete_to_trash: false,
+            dry_run: true,
+        })
+        .expect_err("unknown scanner must fail");
         assert!(error.contains("nope"), "missing scanner name in: {error}");
 
         let export_error = export(ExportRequest {
@@ -640,7 +663,10 @@ mod tests {
         let spec = registry::spec("duplicate_files").expect("known scanner");
         let text = csv_document(&request, &spec);
 
-        assert_eq!(text.lines().next().expect("header line"), "group,name,directory,path,size,modified,size_bytes,modified_ts,is_reference");
+        assert_eq!(
+            text.lines().next().expect("header line"),
+            "group,name,directory,path,size,modified,size_bytes,modified_ts,is_reference"
+        );
         assert!(text.contains("\"na,me\""), "unexpected: {text}");
     }
 
@@ -708,7 +734,11 @@ mod tests {
         assert_eq!(outcome.errors, 0);
         assert_eq!(
             outcome.log,
-            vec!["Deleted copy.bin".to_string(), "Kept one copy keeper.bin".to_string(), "Skipped reference reference.bin".to_string()]
+            vec![
+                "Deleted copy.bin".to_string(),
+                "Kept one copy keeper.bin".to_string(),
+                "Skipped reference reference.bin".to_string()
+            ]
         );
         assert!(!Path::new(&copy.path).exists(), "the target must be gone");
         assert!(Path::new(&keeper.path).exists(), "the spared copy must survive");

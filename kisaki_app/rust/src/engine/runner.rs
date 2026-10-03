@@ -1,16 +1,15 @@
-use std::sync::Arc;
-use std::sync::OnceLock;
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, OnceLock};
 use std::thread;
 
 use crossbeam_channel::Sender;
 use czkawka_core::common::consts::DEFAULT_THREAD_SIZE;
 use czkawka_core::common::progress_data::ProgressData;
-use crate::frb_generated::StreamSink;
 use futures::channel::oneshot;
 
 use crate::api::types::{ScanEvent, ScanOutcome, ScanRequest};
 use crate::engine::{EngineOutcome, convert, dispatch, progress};
+use crate::frb_generated::StreamSink;
 
 /// Only one scan may own the engine at a time; the stop flag is shared with the worker.
 fn stop_flag() -> &'static Arc<AtomicBool> {
@@ -60,14 +59,11 @@ pub async fn spawn(request: ScanRequest, sink: StreamSink<ScanEvent>) -> Result<
         return Err(format!("Failed to start progress forwarder: {error}"));
     }
 
-    let scan_result = thread::Builder::new()
-        .name("kisaki-scan".to_string())
-        .stack_size(DEFAULT_THREAD_SIZE)
-        .spawn(move || {
-            let outcome = dispatch::run(&request, progress_tx.clone(), Arc::clone(&stop));
-            drop(progress_tx);
-            let _ = done_tx.send(outcome);
-        });
+    let scan_result = thread::Builder::new().name("kisaki-scan".to_string()).stack_size(DEFAULT_THREAD_SIZE).spawn(move || {
+        let outcome = dispatch::run(&request, progress_tx.clone(), Arc::clone(&stop));
+        drop(progress_tx);
+        let _ = done_tx.send(outcome);
+    });
 
     let _scan_thread = match scan_result {
         Ok(handle) => handle,
