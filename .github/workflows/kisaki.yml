@@ -48,7 +48,7 @@ jobs:
           else
             PROFILE="--profile fastci"
           fi
-          cargo build -p kisaki $PROFILE --features heif,libraw,libavif
+          cargo build -p kisaki "$PROFILE" --features heif,libraw,libavif
       - name: Test
         run: xvfb-run cargo test -p kisaki --all-features
       - name: Upload artifact
@@ -105,6 +105,35 @@ jobs:
         with:
           name: windows_kisaki_msvc
           path: target/release/kisaki.exe
+
+  # The Flutter frontend reaches czkawka_core only through this crate, so its tests are the
+  # contract check for every scanner the board can ask for. The Dart suite is not run here:
+  # it needs a Flutter toolchain and a dylib path that this workspace does not yet ship to CI.
+  bridge:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Install dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libraw-dev libheif-dev libavif-dev libdav1d-dev libasound2-dev
+      - name: Build cdylib
+        shell: bash
+        run: cargo build -p kisaki_bridge
+      - name: Test
+        run: cargo test -p kisaki_bridge
+      - name: Formatting
+        if: matrix.os == 'ubuntu-22.04'
+        run: cargo fmt -p kisaki_bridge -- --check
+      - name: Clippy
+        if: matrix.os == 'ubuntu-22.04'
+        run: cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 
   quality:
     runs-on: ubuntu-22.04
