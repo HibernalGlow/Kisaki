@@ -87,33 +87,44 @@ void main() {
     expect(find.byKey(const Key('row-thumb-/data/a.jpg')), findsNothing);
   });
 
-  testWidgets('the slot does not swallow the row click', (
+  testWidgets('the picture is its own target and the row still toggles', (
     WidgetTester tester,
   ) async {
     await pumpPictures(tester);
     expect(controller.selectedCount, 0);
 
+    // The picture opens the preview instead of selecting, like the reference's preview button.
     await tester.tapAt(
       tester.getCenter(find.byKey(const Key('row-thumb-/data/a.jpg'))),
     );
     await tester.pumpAndSettle();
+    expect(controller.previewOpen, isTrue);
+    expect(controller.selectedCount, 0);
 
+    await tester.tap(find.byKey(const Key('preview-close')));
+    await tester.pumpAndSettle();
+
+    // A press on the row, away from the picture, is the selection click.
+    final Rect row = tester.getRect(
+      find.byKey(const Key('result-row-/data/a.jpg')),
+    );
+    await tester.tapAt(Offset(row.center.dx + 40, row.center.dy));
+    await tester.pumpAndSettle();
     expect(controller.selectedCount, 1);
     expect(controller.isSelected(controller.rows.first), isTrue);
   });
 
-  testWidgets(
-    'turning the switch back on brings the pictures back',
-    (WidgetTester tester) async {
-      await pumpPictures(tester);
-      await tester.tap(find.byKey(const Key('toggle-thumbnails')));
-      await tester.pumpAndSettle();
-      expect(find.byKey(const Key('row-thumb-/data/a.jpg')), findsNothing);
+  testWidgets('turning the switch back on brings the pictures back', (
+    WidgetTester tester,
+  ) async {
+    await pumpPictures(tester);
+    await tester.tap(find.byKey(const Key('toggle-thumbnails')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('row-thumb-/data/a.jpg')), findsNothing);
 
-      await tester.tap(find.byKey(const Key('toggle-thumbnails')));
-      await tester.pumpAndSettle();
-      expect(controller.showThumbnails, isTrue);
-      expect(find.byKey(const Key('row-thumb-/data/a.jpg')), findsOneWidget);
-    },
-  );
+    await tester.tap(find.byKey(const Key('toggle-thumbnails')));
+    await tester.pumpAndSettle();
+    expect(controller.showThumbnails, isTrue);
+    expect(find.byKey(const Key('row-thumb-/data/a.jpg')), findsOneWidget);
+  });
 }

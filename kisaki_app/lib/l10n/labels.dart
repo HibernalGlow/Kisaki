@@ -483,6 +483,10 @@ class Labels {
     'row-menu-copy-name': 'Copy the file name',
     'row-menu-copy-path': 'Copy the full path',
     'row-menu-select-group': 'Select the whole group',
+    'preview-loading': 'Reading the picture...',
+    'preview-next': 'Next',
+    'preview-prev': 'Previous',
+    'preview-title': 'Picture preview',
     'rust_init_error_title': 'Kisaki failed to start',
     'rust_no_included_paths':
         'Add at least one included directory before scanning',

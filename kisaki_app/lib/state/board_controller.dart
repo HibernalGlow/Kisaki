@@ -116,6 +116,7 @@ class BoardController extends ChangeNotifier {
   Map<String, Object> _assistantMessageArgs = const <String, Object>{};
   bool _assistantMessageIsError = false;
   ComparisonState _comparison = const ComparisonState();
+  String? _previewPath;
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
   final Map<String, double> _columnWidths = <String, double>{};
@@ -740,6 +741,46 @@ class BoardController extends ChangeNotifier {
   /// The assistant and the comparison dialog work on the groups the table shows, so a filtered-out
   /// row is never touched.
   List<List<ScanRow>> get boardGroups => groupsOf(_visible, _tool);
+
+  /// The pictures the preview can step through: the rows on screen, in table order.
+  List<String> get previewPaths =>
+      _visible.map((ScanRow row) => row.path).where(isSimiuSetImage).toList();
+
+  String get previewPath => _previewPath ?? '';
+
+  bool get previewOpen => _previewPath != null;
+
+  void openPreview(String path) {
+    _previewPath = path;
+    notifyListeners();
+  }
+
+  void closePreview() {
+    if (_previewPath == null) {
+      return;
+    }
+    _previewPath = null;
+    notifyListeners();
+  }
+
+  /// Steps through [previewPaths] and stops at the ends, like the reference's arrows.
+  void stepPreview(int delta) {
+    final String? current = _previewPath;
+    if (current == null) {
+      return;
+    }
+    final List<String> paths = previewPaths;
+    final int index = paths.indexOf(current);
+    if (index < 0) {
+      return;
+    }
+    final int next = (index + delta).clamp(0, paths.length - 1);
+    if (paths[next] == current) {
+      return;
+    }
+    _previewPath = paths[next];
+    notifyListeners();
+  }
 
   /// Widths the reader dragged, keyed `tool:column`, so each scanner keeps its own layout.
   Map<String, double> get columnWidths => _columnWidths;

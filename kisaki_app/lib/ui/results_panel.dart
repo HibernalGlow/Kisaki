@@ -11,6 +11,7 @@ import 'assistant_panel.dart';
 import 'comparison_images.dart';
 import 'comparison_view.dart';
 import 'filter_panel.dart';
+import 'preview_view.dart';
 import 'row_menu.dart';
 import 'similar_folders_view.dart';
 import 'widgets/primitives.dart';
@@ -795,7 +796,7 @@ class _ResultRow extends StatelessWidget {
           child: Row(
             children: <Widget>[
               if (controller.showsThumbnail(row)) ...<Widget>[
-                _ThumbSlot(path: row.path),
+                _ThumbSlot(controller: controller, path: row.path),
                 const SizedBox(width: BoardTokens.gapSmall),
               ],
               Expanded(
@@ -921,15 +922,18 @@ class _RefBadge extends StatelessWidget {
 }
 
 class _ThumbSlot extends StatelessWidget {
-  const _ThumbSlot({required this.path});
+  const _ThumbSlot({required this.controller, required this.path});
 
+  final BoardController controller;
   final String path;
 
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
-    // The picture never takes the row's click: selecting a row is the primary action.
-    return IgnorePointer(
+    // The picture opens the preview instead of toggling the row, which is what the reference does.
+    return GestureDetector(
+      behavior: HitTestBehavior.opaque,
+      onTap: () => PreviewView.open(context, controller, path),
       child: Container(
         key: Key('row-thumb-$path'),
         width: 24,
