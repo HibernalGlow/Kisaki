@@ -67,6 +67,7 @@ class Labels {
     'action-move-copy': 'Copy',
     'action-move-move': 'Move',
     'action-remove-checked': 'Remove checked',
+    'action-reset-columns': 'Reset column widths',
     'action-reset-layout': 'Reset lane layout',
     'action-scan': 'Scan',
     'action-select-all': 'Select all',

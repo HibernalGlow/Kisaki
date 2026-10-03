@@ -40,6 +40,7 @@ class ResultsPanel extends StatelessWidget {
                           : 900,
                       controller.tool,
                       grouped,
+                      overrides: controller.columnWidths,
                     );
                     final double total = widths.fold<double>(
                       0,
@@ -146,6 +147,15 @@ class _ResultsHeader extends StatelessWidget {
                     key: const Key('active-filter-count'),
                     style: palette.text.labelSmall,
                   ),
+                // An explicit reset beats a hidden double-tap: the drag recognizer owns the pointer
+                // on the hairline, so a tap there never reaches a double-tap handler.
+                if (controller.columnWidths.isNotEmpty)
+                  BoardAction(
+                    key: const Key('reset-columns'),
+                    labelKey: 'action-reset-columns',
+                    dense: true,
+                    onPressed: controller.resetColumnWidths,
+                  ),
                 BoardAction(
                   key: const Key('open-comparison'),
                   labelKey: 'action-compare',
@@ -198,7 +208,15 @@ class _ResultsHeader extends StatelessWidget {
 }
 
 /// Column widths: fixed chrome first, then the surplus split by each column's flex.
-List<double> tableWidths(double available, ToolSpec? tool, bool grouped) {
+///
+/// A column the reader dragged keeps that width through a `tool:key` entry in [overrides]; the
+/// chrome columns are addressable too, so the name column can be widened the same way.
+List<double> tableWidths(
+  double available,
+  ToolSpec? tool,
+  bool grouped, {
+  Map<String, double> overrides = const <String, double>{},
+}) {
   final List<ColumnDef> columns = tool?.columns ?? const <ColumnDef>[];
   final List<double> chrome = <double>[
     BoardTokens.colSelect,
@@ -214,10 +232,17 @@ List<double> tableWidths(double available, ToolSpec? tool, bool grouped) {
     (double sum, double value) => sum + value,
   );
   final double surplus = available - fixed;
-  if (surplus <= 0) {
-    return minimums;
-  }
+  final List<double> widths = surplus <= 0
+      ? minimums
+      : _flexed(chrome, columns, surplus);
+  return _applyOverrides(widths, tool, grouped, columns, overrides);
+}
 
+List<double> _flexed(
+  List<double> chrome,
+  List<ColumnDef> columns,
+  double surplus,
+) {
   const double nameFlex = 1.4;
   final double flexSum =
       nameFlex +
@@ -232,6 +257,29 @@ List<double> tableWidths(double available, ToolSpec? tool, bool grouped) {
   }
   for (final ColumnDef column in columns) {
     widths.add(column.minWidth + surplus * (column.flex / flexSum));
+  }
+  return widths;
+}
+
+List<double> _applyOverrides(
+  List<double> widths,
+  ToolSpec? tool,
+  bool grouped,
+  List<ColumnDef> columns,
+  Map<String, double> overrides,
+) {
+  final List<String> keys = <String>[
+    'select',
+    if (grouped) 'group',
+    'name',
+    ...columns.map((ColumnDef column) => column.key),
+  ];
+  final String prefix = '${tool?.id ?? ''}:';
+  for (int index = 0; index < widths.length && index < keys.length; index++) {
+    final double? wanted = overrides['$prefix${keys[index]}'];
+    if (wanted != null) {
+      widths[index] = wanted;
+    }
   }
   return widths;
 }
@@ -258,7 +306,14 @@ class ColumnHeader extends StatelessWidget {
         child: ColoredBox(color: palette.sunken),
       ),
       if (grouped) _cell(widths[1], palette, Labels.of('col-group')),
-      _sortCell(palette, widths[grouped ? 2 : 1], Labels.of('col-name'), -1),
+      _sortCell(
+        palette,
+        widths[grouped ? 2 : 1],
+        Labels.of('col-name'),
+        -1,
+        resizeKey: 'name',
+        minWidth: BoardTokens.colName,
+      ),
     ];
     for (int column = 0; column < (tool?.columns.length ?? 0); column++) {
       final ColumnDef def = tool!.columns[column];
@@ -269,6 +324,8 @@ class ColumnHeader extends StatelessWidget {
           Labels.of(def.labelKey),
           column,
           alignRight: def.alignRight,
+          resizeKey: def.key,
+          minWidth: def.minWidth,
         ),
       );
     }
@@ -293,43 +350,122 @@ class ColumnHeader extends StatelessWidget {
     String text,
     int column, {
     bool alignRight = false,
+    required String resizeKey,
+    required double minWidth,
   }) {
     final bool active = controller.sortColumn == column;
-    return GestureDetector(
-      key: Key('column-header-$text'),
-      behavior: HitTestBehavior.opaque,
-      onTap: () => controller.toggleSort(column),
-      child: SizedBox(
-        width: width,
-        height: 28,
-        child: ColoredBox(
-          color: palette.sunken,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: BoardTokens.gapSmall,
-            ),
-            child: Row(
-              mainAxisAlignment: alignRight
-                  ? MainAxisAlignment.end
-                  : MainAxisAlignment.start,
-              children: <Widget>[
-                Flexible(
-                  child: MicroHeading(
-                    text,
-                    color: active ? palette.primary : null,
-                  ),
+    return SizedBox(
+      width: width,
+      height: 28,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: <Widget>[
+          GestureDetector(
+            key: Key('column-header-$text'),
+            behavior: HitTestBehavior.opaque,
+            onTap: () => controller.toggleSort(column),
+            child: ColoredBox(
+              color: palette.sunken,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BoardTokens.gapSmall,
                 ),
-                if (active)
-                  Icon(
-                    controller.sortAscending
-                        ? Icons.arrow_upward_rounded
-                        : Icons.arrow_downward_rounded,
-                    size: 11,
-                    color: palette.primary,
-                  ),
-              ],
+                child: Row(
+                  mainAxisAlignment: alignRight
+                      ? MainAxisAlignment.end
+                      : MainAxisAlignment.start,
+                  children: <Widget>[
+                    Flexible(
+                      child: MicroHeading(
+                        text,
+                        color: active ? palette.primary : null,
+                      ),
+                    ),
+                    if (active)
+                      Icon(
+                        controller.sortAscending
+                            ? Icons.arrow_upward_rounded
+                            : Icons.arrow_downward_rounded,
+                        size: 11,
+                        color: palette.primary,
+                      ),
+                  ],
+                ),
+              ),
             ),
           ),
+          Positioned(
+            right: 0,
+            top: 0,
+            bottom: 0,
+            child: _ResizeStrip(
+              controller: controller,
+              resizeKey: resizeKey,
+              width: width,
+              minWidth: minWidth,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// The hairline a reader drags to widen a column; a double-tap gives the column back to the layout.
+class _ResizeStrip extends StatefulWidget {
+  const _ResizeStrip({
+    required this.controller,
+    required this.resizeKey,
+    required this.width,
+    required this.minWidth,
+  });
+
+  final BoardController controller;
+  final String resizeKey;
+  final double width;
+  final double minWidth;
+
+  @override
+  State<_ResizeStrip> createState() => _ResizeStripState();
+}
+
+class _ResizeStripState extends State<_ResizeStrip> {
+  double? _startWidth;
+  double? _originX;
+
+  @override
+  Widget build(BuildContext context) {
+    final BoardPalette palette = BoardTheme.of(context);
+    return MouseRegion(
+      cursor: SystemMouseCursors.resizeColumn,
+      child: GestureDetector(
+        key: Key('column-resize-${widget.resizeKey}'),
+        behavior: HitTestBehavior.opaque,
+        // The drag recognizer stays silent until the pointer passes its slop, so the press point is
+        // taken from the down event: the column then tracks the pointer instead of lagging behind it.
+        onHorizontalDragDown: (DragDownDetails details) {
+          _startWidth = widget.width;
+          _originX = details.globalPosition.dx;
+        },
+        onHorizontalDragUpdate: (DragUpdateDetails details) {
+          final double? from = _startWidth;
+          final double? origin = _originX;
+          if (from == null || origin == null) {
+            return;
+          }
+          widget.controller.setColumnWidth(
+            widget.resizeKey,
+            from + (details.globalPosition.dx - origin),
+            widget.minWidth,
+          );
+        },
+        onHorizontalDragEnd: (_) {
+          _startWidth = null;
+          _originX = null;
+        },
+        child: ColoredBox(
+          color: palette.border,
+          child: const SizedBox(width: 3),
         ),
       ),
     );
