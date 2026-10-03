@@ -1,0 +1,131 @@
+name: Kisaki
+
+# Kisaki is a third-party frontend added to this workspace, so it gets its own
+# workflow file instead of edits to linux.yml / mac.yml / windows.yml. A new file
+# keeps `git rebase upstream/master` conflict-free.
+#
+# Conventions here are copied from the existing workflows: actions/checkout@v6,
+# actions/upload-artifact@v6, `rustup default 1.94.1` as a run step (no toolchain
+# action), --release on the default branch and --profile fastci otherwise.
+
+on:
+  push:
+    branches:
+      - master
+      - kisaki
+  pull_request:
+    branches:
+      - master
+      - kisaki
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTBACKTRACE: 1
+
+jobs:
+  linux-kisaki:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-22.04
+            ARCHNAME: x86_64
+          - os: ubuntu-22.04-arm
+            ARCHNAME: aarch64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libraw-dev libheif-dev libavif-dev libdav1d-dev libasound2-dev
+      - name: Build
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            PROFILE="--release"
+          else
+            PROFILE="--profile fastci"
+          fi
+          cargo build -p kisaki $PROFILE --features heif,libraw,libavif
+      - name: Test
+        run: xvfb-run cargo test -p kisaki --all-features
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        if: github.ref == 'refs/heads/master'
+        with:
+          name: linux_kisaki_${{ matrix.ARCHNAME }}
+          path: target/release/kisaki
+      - name: Upload artifact (pull request profile)
+        uses: actions/upload-artifact@v6
+        if: github.ref != 'refs/heads/master'
+        with:
+          name: linux_kisaki_${{ matrix.ARCHNAME }}
+          path: target/fastci/kisaki
+
+  macos-kisaki:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Build
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            cargo build -p kisaki --release
+          else
+            cargo build -p kisaki --profile fastci
+          fi
+      - name: Bundle .app
+        if: github.ref == 'refs/heads/master'
+        run: bash kisaki/packaging/macos_bundle.sh target/release
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: mac_kisaki_aarch64
+          path: target/release/kisaki
+
+  windows-kisaki:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Build
+        shell: bash
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/master" ]; then
+            cargo build -p kisaki --release
+          else
+            cargo build -p kisaki --profile fastci
+          fi
+      - name: Test
+        run: cargo test -p kisaki
+      - name: Upload artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows_kisaki_msvc
+          path: target/release/kisaki.exe
+
+  quality:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libraw-dev libheif-dev libavif-dev libdav1d-dev libasound2-dev
+      - name: Formatting
+        run: cargo fmt -p kisaki -- --check
+      - name: Clippy default features
+        run: cargo clippy -p kisaki --all-targets -- -D warnings
+      - name: Clippy all features
+        run: cargo clippy -p kisaki --all-targets --all-features -- -D warnings
+      - name: Dead code checks
+        run: |
+          python3 misc/delete_unused_krokiet_slint_imports.py kisaki
+          git diff --exit-code -- kisaki/ui
+          python3 misc/find_unused_fluent_translations.py kisaki
+          python3 misc/find_unused_slint_translations.py kisaki
+          python3 misc/find_unused_callbacks.py kisaki
+          python3 misc/find_unused_settings_properties.py kisaki

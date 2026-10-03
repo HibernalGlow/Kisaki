@@ -1,0 +1,431 @@
+import { ScrollView } from "std-widgets.slint";
+import { Palette, Theme } from "globals/theme.slint";
+import { AppState } from "globals/app_state.slint";
+import { Callabler } from "globals/callabler.slint";
+import { Translations } from "globals/translations.slint";
+import { Phase } from "globals/common.slint";
+import { ButtonVariant, Capsule, GlyphButton, MicroHeading } from "components/atoms.slint";
+import { DragHandle, Lane } from "components/lane.slint";
+import { HeaderBar } from "screens/header_bar.slint";
+import { SourceBody } from "screens/source_lane.slint";
+import { ResultsBody } from "screens/results_lane.slint";
+import { AnalysisBody } from "screens/analysis_lane.slint";
+
+export { AppState, Callabler, Translations, Theme, Palette }
+
+// Three horizontal swimlanes: scan conditions, results, analysis and actions.
+export component MainWindow inherits Window {
+    title: Translations.app_title;
+    background: Palette.bg;
+    preferred-width: 1280px;
+    preferred-height: 800px;
+    // Below this the three-lane board can no longer keep a usable share each.
+    min-width: 940px;
+    min-height: 560px;
+
+    in-out property <string> version_string: "12.0.2";
+    in-out property <bool> focus_search: false;
+
+    // Keyboard shortcuts are handled by lane_focus, so the window hands the focus
+    // to it instead of to the first focusable widget.
+    forward-focus: lane_focus;
+
+    function clamp_width(value: length, lower: length, upper: length) -> length {
+        if (value < lower) {
+            return lower;
+        }
+        if (value > upper) {
+            return upper;
+        }
+        value
+    }
+
+    function close_overlays() {
+        AppState.tool_menu_open = false;
+        AppState.confirm_open = false;
+        AppState.errors_open = false;
+    }
+
+    // Keyboard focus lives here so the global shortcuts keep working while the
+    // lane bodies stay free for pointer interaction.
+    lane_focus := FocusScope {
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        // has-focus is output-only, so mirror it for the Rust side.
+        focus_gained(reason) => {
+            root.focus_search = true;
+        }
+        focus_lost(reason) => {
+            root.focus_search = false;
+        }
+
+        VerticalLayout {
+            spacing: 0px;
+
+            HeaderBar {}
+
+            HorizontalLayout {
+                padding-left: Theme.pad;
+                padding-right: Theme.pad;
+                padding-top: Theme.pad;
+                padding-bottom: Theme.pad;
+                spacing: 0px;
+
+                Lane {
+                    title: Translations.lane_source;
+                    short: "C";
+                    collapsed <=> AppState.source_collapsed;
+                    preferred-width: AppState.source_collapsed ? Theme.lane_collapsed_width : AppState.source_width;
+                    min-width: AppState.source_collapsed ? Theme.lane_collapsed_width : 220px;
+                    max-width: AppState.source_collapsed ? Theme.lane_collapsed_width : 560px;
+                    horizontal-stretch: 0;
+                    toggled => {
+                        AppState.source_collapsed = !AppState.source_collapsed;
+                    }
+
+                    SourceBody {
+                        x: 0px;
+                        y: Theme.lane_header_height;
+                        width: parent.width;
+                        height: parent.height - Theme.lane_header_height;
+                    }
+                }
+
+                DragHandle {
+                    current: AppState.source_width;
+                    resized(new_width) => {
+                        AppState.source_width = root.clamp_width(new_width, 220px, 560px);
+                    }
+                    reset() => {
+                        AppState.source_width = 300px;
+                    }
+                }
+
+                Lane {
+                    title: Translations.lane_results;
+                    short: "R";
+                    active: true;
+                    horizontal-stretch: 1;
+                    min-width: 360px;
+
+                    ResultsBody {
+                        x: 0px;
+                        y: Theme.lane_header_height;
+                        width: parent.width;
+                        height: parent.height - Theme.lane_header_height;
+                    }
+                }
+
+                DragHandle {
+                    current: AppState.analysis_width;
+                    resized(new_width) => {
+                        AppState.analysis_width = root.clamp_width(new_width, 210px, 520px);
+                    }
+                    reset() => {
+                        AppState.analysis_width = 300px;
+                    }
+                }
+
+                Lane {
+                    title: Translations.lane_analysis;
+                    short: "A";
+                    collapsed <=> AppState.analysis_collapsed;
+                    preferred-width: AppState.analysis_collapsed ? Theme.lane_collapsed_width : AppState.analysis_width;
+                    min-width: AppState.analysis_collapsed ? Theme.lane_collapsed_width : 210px;
+                    max-width: AppState.analysis_collapsed ? Theme.lane_collapsed_width : 520px;
+                    horizontal-stretch: 0;
+                    toggled => {
+                        AppState.analysis_collapsed = !AppState.analysis_collapsed;
+                    }
+
+                    AnalysisBody {
+                        x: 0px;
+                        y: Theme.lane_header_height;
+                        width: parent.width;
+                        height: parent.height - Theme.lane_header_height;
+                    }
+                }
+            }
+        }
+
+        key-pressed(event) => {
+            if (event.text == Key.Escape) {
+                root.close_overlays();
+                return accept;
+            }
+            if ((event.text == "a" || event.text == "A") && event.modifiers.control && !event.modifiers.alt && !event.modifiers.meta) {
+                Callabler.toggle_all_rows();
+                return accept;
+            }
+            if (event.text == Key.Return && AppState.can_scan) {
+                Callabler.scan_requested();
+                return accept;
+            }
+            accept
+        }
+    }
+
+    // Tool selector overlay
+    Rectangle {
+        visible: AppState.tool_menu_open;
+        z: 100;
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        background: Palette.scrim;
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                AppState.tool_menu_open = false;
+                lane_focus.focus();
+            }
+        }
+
+        Rectangle {
+            x: Theme.pad;
+            y: Theme.header_height + Theme.pad;
+            width: 320px;
+            height: AppState.tool_entries.length * 30px + 74px;
+            border-radius: Theme.radius;
+            border-width: 1px;
+            border-color: Palette.border;
+            background: Palette.card;
+
+            VerticalLayout {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                spacing: 2px;
+                padding: Theme.pad;
+
+                MicroHeading {
+                    label: Translations.tool_selector;
+                }
+
+                for t[idx] in AppState.tool_entries: Rectangle {
+                    height: 28px;
+                    border-radius: Theme.radius;
+                    background: item_area.has-hover ? Palette.hover : AppState.active_tool == t.id ? Palette.primary_soft : transparent;
+
+                    item_area := TouchArea {
+                        mouse-cursor: MouseCursor.pointer;
+                        clicked => {
+                            Callabler.tool_selected(idx);
+                            AppState.tool_menu_open = false;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        padding-left: 6px;
+                        padding-right: 6px;
+                        spacing: 8px;
+                        alignment: start;
+
+                        Text {
+                            text: t.glyph;
+                            color: Palette.primary;
+                            font-size: Theme.fs_body;
+                            font-weight: 700;
+                            vertical-alignment: center;
+                        }
+                        Text {
+                            text: t.label;
+                            color: Palette.fg;
+                            font-size: Theme.fs_body;
+                            vertical-alignment: center;
+                            overflow: elide;
+                        }
+                    }
+                }
+
+                Text {
+                    text: "Kisaki \{root.version_string}";
+                    color: Palette.fg_faint;
+                    font-size: Theme.fs_caption;
+                    vertical-alignment: bottom;
+                }
+            }
+        }
+    }
+
+    // Confirmation overlay for destructive actions
+    Rectangle {
+        visible: AppState.confirm_open;
+        z: 200;
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        background: Palette.scrim;
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                Callabler.confirm_rejected();
+                lane_focus.focus();
+            }
+        }
+
+        Rectangle {
+            width: 440px;
+            height: 210px;
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: Theme.radius;
+            border-width: 1px;
+            border-color: Palette.border;
+            background: Palette.card;
+
+            VerticalLayout {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                spacing: Theme.gap;
+                padding: Theme.pad;
+                alignment: stretch;
+
+                MicroHeading {
+                    label: AppState.confirm_title != "" ? AppState.confirm_title : Translations.confirm_title;
+                }
+                Text {
+                    text: AppState.confirm_body;
+                    color: Palette.fg;
+                    font-size: Theme.fs_body;
+                    wrap: word-wrap;
+                    overflow: elide;
+                    max-height: 84px;
+                }
+                Text {
+                    text: AppState.action_summary;
+                    color: Palette.fg_muted;
+                    font-size: Theme.fs_caption;
+                    wrap: word-wrap;
+                }
+                Rectangle {
+                    vertical-stretch: 1;
+                }
+                HorizontalLayout {
+                    spacing: Theme.gap;
+                    alignment: end;
+
+                    Capsule {
+                        text: Translations.confirm_cancel;
+                        variant: ButtonVariant.Neutral;
+                        clicked => {
+                            Callabler.confirm_rejected();
+                        }
+                    }
+                    Capsule {
+                        text: Translations.confirm_ok;
+                        variant: ButtonVariant.Danger;
+                        clicked => {
+                            Callabler.confirm_accepted();
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // Scan messages overlay
+    Rectangle {
+        visible: AppState.errors_open;
+        z: 300;
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        background: Palette.scrim;
+
+        TouchArea {
+            width: parent.width;
+            height: parent.height;
+            clicked => {
+                Callabler.hide_errors();
+                lane_focus.focus();
+            }
+        }
+
+        Rectangle {
+            width: Math.min(720px, parent.width - 32px);
+            height: Math.min(460px, parent.height - 32px);
+            x: (parent.width - self.width) / 2;
+            y: (parent.height - self.height) / 2;
+            border-radius: Theme.radius;
+            border-width: 1px;
+            border-color: Palette.border;
+            background: Palette.card;
+
+            VerticalLayout {
+                x: 0px;
+                y: 0px;
+                width: parent.width;
+                height: parent.height;
+                spacing: Theme.gap;
+                padding: Theme.pad;
+
+                HorizontalLayout {
+                    spacing: Theme.gap;
+                    alignment: center;
+
+                    MicroHeading {
+                        label: Translations.label_errors;
+                        horizontal-stretch: 1;
+                    }
+                    GlyphButton {
+                        glyph: "x";
+                        label: Translations.action_close;
+                        clicked => {
+                            Callabler.hide_errors();
+                lane_focus.focus();
+                        }
+                    }
+                }
+
+                ScrollView {
+                    vertical-stretch: 1;
+
+                    VerticalLayout {
+                        Text {
+                            visible: AppState.error_text != "";
+                            text: AppState.error_text;
+                            color: Palette.fg_muted;
+                            font-size: Theme.fs_label;
+                            font-family: "monospace";
+                            wrap: word-wrap;
+                        }
+                        Text {
+                            visible: AppState.error_text == "";
+                            text: AppState.phase == Phase.Running ? Translations.empty_running : Translations.status_ready;
+                            color: Palette.fg_faint;
+                            font-size: Theme.fs_label;
+                            wrap: word-wrap;
+                        }
+                    }
+                }
+
+                HorizontalLayout {
+                    spacing: Theme.gap;
+                    alignment: end;
+
+                    Capsule {
+                        text: Translations.action_close;
+                        variant: ButtonVariant.Neutral;
+                        clicked => {
+                            Callabler.hide_errors();
+                lane_focus.focus();
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
