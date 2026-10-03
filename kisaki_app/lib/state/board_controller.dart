@@ -1502,7 +1502,12 @@ class BoardController extends ChangeNotifier {
           dryRun: dryRun,
         ),
       );
-      _messages = outcome.messages;
+      _messages = outcome.log.isEmpty
+          ? outcome.messages
+          : <String>[
+              if (outcome.messages.isNotEmpty) outcome.messages,
+              ...outcome.log,
+            ].join('\n');
       if (dryRun) {
         _setStatus('status_dry_run_only');
       } else if (outcome.errors > 0) {
