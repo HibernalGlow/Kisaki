@@ -187,7 +187,7 @@ void main() {
     state.resolutionEnabled = true;
     state.minWidth = 1900;
     state.minHeight = 1000;
-    state.aspectRatio = AspectRatio.wide;
+    state.aspectRatio = FilterAspectRatio.wide;
     state.pathEnabled = true;
     state.pathMode = PathMatchMode.regex;
     state.pathPattern = r'keep[/\\].+\.jpg$';
@@ -311,7 +311,7 @@ void main() {
       state.textPattern = r'^(a|c|README)';
       state.textRegex = true;
       state.textCaseSensitive = true;
-      state.textFields = <TextField>[TextField.name];
+      state.textFields = <TextFilterField>[TextFilterField.name];
       state.showAllInFilteredGroups = false;
 
       expect(
@@ -497,7 +497,7 @@ void main() {
       ),
     ];
 
-    FilterResult run(List<TextField> fields, String pattern) {
+    FilterResult run(List<TextFilterField> fields, String pattern) {
       final FilterState state = FilterState.defaults();
       state.textEnabled = true;
       state.textPattern = pattern;
@@ -512,10 +512,22 @@ void main() {
       );
     }
 
-    expect(run(<TextField>[TextField.name], 'Needle').rows, isEmpty);
-    expect(run(<TextField>[TextField.metadata], 'Needle').rows, hasLength(1));
-    expect(run(<TextField>[TextField.detail], 'Needle').rows, hasLength(1));
-    expect(run(<TextField>[TextField.path], 'D:/folder').rows, hasLength(1));
+    expect(
+      run(<TextFilterField>[TextFilterField.name], 'Needle').rows,
+      isEmpty,
+    );
+    expect(
+      run(<TextFilterField>[TextFilterField.metadata], 'Needle').rows,
+      hasLength(1),
+    );
+    expect(
+      run(<TextFilterField>[TextFilterField.detail], 'Needle').rows,
+      hasLength(1),
+    );
+    expect(
+      run(<TextFilterField>[TextFilterField.path], 'D:/folder').rows,
+      hasLength(1),
+    );
   });
 }
 

@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
 import 'analysis_panel.dart';
+import 'filter_panel.dart';
 import 'header_bar.dart';
 import 'lane.dart';
 import 'overlays.dart';
@@ -75,6 +77,10 @@ class KisakiBoard extends StatefulWidget {
 class _KisakiBoardState extends State<KisakiBoard> {
   bool _confirmOpen = false;
 
+  /// The board takes the keyboard on purpose: a shortcut that only worked after the first click
+  /// would leave the app mouse-only on launch.
+  final FocusNode _keys = FocusNode(debugLabel: 'kisaki-keys');
+
   @override
   void initState() {
     super.initState();
@@ -109,35 +115,60 @@ class _KisakiBoardState extends State<KisakiBoard> {
   @override
   void dispose() {
     widget.controller.removeListener(_onControllerChanged);
+    _keys.dispose();
     super.dispose();
+  }
+
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final bool modifier =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (modifier && event.logicalKey == LogicalKeyboardKey.keyF) {
+      FilterPanel.open(context, widget.controller);
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape &&
+        widget.controller.filters.activeCount > 0) {
+      widget.controller.resetFilters();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
   }
 
   @override
   Widget build(BuildContext context) {
     final BoardController controller = widget.controller;
     final BoardPalette palette = BoardTheme.of(context);
-    return Scaffold(
-      backgroundColor: palette.bg,
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: <Widget>[
-          HeaderBar(controller: controller),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.all(BoardTokens.gap),
-              child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) =>
-                    _Lanes(
-                      controller: controller,
-                      picker: widget.picker,
-                      available: constraints.maxWidth.isFinite
-                          ? constraints.maxWidth
-                          : BoardTokens.minWindowWidth,
-                    ),
+    return Focus(
+      focusNode: _keys,
+      autofocus: true,
+      onKeyEvent: _onKey,
+      child: Scaffold(
+        backgroundColor: palette.bg,
+        body: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            HeaderBar(controller: controller),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.all(BoardTokens.gap),
+                child: LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) =>
+                      _Lanes(
+                        controller: controller,
+                        picker: widget.picker,
+                        available: constraints.maxWidth.isFinite
+                            ? constraints.maxWidth
+                            : BoardTokens.minWindowWidth,
+                      ),
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

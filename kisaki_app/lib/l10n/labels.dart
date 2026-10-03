@@ -4,17 +4,28 @@
 /// [Labels.of] with a Fluent-backed lookup; callers only ever see a key.
 library;
 
+import 'package:flutter/foundation.dart' show visibleForTesting;
+
 typedef LabelArgs = Map<String, Object>;
 
 class Labels {
   const Labels._();
 
+  /// Keys that had no table entry and were title-cased instead. A missing label still renders as
+  /// plausible English, so only this record makes the omission visible to a test.
+  @visibleForTesting
+  static final List<String> fallbackKeys = <String>[];
+
   static String of(String key, {LabelArgs? args}) {
-    final String raw = _table[key] ?? _fallback(key);
-    if (args == null || args.isEmpty) {
-      return raw;
+    final String? raw = _table[key];
+    if (raw == null) {
+      fallbackKeys.add(key);
     }
-    var out = raw;
+    final String text = raw ?? _fallback(key);
+    if (args == null || args.isEmpty) {
+      return text;
+    }
+    var out = text;
     args.forEach((name, value) {
       out = out.replaceAll('{ \$$name }', '$value');
     });
@@ -68,6 +79,100 @@ class Labels {
     'empty-paths': 'No directories added yet.',
     'empty-running': 'Analyzing files...',
     'empty-stopped': 'Scan stopped, no results returned.',
+    'filter-case-sensitive': 'Case sensitive',
+    'filter-category-archives': 'Archives',
+    'filter-category-audio': 'Audio',
+    'filter-category-documents': 'Documents',
+    'filter-category-folders': 'Folders',
+    'filter-category-images': 'Images',
+    'filter-category-other': 'Other',
+    'filter-category-videos': 'Videos',
+    'filter-date-custom': 'Custom range',
+    'filter-date-enabled': 'Filter by modified date',
+    'filter-date-preset': 'Date range',
+    'filter-date-last-30-days': 'Last 30 days',
+    'filter-date-last-7-days': 'Last 7 days',
+    'filter-date-last-year': 'Last year',
+    'filter-date-title': 'Modified date',
+    'filter-date-today': 'Today',
+    'filter-extension-enabled': 'Filter by extension',
+    'filter-extension-exclude': 'Exclude',
+    'filter-extension-include': 'Only include',
+    'filter-extension-mode': 'Extension mode',
+    'filter-extension-none': 'No extension',
+    'filter-extension-placeholder': 'jpg, png, avif',
+    'filter-extension-title': 'Extension',
+    'filter-file-size': 'File size',
+    'filter-file-size-max': 'Maximum',
+    'filter-file-size-min': 'Minimum',
+    'filter-file-size-unit': 'Unit',
+    'filter-filter': 'Filters',
+    'filter-group-count': 'Files per group',
+    'filter-group-count-max': 'Maximum',
+    'filter-group-count-min': 'Minimum',
+    'filter-group-size': 'Group size',
+    'filter-group-size-max': 'Maximum',
+    'filter-group-size-min': 'Minimum',
+    'filter-group-size-unit': 'Unit',
+    'filter-mark': 'Selection state',
+    'filter-mark-all': 'All',
+    'filter-mark-group-all-selected': 'Group fully selected',
+    'filter-mark-group-none-selected': 'Group with nothing selected',
+    'filter-mark-group-some-selected': 'Group partly selected',
+    'filter-mark-reference': 'Reference entries only',
+    'filter-mark-selected': 'Selected',
+    'filter-mark-title': 'Selection state',
+    'filter-mark-unselected': 'Not selected',
+    'filter-path-contains': 'Contains',
+    'filter-path-enabled': 'Filter by path',
+    'filter-path-ends-with': 'Ends with',
+    'filter-path-mode': 'Path match mode',
+    'filter-path-not-contains': 'Does not contain',
+    'filter-path-placeholder': 'Path pattern',
+    'filter-path-regex': 'Regular expression',
+    'filter-path-starts-with': 'Starts with',
+    'filter-path-title': 'Path',
+    'filter-preset-delete': 'Delete',
+    'filter-preset-export': 'Export JSON',
+    'filter-preset-import': 'Import JSON',
+    'filter-preset-json': 'Preset JSON',
+    'filter-preset-large-files': 'Large files, 100 MB or more',
+    'filter-preset-name-placeholder': 'Preset name',
+    'filter-preset-needs-name': 'Enter a name for the preset.',
+    'filter-preset-none': 'No preset',
+    'filter-preset-old-files': 'Older than a year',
+    'filter-preset-recently-modified': 'Modified in the last 30 days',
+    'filter-preset-save': 'Save',
+    'filter-preset-select': 'Filter preset',
+    'filter-preset-small-files': 'Small files, 1 MB or less',
+    'filter-preset-unsupported': 'Unsupported filter preset format.',
+    'filter-presets-title': 'Filter presets',
+    'filter-regex': 'Regular expression',
+    'filter-reset': 'Reset',
+    'filter-resolution-any': 'Any aspect ratio',
+    'filter-resolution-aspect': 'Aspect ratio',
+    'filter-resolution-enabled': 'Filter by resolution',
+    'filter-resolution-max-height': 'Maximum height',
+    'filter-resolution-max-width': 'Maximum width',
+    'filter-resolution-min-height': 'Minimum height',
+    'filter-resolution-min-width': 'Minimum width',
+    'filter-resolution-title': 'Resolution and aspect ratio',
+    'filter-shortcuts': 'Ctrl or Cmd+F opens the filters, Esc clears them.',
+    'filter-show-whole-group': 'Show the whole group when one entry matches',
+    'filter-similarity': 'Similarity',
+    'filter-similarity-max': 'Maximum',
+    'filter-similarity-min': 'Minimum',
+    'filter-stats':
+        '{ \$filtered } of { \$total } files · { \$filteredGroups } of '
+        '{ \$totalGroups } groups',
+    'filter-text-enabled': 'Filter by text',
+    'filter-text-field-detail': 'Detail',
+    'filter-text-field-metadata': 'Media metadata',
+    'filter-text-field-name': 'Name',
+    'filter-text-field-path': 'Path',
+    'filter-text-placeholder': 'Name, path and media fields',
+    'filter-text-title': 'Quick text',
+    'filter-title': 'Multi-dimensional filter',
     'header-results': 'Result groups',
     'hint-dry-run':
         'Delete and export only produce a plan while dry run is on.',
