@@ -429,6 +429,7 @@ class Labels {
     'label-no-options': 'This scanner has no additional options.',
     'label-recursive': 'Recursive search',
     'label-reference': 'Reference folder',
+    'label-thumbnails': 'Thumbnails',
     'label-trash': 'Move to trash',
     'lane-analysis': 'Analysis and actions',
     'lane-results': 'Results',
