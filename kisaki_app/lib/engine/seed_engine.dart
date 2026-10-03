@@ -258,6 +258,34 @@ class SeedEngine implements KisakiEngine {
   }
 
   @override
+  Future<OptimizeOutcome> optimizeVideos(OptimizeRequest request) async {
+    // ffmpeg decides what is worth re-encoding, so a seed answer plans and changes nothing.
+    final bool plannedOnly = request.dryRun;
+    final List<OptimizeItem> items = <OptimizeItem>[
+      for (final String path in request.paths)
+        OptimizeItem(
+          path: path,
+          target: plannedOnly ? path : '',
+          status: plannedOnly ? OptimizeStatus.planned : OptimizeStatus.skipped,
+          detail: plannedOnly ? 'seed engine' : 'seed engine runs no encoder',
+          sizeBefore: 0,
+          sizeAfter: 0,
+        ),
+    ];
+    return OptimizeOutcome(
+      transcoded: 0,
+      cropped: 0,
+      planned: plannedOnly ? request.paths.length : 0,
+      skipped: plannedOnly ? 0 : request.paths.length,
+      failed: 0,
+      items: items,
+      messages: plannedOnly
+          ? 'dry run: ${request.paths.length} seed videos planned, none encoded'
+          : 'seed engine: no video is re-encoded',
+    );
+  }
+
+  @override
   Future<String> exportResults(ExportRequest request) async => request.path;
 
   @override

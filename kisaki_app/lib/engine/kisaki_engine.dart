@@ -33,4 +33,6 @@ abstract interface class KisakiEngine {
   Future<SimiuUndoOutcome> undoSimiuSet(SimiuUndoRequest request);
 
   Future<ExifOutcome> cleanExif(ExifRequest request);
+
+  Future<OptimizeOutcome> optimizeVideos(OptimizeRequest request);
 }

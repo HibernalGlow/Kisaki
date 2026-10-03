@@ -9,6 +9,7 @@ import '../util/format.dart';
 import 'exif_card.dart';
 import 'overlays.dart';
 import 'simiu_panel.dart';
+import 'video_card.dart';
 import 'widgets/primitives.dart';
 
 /// Right lane: result metrics, the destructive toggles, a plan preview, and actions.
@@ -81,6 +82,10 @@ class AnalysisPanel extends StatelessWidget {
         ],
         if (controller.supportsExifClean) ...<Widget>[
           ExifCard(controller: controller, key: const Key('exif-card')),
+          const SizedBox(height: BoardTokens.gap * 2),
+        ],
+        if (controller.supportsVideoOptimize) ...<Widget>[
+          VideoCard(controller: controller, key: const Key('video-card')),
           const SizedBox(height: BoardTokens.gap * 2),
         ],
         const Hairline(),

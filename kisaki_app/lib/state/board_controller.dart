@@ -14,6 +14,7 @@ import 'row_projection.dart';
 import 'selection_model.dart';
 import 'similar_folders.dart';
 import 'simiu_model.dart';
+import 'video_optimize.dart';
 import 'selection_rules.dart';
 
 export 'row_projection.dart' show GroupSelection;
@@ -115,6 +116,8 @@ class BoardController extends ChangeNotifier {
   ComparisonState _comparison = const ComparisonState();
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
+  VideoOptions _video = const VideoOptions();
+  OptimizeOutcome? _videoOutcome;
   bool _exifOverrideFile = false;
   ExifOutcome? _exifOutcome;
   int _sortColumn = -1;
@@ -904,6 +907,76 @@ class BoardController extends ChangeNotifier {
   /// A mutation moves files the plan was built from, so the cached plan must not be reused.
   void _invalidatePlan() {
     _simiu.invalidate();
+  }
+
+  VideoOptions get video => _video;
+
+  /// The engine re-derives which videos are worth the work, so the board only ever asks for the
+  /// selection and shows the answer it gets back.
+  OptimizeOutcome? get videoOutcome => _videoOutcome;
+
+  bool get supportsVideoOptimize => _tool?.id == 'video_optimizer';
+
+  void updateVideo(VideoOptions Function(VideoOptions options) change) {
+    _video = change(_video);
+    notifyListeners();
+  }
+
+  void requestOptimizeVideos() {
+    final List<String> paths = selectedRows
+        .map((ScanRow row) => row.path)
+        .toList();
+    if (paths.isEmpty) {
+      _setStatus('status_nothing_selected');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _applyOptimize(paths);
+    _confirm = ConfirmRequest(
+      titleKey: dryRun ? 'confirm_video_plan_title' : 'confirm_video_title',
+      bodyKey: 'confirm_video_body',
+      args: <String, Object>{'count': paths.length},
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _applyOptimize(List<String> paths) async {
+    _actionRunning = true;
+    _setStatus('status_video_running');
+    notifyListeners();
+    try {
+      final bool crop = _video.mode == VideoOptimizeMode.crop;
+      final OptimizeOutcome outcome = await engine.optimizeVideos(
+        OptimizeRequest(
+          scan: buildRequest(),
+          paths: paths,
+          transcode: crop ? null : _video.transcode,
+          crop: crop ? _video.crop : null,
+          dryRun: dryRun,
+        ),
+      );
+      _videoOutcome = outcome;
+      _messages = outcome.messages;
+      _setStatus(
+        dryRun ? 'status_video_planned' : 'status_video_done',
+        args: <String, Object>{
+          'count': dryRun
+              ? outcome.planned
+              : outcome.transcoded + outcome.cropped,
+          'skipped': outcome.skipped,
+        },
+      );
+      if (outcome.failed > 0) {
+        _critical = outcome.messages;
+      }
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
   }
 
   bool get supportsExifClean => _tool?.id == 'exif_remover';
