@@ -634,6 +634,8 @@ class _RowsState extends State<_Rows> {
   /// A drag shorter than this is a click that missed a target, not a selection box.
   static const double _boxThreshold = 8;
 
+  final FocusNode _keys = FocusNode(debugLabel: 'kisaki-results-keys');
+
   Offset? _origin;
   Rect? _box;
   int? _pointer;
@@ -651,7 +653,71 @@ class _RowsState extends State<_Rows> {
   @override
   void dispose() {
     HardwareKeyboard.instance.removeHandler(_onKey);
+    _keys.dispose();
     super.dispose();
+  }
+
+  /// Arrows walk the rows, Space checks one, Enter opens the picture under the cursor. Every action
+  /// goes through the same rules a click uses, so a keyboard selection and a mouse selection agree.
+  KeyEventResult _onResultKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final bool extend = HardwareKeyboard.instance.isShiftPressed;
+    final LogicalKeyboardKey key = event.logicalKey;
+    if (key == LogicalKeyboardKey.arrowDown) {
+      _move(1, extend);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.arrowUp) {
+      _move(-1, extend);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.pageDown) {
+      _move(10, extend);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.pageUp) {
+      _move(-10, extend);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.home) {
+      _jump(0);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.end) {
+      _jump(widget.controller.visibleRows.length - 1);
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.space) {
+      widget.controller.toggleCursorSelection();
+      return KeyEventResult.handled;
+    }
+    if (key == LogicalKeyboardKey.enter ||
+        key == LogicalKeyboardKey.numpadEnter) {
+      return _openCursor();
+    }
+    return KeyEventResult.ignored;
+  }
+
+  void _move(int delta, bool extend) {
+    widget.controller.moveCursor(delta);
+    if (extend) {
+      widget.controller.extendCursorSelection();
+    }
+  }
+
+  void _jump(int index) {
+    widget.controller.setCursor(index);
+  }
+
+  KeyEventResult _openCursor() {
+    final ScanRow? row = widget.controller.cursorRow;
+    if (row == null || !widget.controller.previewPaths.contains(row.path)) {
+      return KeyEventResult.ignored;
+    }
+    PreviewView.open(context, widget.controller, row.path);
+    return KeyEventResult.handled;
   }
 
   bool _onKey(KeyEvent event) {
@@ -674,55 +740,61 @@ class _RowsState extends State<_Rows> {
     }
     final bool grouped = widget.controller.tool?.grouped ?? false;
     final BoardPalette palette = BoardTheme.of(context);
-    return Stack(
-      children: <Widget>[
-        Listener(
-          key: const Key('results-box-area'),
-          behavior: HitTestBehavior.translucent,
-          onPointerDown: _onDown,
-          onPointerMove: _onMove,
-          onPointerUp: _onUp,
-          onPointerCancel: (_) => _clear(),
-          child: ListView.builder(
-            key: const Key('results-list'),
-            padding: EdgeInsets.zero,
-            physics: _shiftHeld ? const NeverScrollableScrollPhysics() : null,
-            itemCount: visible.length,
-            itemBuilder: (BuildContext context, int index) {
-              final ScanRow row = visible[index];
-              return Column(
-                children: <Widget>[
-                  if (grouped && row.isGroupStart)
-                    _GroupStrip(
+    return Focus(
+      focusNode: _keys,
+      onKeyEvent: _onResultKey,
+      child: Stack(
+        children: <Widget>[
+          Listener(
+            key: const Key('results-box-area'),
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: _onDown,
+            onPointerMove: _onMove,
+            onPointerUp: _onUp,
+            onPointerCancel: (_) => _clear(),
+            child: ListView.builder(
+              key: const Key('results-list'),
+              padding: EdgeInsets.zero,
+              physics: _shiftHeld ? const NeverScrollableScrollPhysics() : null,
+              itemCount: visible.length,
+              itemBuilder: (BuildContext context, int index) {
+                final ScanRow row = visible[index];
+                final bool cursor = widget.controller.isCursor(row);
+                return Column(
+                  children: <Widget>[
+                    if (grouped && row.isGroupStart)
+                      _GroupStrip(
+                        controller: widget.controller,
+                        row: row,
+                        widths: widget.widths,
+                      ),
+                    _ResultRow(
                       controller: widget.controller,
                       row: row,
                       widths: widget.widths,
+                      focused: cursor && _keys.hasFocus,
                     ),
-                  _ResultRow(
-                    controller: widget.controller,
-                    row: row,
-                    widths: widget.widths,
-                  ),
-                ],
-              );
-            },
-          ),
-        ),
-        if (_box != null)
-          Positioned.fromRect(
-            rect: _toLocal(_box!),
-            child: IgnorePointer(
-              child: DecoratedBox(
-                key: const Key('selection-box'),
-                decoration: BoxDecoration(
-                  color: palette.selection,
-                  border: Border.all(color: palette.primary),
-                ),
-                child: const SizedBox.expand(),
-              ),
+                  ],
+                );
+              },
             ),
           ),
-      ],
+          if (_box != null)
+            Positioned.fromRect(
+              rect: _toLocal(_box!),
+              child: IgnorePointer(
+                child: DecoratedBox(
+                  key: const Key('selection-box'),
+                  decoration: BoxDecoration(
+                    color: palette.selection,
+                    border: Border.all(color: palette.primary),
+                  ),
+                  child: const SizedBox.expand(),
+                ),
+              ),
+            ),
+        ],
+      ),
     );
   }
 
@@ -876,11 +948,16 @@ class _ResultRow extends StatelessWidget {
     required this.controller,
     required this.row,
     required this.widths,
+    required this.focused,
   });
 
   final BoardController controller;
   final ScanRow row;
   final List<double> widths;
+
+  /// The keyboard is on this row and the table holds focus, so the rule is drawn in the accent
+  /// rather than a faint grey.
+  final bool focused;
 
   @override
   Widget build(BuildContext context) {
@@ -898,7 +975,7 @@ class _ResultRow extends StatelessWidget {
           key: Key('row-select-${row.path}'),
           value: selected,
           // A reference row is the copy a fix must keep, so it cannot be picked, like the reference.
-          onChanged: row.isReference ? null : (_) => _click(),
+          onChanged: row.isReference ? null : (_) => _click(context),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
@@ -1030,7 +1107,7 @@ class _ResultRow extends StatelessWidget {
     return GestureDetector(
       key: Key('result-row-${row.path}'),
       behavior: HitTestBehavior.opaque,
-      onTap: _click,
+      onTap: () => _click(context),
       onSecondaryTapDown: (TapDownDetails details) => showRowMenu(
         context: context,
         controller: controller,
@@ -1044,9 +1121,31 @@ class _ResultRow extends StatelessWidget {
           color: selected ? palette.selection : Colors.transparent,
           border: Border(bottom: BorderSide(color: palette.hairline)),
         ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: cells,
+        child: _CursorAnchor(
+          active: controller.isCursor(row),
+          child: Stack(
+            children: <Widget>[
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: cells,
+              ),
+              // The cursor rule is an overlay, not a border: a border would take two pixels from the
+              // columns and the row would report an overflow.
+              if (controller.isCursor(row))
+                Positioned(
+                  left: 0,
+                  top: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
+                    child: Container(
+                      key: const Key('cursor-rule'),
+                      width: 2,
+                      color: focused ? palette.primary : palette.fgFaint,
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -1054,17 +1153,76 @@ class _ResultRow extends StatelessWidget {
 
   /// Plain click picks one row, Ctrl or Command adds, Shift extends from the last plain click. A
   /// reference row is not a target, so neither the checkbox nor the row reacts to it.
-  void _click() {
+  void _click(BuildContext context) {
     if (row.isReference) {
       return;
     }
     final HardwareKeyboard keys = HardwareKeyboard.instance;
+    // Clicking the table is also how a reader gets to the arrows, so the pointer hands focus over.
+    Focus.of(context).requestFocus();
+    controller.placeCursor(row.path);
     controller.clickSelect(
       row,
       additive: keys.isControlPressed || keys.isMetaPressed,
       ranged: keys.isShiftPressed,
     );
   }
+}
+
+/// Scrolls the row into view when the keyboard cursor lands on it.
+///
+/// A GlobalKey would be the shorter way, but one key moving between the rows of a lazily built list
+/// trips the semantics owner, which insists each traversal parent is unique.
+class _CursorAnchor extends StatefulWidget {
+  const _CursorAnchor({required this.active, required this.child});
+
+  final bool active;
+  final Widget child;
+
+  @override
+  State<_CursorAnchor> createState() => _CursorAnchorState();
+}
+
+class _CursorAnchorState extends State<_CursorAnchor> {
+  @override
+  void initState() {
+    super.initState();
+    _reveal();
+  }
+
+  @override
+  void didUpdateWidget(covariant _CursorAnchor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (!oldWidget.active && widget.active) {
+      _reveal();
+    }
+  }
+
+  void _reveal() {
+    if (!widget.active) {
+      return;
+    }
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      // Holding Shift keeps the list still so a drag can draw a box, and asking a scroll view that
+      // refuses to scroll for a move leaves the request pending forever. The cursor still ranges; the
+      // lane's own counts say what it reached.
+      final ScrollableState? view = Scrollable.maybeOf(context);
+      if (view == null || view.widget.physics is NeverScrollableScrollPhysics) {
+        return;
+      }
+      Scrollable.ensureVisible(
+        context,
+        alignment: 0.05,
+        duration: const Duration(milliseconds: 120),
+      );
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }
 
 class _RefBadge extends StatelessWidget {
