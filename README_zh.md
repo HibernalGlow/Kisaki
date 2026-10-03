@@ -15,7 +15,7 @@
 
 | | |
 |:--|:--|
-| `kisaki/` | 16 个文件 3 975 行 Rust，12 个文件 2 247 行 Slint |
+| `kisaki/` | 16 个文件 4 045 行 Rust，12 个文件 2 260 行 Slint |
 | `kisaki/` 之外 | `+16 -4` 分布在 `Cargo.toml`（workspace 成员）、`justfile`、`misc/run_checks.sh`、`misc/change_version.py`，另有新增的 `Cargo.lock` 条目、`.github/workflows/kisaki.yml`、`data/com.github.hibernerglow.kisaki.desktop` 与同名 `.metainfo.xml` |
 | 边界 | 绝不为了让 UI 功能省事而改 `czkawka_core`，也绝不动手重排上游代码风格，因为两者都会毁掉以后的 rebase |
 
@@ -81,6 +81,7 @@ just runr kisaki          # fast_release 运行
 cargo clippy -p kisaki --all-targets --all-features -- -D warnings
 python3 misc/find_unused_callbacks.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
+python3 kisaki/tools/check_grid.py kisaki
 ```
 
 ## 安全
