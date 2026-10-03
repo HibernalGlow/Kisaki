@@ -621,3 +621,127 @@ class ExifOutcome {
   final List<ExifItem> items;
   final String messages;
 }
+
+/// Transcoding settings, named the way the engine's codec table expects.
+class TranscodeOptions {
+  const TranscodeOptions({
+    required this.codec,
+    required this.hardwareEncoder,
+    required this.quality,
+    required this.failIfNotSmaller,
+    required this.overwriteOriginal,
+    required this.limitVideoSize,
+    required this.maxWidth,
+    required this.maxHeight,
+    required this.noiseReduction,
+    required this.noiseReductionStrength,
+    required this.customFfmpegCommand,
+  });
+
+  /// `h264`, `h265`, `av1` or `vp9`.
+  final String codec;
+
+  /// `none`, `nvenc`, `vaapi`, `qsv`, `videotoolbox` or `amf`.
+  final String hardwareEncoder;
+  final int quality;
+
+  /// Refuses a result that is not smaller, leaving the original alone.
+  final bool failIfNotSmaller;
+  final bool overwriteOriginal;
+  final bool limitVideoSize;
+  final int maxWidth;
+  final int maxHeight;
+
+  /// `none` or `hqdn3d`.
+  final String noiseReduction;
+  final int noiseReductionStrength;
+
+  /// Empty lets the engine build the command line for the chosen codec.
+  final String customFfmpegCommand;
+}
+
+/// Black-bar removal settings. The rectangle comes from the engine's own detection, and so does the
+/// mechanism, because a fix must use the one the scan was run with.
+class CropOptions {
+  const CropOptions({
+    required this.overwriteOriginal,
+    required this.targetCodec,
+    required this.quality,
+  });
+
+  final bool overwriteOriginal;
+
+  /// Empty keeps the source codec; with a codec the quality must be non-negative.
+  final String targetCodec;
+
+  /// Negative leaves the quality at the engine default.
+  final int quality;
+}
+
+/// Exactly one of the two option blocks must be present, because the modes share a tool but not a
+/// fix. The scan block re-derives the candidate list, so a fix only ever touches scanned files.
+class OptimizeRequest {
+  const OptimizeRequest({
+    required this.scan,
+    required this.paths,
+    required this.transcode,
+    required this.crop,
+    required this.dryRun,
+  });
+
+  final ScanRequest scan;
+  final List<String> paths;
+  final TranscodeOptions? transcode;
+  final CropOptions? crop;
+  final bool dryRun;
+}
+
+enum OptimizeStatus {
+  transcoded,
+  cropped,
+  planned,
+
+  /// The engine no longer considers this file worth optimizing.
+  skipped,
+  failed,
+}
+
+class OptimizeItem {
+  const OptimizeItem({
+    required this.path,
+    required this.target,
+    required this.status,
+    required this.detail,
+    required this.sizeBefore,
+    required this.sizeAfter,
+  });
+
+  final String path;
+
+  /// Where the optimized file ends up: the original when it is overwritten, else a side file.
+  final String target;
+  final OptimizeStatus status;
+  final String detail;
+  final int sizeBefore;
+  final int sizeAfter;
+}
+
+class OptimizeOutcome {
+  const OptimizeOutcome({
+    required this.transcoded,
+    required this.cropped,
+    required this.planned,
+    required this.skipped,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  final int transcoded;
+  final int cropped;
+  final int planned;
+  final int skipped;
+  final int failed;
+  final List<OptimizeItem> items;
+  final String messages;
+}
