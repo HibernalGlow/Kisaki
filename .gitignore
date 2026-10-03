@@ -55,3 +55,10 @@ cedinia/ui/fonts
 tmp/
 test/
 temp/
+
+# The blanket rules above hide part of the Flutter frontend: `*.txt` swallows the six CMake files
+# that build it for Linux and Windows, and `test/` swallows every Dart test file added after the
+# scaffold was committed. Negating them scoped to kisaki_app, so no upstream path changes status.
+!kisaki_app/**/CMakeLists.txt
+!kisaki_app/test/
+!kisaki_app/test/**
