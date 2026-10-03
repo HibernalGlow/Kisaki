@@ -62,14 +62,6 @@ class SimiuModel {
     _invalidate();
   }
 
-  void setRecursive(bool value) {
-    if (_options.recursive == value) {
-      return;
-    }
-    _options = _options.copyWith(recursive: value);
-    _invalidate();
-  }
-
   /// Records the journals an apply wrote; the newest of them is what the undo button replays.
   void recordJournals(List<String> written) {
     if (written.isEmpty) {
@@ -81,9 +73,15 @@ class SimiuModel {
   /// Drops the cached plan, because a mutation moved files the plan was built from.
   void invalidate() => _invalidate();
 
-  SimiuPlan plan(List<ScanRow> rows, List<String> roots) {
+  /// The plan for the current rows. Recursion follows the scan's own setting, because the rows the
+  /// plan reads were produced by that traversal.
+  SimiuPlan plan(
+    List<ScanRow> rows,
+    List<String> roots, {
+    required bool recursive,
+  }) {
     final List<String> kept = uniqueSimiuRoots(roots);
-    final String signature = kept.join('\n');
+    final String signature = '${kept.join('\n')}|recursive=$recursive';
     if (!identical(_cachedRows, rows) || _cachedSignature != signature) {
       _cachedRows = rows;
       _cachedSignature = signature;
@@ -91,7 +89,7 @@ class SimiuModel {
         rows: rows,
         options: SimiuOptions(
           roots: kept,
-          recursive: _options.recursive,
+          recursive: recursive,
           scanOrder: _options.scanOrder,
           namePrefix: _options.namePrefix,
           minimumGroupSize: _options.minimumGroupSize,

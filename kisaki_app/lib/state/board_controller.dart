@@ -755,7 +755,8 @@ class BoardController extends ChangeNotifier {
   /// Only the image scanner has a set plan to make, like the reference's mode selector.
   bool get supportsSimiuSets => _tool?.id == 'similar_images';
 
-  SimiuPlan get simiuPlan => _simiu.plan(_rows, _included);
+  SimiuPlan get simiuPlan =>
+      _simiu.plan(_rows, _included, recursive: recursive);
 
   void setSimiuEnabled(bool value) {
     if (_simiu.enabled == value) {
@@ -780,11 +781,6 @@ class BoardController extends ChangeNotifier {
 
   void setSimiuScanOrder(SimiuScanOrder value) {
     _simiu.setScanOrder(value);
-    notifyListeners();
-  }
-
-  void setSimiuRecursive(bool value) {
-    _simiu.setRecursive(value);
     notifyListeners();
   }
 

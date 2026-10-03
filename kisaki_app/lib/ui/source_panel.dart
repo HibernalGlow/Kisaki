@@ -4,6 +4,7 @@ import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
+import 'simiu_panel.dart';
 import 'token_list.dart';
 import 'widgets/primitives.dart';
 
@@ -334,24 +335,27 @@ class _AlgorithmTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<FieldDef> fields = controller.fields;
-    if (fields.isEmpty) {
+    if (fields.isEmpty && !controller.supportsSimiuSets) {
       return const EmptyState(labelKey: 'label-no-options');
     }
-    return ListView.separated(
+    return ListView(
       padding: const EdgeInsets.all(BoardTokens.pad),
-      itemCount: fields.length,
-      separatorBuilder: (BuildContext context, int index) =>
-          const SizedBox(height: BoardTokens.gap),
-      itemBuilder: (BuildContext context, int index) {
-        final FieldDef def = fields[index];
-        return FieldControl(
-          key: ValueKey<String>('${controller.tool?.id}-${def.id}'),
-          def: def,
-          value: controller.valueOf(def.id),
-          onChanged: (FieldPayload payload) =>
-              controller.setFieldValue(def.id, payload),
-        );
-      },
+      children: <Widget>[
+        if (controller.supportsSimiuSets) ...<Widget>[
+          SimiuFields(controller: controller),
+          const SizedBox(height: BoardTokens.section),
+        ],
+        for (int index = 0; index < fields.length; index++) ...<Widget>[
+          if (index > 0) const SizedBox(height: BoardTokens.gap),
+          FieldControl(
+            key: ValueKey<String>('${controller.tool?.id}-${fields[index].id}'),
+            def: fields[index],
+            value: controller.valueOf(fields[index].id),
+            onChanged: (FieldPayload payload) =>
+                controller.setFieldValue(fields[index].id, payload),
+          ),
+        ],
+      ],
     );
   }
 }
