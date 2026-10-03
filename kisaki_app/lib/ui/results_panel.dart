@@ -6,6 +6,7 @@ import '../state/board_controller.dart';
 import '../state/row_projection.dart';
 import '../theme/board_theme.dart';
 import 'assistant_panel.dart';
+import 'comparison_images.dart';
 import 'comparison_view.dart';
 import 'filter_panel.dart';
 import 'row_menu.dart';
@@ -156,6 +157,20 @@ class _ResultsHeader extends StatelessWidget {
                     dense: true,
                     onPressed: controller.resetColumnWidths,
                   ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      Labels.of('label-thumbnails'),
+                      style: palette.text.labelSmall,
+                    ),
+                    Switch(
+                      key: const Key('toggle-thumbnails'),
+                      value: controller.showThumbnails,
+                      onChanged: controller.setShowThumbnails,
+                    ),
+                  ],
+                ),
                 BoardAction(
                   key: const Key('open-comparison'),
                   labelKey: 'action-compare',
@@ -619,37 +634,47 @@ class _ResultRow extends StatelessWidget {
             horizontal: BoardTokens.gapSmall,
             vertical: 6,
           ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: Row(
             children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Flexible(
-                    child: Text(
-                      row.name,
+              if (controller.showsThumbnail(row)) ...<Widget>[
+                _ThumbSlot(path: row.path),
+                const SizedBox(width: BoardTokens.gapSmall),
+              ],
+              Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        Flexible(
+                          child: Text(
+                            row.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: BoardTokens.fsBody,
+                              fontWeight: FontWeight.w600,
+                              color: selected ? palette.primary : palette.fg,
+                            ),
+                          ),
+                        ),
+                        if (row.isReference) ...<Widget>[
+                          const SizedBox(width: BoardTokens.gapSmall),
+                          _RefBadge(),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      row.directory,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: BoardTokens.fsBody,
-                        fontWeight: FontWeight.w600,
-                        color: selected ? palette.primary : palette.fg,
+                        fontSize: BoardTokens.fsCaption,
+                        color: palette.fgFaint,
                       ),
                     ),
-                  ),
-                  if (row.isReference) ...<Widget>[
-                    const SizedBox(width: BoardTokens.gapSmall),
-                    _RefBadge(),
                   ],
-                ],
-              ),
-              Text(
-                row.directory,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: BoardTokens.fsCaption,
-                  color: palette.fgFaint,
                 ),
               ),
             ],
@@ -731,6 +756,34 @@ class _RefBadge extends StatelessWidget {
           fontSize: BoardTokens.fsCaption,
           fontWeight: FontWeight.w700,
           color: palette.warn,
+        ),
+      ),
+    );
+  }
+}
+
+class _ThumbSlot extends StatelessWidget {
+  const _ThumbSlot({required this.path});
+
+  final String path;
+
+  @override
+  Widget build(BuildContext context) {
+    final BoardPalette palette = BoardTheme.of(context);
+    // The picture never takes the row's click: selecting a row is the primary action.
+    return IgnorePointer(
+      child: Container(
+        key: Key('row-thumb-$path'),
+        width: 24,
+        height: 24,
+        decoration: BoxDecoration(
+          border: Border.all(color: palette.border),
+          color: palette.sunken,
+        ),
+        child: DiskImage(
+          path: path,
+          fit: BoxFit.cover,
+          placeholder: const SizedBox.shrink(),
         ),
       ),
     );

@@ -15,6 +15,7 @@ import 'row_projection.dart';
 import 'selection_model.dart';
 import 'similar_folders.dart';
 import 'simiu_model.dart';
+import 'simiu_sets.dart' show isSimiuSetImage;
 import 'video_optimize.dart';
 import 'selection_rules.dart';
 
@@ -118,6 +119,7 @@ class BoardController extends ChangeNotifier {
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
   final Map<String, double> _columnWidths = <String, double>{};
+  bool _showThumbnails = true;
   OrganizeOptions _organize = const OrganizeOptions();
   VideoOptions _video = const VideoOptions();
   OptimizeOutcome? _videoOutcome;
@@ -727,6 +729,18 @@ class BoardController extends ChangeNotifier {
 
   /// Widths the reader dragged, keyed `tool:column`, so each scanner keeps its own layout.
   Map<String, double> get columnWidths => _columnWidths;
+
+  /// The reference paints a picture per row when thumbnails are on. A row whose suffix cannot be
+  /// decoded keeps the slot empty rather than asking an image codec for a text file.
+  bool get showThumbnails => _showThumbnails;
+
+  bool showsThumbnail(ScanRow row) =>
+      _showThumbnails && isSimiuSetImage(row.path);
+
+  void setShowThumbnails(bool value) {
+    _showThumbnails = value;
+    notifyListeners();
+  }
 
   void setColumnWidth(String columnKey, double width, double minWidth) {
     final String toolId = _tool?.id ?? '';
