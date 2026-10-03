@@ -614,7 +614,7 @@ class _RefBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
       decoration: BoxDecoration(
         border: Border.all(color: palette.warn),
-        borderRadius: BorderRadius.circular(3),
+        borderRadius: BorderRadius.circular(BoardTokens.radius),
       ),
       child: Text(
         Labels.of('badge-reference'),

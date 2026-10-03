@@ -202,6 +202,7 @@ class BoardAction extends StatelessWidget {
     this.icon,
     this.tone,
     this.dense = false,
+    this.iconOnly = false,
     super.key,
   });
 
@@ -211,17 +212,50 @@ class BoardAction extends StatelessWidget {
   final Color? tone;
   final bool dense;
 
+  /// The reference's strip buttons carry an icon and an aria-label only, so a tight header keeps
+  /// its affordances instead of losing them to an ellipsis.
+  final bool iconOnly;
+
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
     final bool enabled = onPressed != null;
+    final String label = Labels.of(labelKey);
+    final Widget content = Row(
+      mainAxisSize: MainAxisSize.min,
+      children: <Widget>[
+        if (icon != null) ...<Widget>[
+          Icon(
+            icon,
+            size: 14,
+            color: enabled ? (tone ?? palette.fg) : palette.fgFaint,
+          ),
+          if (!iconOnly) const SizedBox(width: BoardTokens.gapSmall),
+        ],
+        if (!iconOnly)
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: BoardTokens.fsLabel,
+                fontWeight: FontWeight.w600,
+                color: enabled ? (tone ?? palette.fg) : palette.fgFaint,
+              ),
+            ),
+          ),
+      ],
+    );
     return GestureDetector(
       onTap: enabled ? onPressed : null,
       child: Container(
-        padding: EdgeInsets.symmetric(
-          horizontal: BoardTokens.gap,
-          vertical: dense ? BoardTokens.gapSmall : 6,
-        ),
+        padding: iconOnly
+            ? const EdgeInsets.all(BoardTokens.gapSmall)
+            : EdgeInsets.symmetric(
+                horizontal: BoardTokens.gap,
+                vertical: dense ? BoardTokens.gapSmall : 6,
+              ),
         decoration: BoxDecoration(
           color: enabled ? palette.raised : palette.sunken,
           borderRadius: BorderRadius.circular(BoardTokens.radius),
@@ -229,27 +263,7 @@ class BoardAction extends StatelessWidget {
             color: enabled && tone != null ? tone! : palette.border,
           ),
         ),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            if (icon != null) ...<Widget>[
-              Icon(
-                icon,
-                size: 14,
-                color: enabled ? (tone ?? palette.fg) : palette.fgFaint,
-              ),
-              const SizedBox(width: BoardTokens.gapSmall),
-            ],
-            Text(
-              Labels.of(labelKey),
-              style: TextStyle(
-                fontSize: BoardTokens.fsLabel,
-                fontWeight: FontWeight.w600,
-                color: enabled ? (tone ?? palette.fg) : palette.fgFaint,
-              ),
-            ),
-          ],
-        ),
+        child: iconOnly ? Tooltip(message: label, child: content) : content,
       ),
     );
   }
