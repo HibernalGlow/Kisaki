@@ -8,6 +8,7 @@ import '../l10n/labels.dart';
 import '../util/format.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
+import 'image_comparison.dart';
 import 'row_projection.dart';
 import 'selection_model.dart';
 import 'selection_rules.dart';
@@ -108,6 +109,7 @@ class BoardController extends ChangeNotifier {
   String _assistantMessageKey = '';
   Map<String, Object> _assistantMessageArgs = const <String, Object>{};
   bool _assistantMessageIsError = false;
+  ComparisonState _comparison = const ComparisonState();
   int _sortColumn = -1;
   bool _sortAscending = true;
 
@@ -473,6 +475,7 @@ class BoardController extends ChangeNotifier {
     _selected.clear();
     _history = createSelectionHistory(const <String>[]);
     _clearAssistantMessage();
+    _comparison = const ComparisonState();
     _progress = null;
     _outcome = null;
     _messages = '';
@@ -551,6 +554,19 @@ class BoardController extends ChangeNotifier {
       sortColumn: _sortColumn,
       sortAscending: _sortAscending,
     );
+    _closeComparisonIfGone();
+  }
+
+  /// The comparison dialog reads the group the table shows, so it must not stay open on a row that
+  /// filtering or a scan just removed.
+  void _closeComparisonIfGone() {
+    final String? path = _comparison.activePath;
+    if (path == null) {
+      return;
+    }
+    if (!_visible.any((ScanRow row) => row.path == path)) {
+      _comparison = comparisonClose(_comparison);
+    }
   }
 
   FilterState get filters => _filters;
@@ -691,8 +707,9 @@ class BoardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// The assistant works on the groups the table shows, so a filtered-out row is never touched.
-  List<List<ScanRow>> get assistantGroups => groupsOf(_visible, _tool);
+  /// The assistant and the comparison dialog work on the groups the table shows, so a filtered-out
+  /// row is never touched.
+  List<List<ScanRow>> get boardGroups => groupsOf(_visible, _tool);
 
   SelectionConfig get assistant => _assistant;
   bool get canUndoSelection => _history.canUndo;
@@ -702,8 +719,7 @@ class BoardController extends ChangeNotifier {
       ? ''
       : Labels.of(_assistantMessageKey, args: _assistantMessageArgs);
 
-  SelectionStats get assistantStats =>
-      selectionStats(assistantGroups, _selected);
+  SelectionStats get assistantStats => selectionStats(boardGroups, _selected);
 
   void setAssistantConfig(SelectionConfig next) {
     _assistant = next;
@@ -717,7 +733,7 @@ class BoardController extends ChangeNotifier {
   }
 
   void applyAssistantRule(AssistantRuleKind kind) {
-    final List<List<ScanRow>> groups = assistantGroups;
+    final List<List<ScanRow>> groups = boardGroups;
     final SelectionResult result = switch (kind) {
       AssistantRuleKind.group => applyGroupSelection(
         groups: groups,
@@ -762,7 +778,7 @@ class BoardController extends ChangeNotifier {
   }
 
   void invertAssistantSelection() {
-    final List<String> paths = invertSelection(assistantGroups, _selected);
+    final List<String> paths = invertSelection(boardGroups, _selected);
     _selected
       ..clear()
       ..addAll(paths);
@@ -771,7 +787,7 @@ class BoardController extends ChangeNotifier {
   }
 
   void selectAllAssistantEntries() {
-    final List<String> paths = selectAllEntries(assistantGroups);
+    final List<String> paths = selectAllEntries(boardGroups);
     _selected
       ..clear()
       ..addAll(paths);
@@ -808,6 +824,61 @@ class BoardController extends ChangeNotifier {
     _assistantMessageKey = '';
     _assistantMessageArgs = const <String, Object>{};
     _assistantMessageIsError = false;
+  }
+
+  /// The comparison dialog needs a second image from the same group, so a lone row has nothing to
+  /// show against.
+  bool get canCompareSelection {
+    final List<ScanRow> picked = selectedRows;
+    if (picked.isEmpty) {
+      return false;
+    }
+    final String path = picked.first.path;
+    return boardGroups.any(
+      (List<ScanRow> group) =>
+          group.length > 1 && group.any((ScanRow row) => row.path == path),
+    );
+  }
+
+  ComparisonState get comparison => _comparison;
+  ComparisonEntries get comparisonSelection =>
+      comparisonEntries(_comparison, boardGroups);
+
+  void openComparison(ScanRow row) {
+    _comparison = comparisonOpen(_comparison, boardGroups, row.path);
+    notifyListeners();
+  }
+
+  void closeComparison() {
+    _comparison = comparisonClose(_comparison);
+    notifyListeners();
+  }
+
+  void setComparisonTarget(String path) {
+    _comparison = comparisonSetTarget(_comparison, boardGroups, path);
+    notifyListeners();
+  }
+
+  void setComparisonMode(ComparisonMode mode) {
+    _comparison = comparisonSetMode(_comparison, mode);
+    notifyListeners();
+  }
+
+  void toggleComparisonColorCoding() {
+    _comparison = comparisonSetColorCoding(
+      _comparison,
+      !_comparison.colorCoding,
+    );
+    notifyListeners();
+  }
+
+  void setComparisonSwipe(double percent) {
+    _comparison = comparisonSetSwipe(_comparison, percent);
+    notifyListeners();
+  }
+
+  void setComparisonOpacity(double percent) {
+    _comparison = comparisonSetOpacity(_comparison, percent);
   }
 
   void _applyHistory(SelectionHistory next) {
