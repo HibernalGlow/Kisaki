@@ -9,4 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'types.dart';
 
+/// What the bridge knows about the engine it is standing on. `core_version` is read from the core
+/// crate itself, not from this crate, because a field named after the engine must not quietly become
+/// the frontend's version number the day the two stop being bumped together.
 EngineInfo engineInfo() => RustLib.instance.api.crateApiInfoEngineInfo();
