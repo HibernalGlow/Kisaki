@@ -4,6 +4,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kisaki_app/engine/kisaki_engine.dart';
 import 'package:kisaki_app/engine/models.dart';
 import 'package:kisaki_app/l10n/labels.dart';
+import 'package:kisaki_app/src/rust/api/actions.dart' as g_actions;
+import 'package:kisaki_app/src/rust/api/types.dart' as g;
 import 'package:kisaki_app/util/rust_lib.dart';
 
 /// Drives the real Rust library, so it is an integration test and needs the dylib built by
@@ -264,6 +266,112 @@ void main() {
       reason: 'core must report why the scan stopped: ${disabled.critical}',
     );
   }, timeout: const Timeout(Duration(minutes: 3)));
+
+  // The rename verb is reachable from Dart only through the generated API so far: the board's
+  // KisakiEngine interface would need a new member, and every implementer of that interface lives
+  // in the parallel lane. This drives the FFI directly to prove the shipped dylib really does it.
+  test('renaming through the bridge fixes the selected bad names only', () async {
+    final root = await Directory.systemTemp.createTemp('kisaki_rename_');
+    final canonicalRoot = await root.resolveSymbolicLinks();
+    addTearDown(() => root.delete(recursive: true));
+    await _write(root, ' leading.txt', 'a');
+    await _write(root, 'emoji_😀.txt', 'a');
+    await _write(root, 'plain.txt', 'a');
+
+    final selected = await _badNamePaths(engine, root.path);
+    expect(selected, hasLength(2), reason: 'the two bad names are the selection');
+
+    final dry = await g_actions.renameFiles(
+      request: _rename('bad_names', root.path, selected, dryRun: true),
+    );
+    expect((dry.renamed, dry.planned, dry.failed), (0, 2, 0));
+    expect(dry.items.map((item) => item.status), everyElement(g.RenameStatus.planned));
+    expect(
+      File('$canonicalRoot/ leading.txt').existsSync(),
+      isTrue,
+      reason: 'a dry run must leave the file where it is',
+    );
+
+    final applied = await g_actions.renameFiles(
+      request: _rename('bad_names', root.path, selected, dryRun: false),
+    );
+    expect((applied.renamed, applied.failed), (2, 0), reason: applied.messages);
+    expect(File('$canonicalRoot/leading.txt').readAsStringSync(), 'a');
+    expect(File('$canonicalRoot/emoji_.txt').readAsStringSync(), 'a');
+    expect(
+      File('$canonicalRoot/ leading.txt').existsSync(),
+      isFalse,
+      reason: 'the old spelling has to be gone',
+    );
+
+    // The untouched file proves the run was scoped to the selection, not to the whole scan.
+    expect(File('$canonicalRoot/plain.txt').existsSync(), isTrue);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+
+  test('the bridge renames a file whose extension contradicts its content', () async {
+    final root = await Directory.systemTemp.createTemp('kisaki_bext_');
+    final canonicalRoot = await root.resolveSymbolicLinks();
+    addTearDown(() => root.delete(recursive: true));
+    // A PNG signature inside a .jpg name: only the engine's own content check can say so.
+    final file = File('${root.path}/photo.jpg');
+    await file.writeAsBytes(<int>[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+
+    final outcome = await g_actions.renameFiles(
+      request: _rename('bad_extensions', root.path, ['$canonicalRoot/photo.jpg'], dryRun: false),
+    );
+
+    expect((outcome.renamed, outcome.failed), (1, 0), reason: '${outcome.items}');
+    expect(outcome.items.single.to, '$canonicalRoot/photo.png');
+    expect(File('$canonicalRoot/photo.png').readAsBytesSync().sublist(0, 4), <int>[0x89, 0x50, 0x4e, 0x47]);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+}
+
+Future<List<String>> _badNamePaths(KisakiEngine engine, String rootPath) async {
+  final events = await engine
+      .startScan(
+        ScanRequest(
+          tool: 'bad_names',
+          included: [rootPath],
+          reference: const [],
+          excludedPaths: const [],
+          excludedItems: const [],
+          allowedExtensions: const [],
+          excludedExtensions: const [],
+          recursive: true,
+          useCache: false,
+          minSizeKib: '',
+          maxSizeKib: '',
+          fields: engine.defaultFields('bad_names'),
+        ),
+      )
+      .toList();
+  final outcome = events.whereType<ScanEventCompleted>().single.outcome;
+  expect(outcome.critical, isNull, reason: outcome.messages);
+  return outcome.rows.map((row) => row.path).toList();
+}
+
+/// A rename request as the board would send it. The scan block carries no option fields, so the
+/// engine works from its own defaults, and the paths keep the spelling the scan reported.
+g.RenameRequest _rename(String tool, String rootPath, List<String> paths, {required bool dryRun}) {
+  return g.RenameRequest(
+    tool: tool,
+    scan: g.ScanRequest(
+      tool: tool,
+      included: [rootPath],
+      reference: const [],
+      excludedPaths: const [],
+      excludedItems: const [],
+      allowedExtensions: const [],
+      excludedExtensions: const [],
+      recursive: true,
+      useCache: false,
+      minSizeKib: '',
+      maxSizeKib: '',
+      fields: const [],
+    ),
+    paths: paths,
+    dryRun: dryRun,
+  );
 }
 
 Future<File> _write(Directory root, String relative, String content) async {

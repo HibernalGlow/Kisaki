@@ -1,6 +1,7 @@
 pub mod config;
 pub mod convert;
 pub mod dispatch;
+pub mod fix;
 pub mod flat;
 pub mod grouped;
 pub mod ops;

@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => -64286847;
+  int get rustContentHash => -1626947234;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -102,6 +102,10 @@ abstract class RustLibApi extends BaseApi {
   bool crateApiScanIsScanning();
 
   List<ToolSpec> crateApiSchemaListTools();
+
+  Future<RenameOutcome> crateApiActionsRenameFiles({
+    required RenameRequest request,
+  });
 
   bool crateApiScanRequestStop();
 
@@ -316,12 +320,42 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "list_tools", argNames: []);
 
   @override
+  Future<RenameOutcome> crateApiActionsRenameFiles({
+    required RenameRequest request,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_rename_request(request, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 9,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_rename_outcome,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiActionsRenameFilesConstMeta,
+        argValues: [request],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiActionsRenameFilesConstMeta =>
+      const TaskConstMeta(debugName: "rename_files", argNames: ["request"]);
+
+  @override
   bool crateApiScanRequestStop() {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -350,7 +384,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 10,
+              funcId: 11,
               port: port_,
             );
           },
@@ -412,6 +446,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ProgressUpdate dco_decode_box_autoadd_progress_update(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_progress_update(raw);
+  }
+
+  @protected
+  RenameRequest dco_decode_box_autoadd_rename_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_rename_request(raw);
   }
 
   @protected
@@ -607,6 +647,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<RenameItem> dco_decode_list_rename_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_rename_item).toList();
+  }
+
+  @protected
   List<ScanRow> dco_decode_list_scan_row(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_scan_row).toList();
@@ -637,6 +683,56 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       percent: dco_decode_i_64(arr[3]),
       detail: dco_decode_String(arr[4]),
     );
+  }
+
+  @protected
+  RenameItem dco_decode_rename_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return RenameItem(
+      from: dco_decode_String(arr[0]),
+      to: dco_decode_String(arr[1]),
+      status: dco_decode_rename_status(arr[2]),
+      detail: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  RenameOutcome dco_decode_rename_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return RenameOutcome(
+      renamed: dco_decode_i_32(arr[0]),
+      planned: dco_decode_i_32(arr[1]),
+      failed: dco_decode_i_32(arr[2]),
+      skipped: dco_decode_i_32(arr[3]),
+      items: dco_decode_list_rename_item(arr[4]),
+      messages: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  RenameRequest dco_decode_rename_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return RenameRequest(
+      tool: dco_decode_String(arr[0]),
+      scan: dco_decode_scan_request(arr[1]),
+      paths: dco_decode_list_String(arr[2]),
+      dryRun: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
+  RenameStatus dco_decode_rename_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return RenameStatus.values[raw as int];
   }
 
   @protected
@@ -798,6 +894,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_progress_update(deserializer));
+  }
+
+  @protected
+  RenameRequest sse_decode_box_autoadd_rename_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_rename_request(deserializer));
   }
 
   @protected
@@ -1038,6 +1142,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<RenameItem> sse_decode_list_rename_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <RenameItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_rename_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<ScanRow> sse_decode_list_scan_row(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1087,6 +1203,62 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       percent: var_percent,
       detail: var_detail,
     );
+  }
+
+  @protected
+  RenameItem sse_decode_rename_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_from = sse_decode_String(deserializer);
+    var var_to = sse_decode_String(deserializer);
+    var var_status = sse_decode_rename_status(deserializer);
+    var var_detail = sse_decode_String(deserializer);
+    return RenameItem(
+      from: var_from,
+      to: var_to,
+      status: var_status,
+      detail: var_detail,
+    );
+  }
+
+  @protected
+  RenameOutcome sse_decode_rename_outcome(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_renamed = sse_decode_i_32(deserializer);
+    var var_planned = sse_decode_i_32(deserializer);
+    var var_failed = sse_decode_i_32(deserializer);
+    var var_skipped = sse_decode_i_32(deserializer);
+    var var_items = sse_decode_list_rename_item(deserializer);
+    var var_messages = sse_decode_String(deserializer);
+    return RenameOutcome(
+      renamed: var_renamed,
+      planned: var_planned,
+      failed: var_failed,
+      skipped: var_skipped,
+      items: var_items,
+      messages: var_messages,
+    );
+  }
+
+  @protected
+  RenameRequest sse_decode_rename_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_tool = sse_decode_String(deserializer);
+    var var_scan = sse_decode_scan_request(deserializer);
+    var var_paths = sse_decode_list_String(deserializer);
+    var var_dryRun = sse_decode_bool(deserializer);
+    return RenameRequest(
+      tool: var_tool,
+      scan: var_scan,
+      paths: var_paths,
+      dryRun: var_dryRun,
+    );
+  }
+
+  @protected
+  RenameStatus sse_decode_rename_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return RenameStatus.values[inner];
   }
 
   @protected
@@ -1294,6 +1466,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_rename_request(
+    RenameRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_rename_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_scan_outcome(
     ScanOutcome self,
     SseSerializer serializer,
@@ -1489,6 +1670,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_rename_item(
+    List<RenameItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_rename_item(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_scan_row(List<ScanRow> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -1530,6 +1723,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_64(self.total, serializer);
     sse_encode_i_64(self.percent, serializer);
     sse_encode_String(self.detail, serializer);
+  }
+
+  @protected
+  void sse_encode_rename_item(RenameItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.from, serializer);
+    sse_encode_String(self.to, serializer);
+    sse_encode_rename_status(self.status, serializer);
+    sse_encode_String(self.detail, serializer);
+  }
+
+  @protected
+  void sse_encode_rename_outcome(RenameOutcome self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.renamed, serializer);
+    sse_encode_i_32(self.planned, serializer);
+    sse_encode_i_32(self.failed, serializer);
+    sse_encode_i_32(self.skipped, serializer);
+    sse_encode_list_rename_item(self.items, serializer);
+    sse_encode_String(self.messages, serializer);
+  }
+
+  @protected
+  void sse_encode_rename_request(RenameRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.tool, serializer);
+    sse_encode_scan_request(self.scan, serializer);
+    sse_encode_list_String(self.paths, serializer);
+    sse_encode_bool(self.dryRun, serializer);
+  }
+
+  @protected
+  void sse_encode_rename_status(RenameStatus self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
