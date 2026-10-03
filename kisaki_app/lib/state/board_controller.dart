@@ -9,6 +9,7 @@ import '../l10n/labels.dart';
 import '../util/format.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
+import 'group_organize.dart';
 import 'image_comparison.dart';
 import 'row_projection.dart';
 import 'selection_model.dart';
@@ -116,6 +117,7 @@ class BoardController extends ChangeNotifier {
   ComparisonState _comparison = const ComparisonState();
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
+  OrganizeOptions _organize = const OrganizeOptions();
   VideoOptions _video = const VideoOptions();
   OptimizeOutcome? _videoOutcome;
   bool _exifOverrideFile = false;
@@ -907,6 +909,108 @@ class BoardController extends ChangeNotifier {
   /// A mutation moves files the plan was built from, so the cached plan must not be reused.
   void _invalidatePlan() {
     _simiu.invalidate();
+  }
+
+  OrganizeOptions get organize => _organize;
+
+  void updateOrganize(
+    OrganizeOptions Function(OrganizeOptions options) change,
+  ) {
+    _organize = change(_organize);
+    notifyListeners();
+  }
+
+  /// The reference hides the organize card while Simiu sets are being planned, because both move the
+  /// same rows into folders.
+  bool get supportsGroupOrganize =>
+      _tool?.id == 'similar_images' && !_simiu.enabled;
+
+  OrganizePlan get organizePlan =>
+      buildGroupOrganizePlan(boardGroups, _selected, _organize);
+
+  void requestOrganize() {
+    final OrganizePlan plan = organizePlan;
+    if (plan.items.isEmpty) {
+      _setStatus('status_organize_nothing');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _applyOrganize(plan);
+    _confirm = ConfirmRequest(
+      titleKey: dryRun
+          ? 'confirm_organize_plan_title'
+          : 'confirm_organize_title',
+      bodyKey: 'confirm_organize_body',
+      args: <String, Object>{
+        'count': plan.items.length,
+        'groups': plan.selectedGroupCount,
+        'folders': plan.targetFolderCount,
+      },
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  /// The bridge moves one destination at a time, so each target folder becomes its own call and the
+  /// answers are accumulated into one report.
+  Future<void> _applyOrganize(OrganizePlan plan) async {
+    _actionRunning = true;
+    _setStatus('status_organizing');
+    notifyListeners();
+    try {
+      final Map<String, List<String>> byDestination = <String, List<String>>{};
+      for (final OrganizeItem item in plan.items) {
+        byDestination
+            .putIfAbsent(item.destination, () => <String>[])
+            .add(item.path);
+      }
+      int moved = 0;
+      int planned = 0;
+      int skipped = 0;
+      int failed = 0;
+      final StringBuffer messages = StringBuffer();
+      for (final MapEntry<String, List<String>> entry
+          in byDestination.entries) {
+        final MoveOutcome outcome = await engine.moveFiles(
+          MoveRequest(
+            paths: entry.value,
+            destination: entry.key,
+            action: MoveAction.move,
+            conflict: MoveConflictPolicy.rename,
+            preserveStructure: false,
+            dryRun: dryRun,
+          ),
+        );
+        moved += outcome.moved;
+        planned += outcome.planned;
+        skipped += outcome.skipped;
+        failed += outcome.failed;
+        if (outcome.messages.isNotEmpty) {
+          messages.writeln(outcome.messages);
+        }
+      }
+      _messages = messages.toString().trimRight();
+      _setStatus(
+        dryRun ? 'status_organize_planned' : 'status_organize_done',
+        args: <String, Object>{
+          'count': dryRun ? planned : moved,
+          'skipped': skipped,
+        },
+      );
+      if (failed > 0) {
+        _critical = _messages;
+      }
+      if (!dryRun) {
+        // The rows that moved are no longer where the scan saw them, so the result is rebuilt.
+        refreshScan();
+      }
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
   }
 
   VideoOptions get video => _video;
