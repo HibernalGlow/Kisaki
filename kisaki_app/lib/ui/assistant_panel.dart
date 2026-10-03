@@ -107,6 +107,12 @@ class _AssistantPanelState extends State<AssistantPanel> {
     if (!modifier) {
       return KeyEventResult.ignored;
     }
+    if (modifier &&
+        event.logicalKey == LogicalKeyboardKey.keyF &&
+        HardwareKeyboard.instance.isShiftPressed) {
+      Navigator.of(context).pop();
+      return KeyEventResult.handled;
+    }
     if (event.logicalKey == LogicalKeyboardKey.enter ||
         event.logicalKey == LogicalKeyboardKey.numpadEnter) {
       widget.controller.applyAssistantRule(_tab);

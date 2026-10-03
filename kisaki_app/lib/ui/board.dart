@@ -130,6 +130,10 @@ class _KisakiBoardState extends State<KisakiBoard> {
       FilterPanel.open(context, widget.controller);
       return KeyEventResult.handled;
     }
+    if (modifier && event.logicalKey == LogicalKeyboardKey.keyR) {
+      widget.controller.refreshScan();
+      return KeyEventResult.handled;
+    }
     if (event.logicalKey == LogicalKeyboardKey.escape &&
         widget.controller.filters.activeCount > 0) {
       widget.controller.resetFilters();
