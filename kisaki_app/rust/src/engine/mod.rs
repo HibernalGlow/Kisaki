@@ -8,6 +8,7 @@ pub mod ops;
 pub mod options;
 pub mod progress;
 pub mod registry;
+pub mod relocate;
 pub mod runner;
 
 use std::path::PathBuf;
