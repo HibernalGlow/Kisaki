@@ -295,6 +295,81 @@ pub struct ExifOutcome {
     pub messages: String,
 }
 
+/// How a file reaches its set folder: relocated, duplicated, or a second name for the same bytes.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SimiuMode {
+    Move,
+    Copy,
+    Link,
+}
+
+/// One "put this file in that set folder" decision. Which images belong to which set is a judgement
+/// about the scan result, so the board makes it and the bridge only performs it and journals it.
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimiuOperation {
+    /// The scanned root the set folder lives under; one undo journal is written per root.
+    pub root: String,
+    pub source: String,
+    pub target: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimiuApplyRequest {
+    pub mode: SimiuMode,
+    pub operations: Vec<SimiuOperation>,
+    pub dry_run: bool,
+}
+
+/// What happened to one file, for both the apply and the undo direction.
+#[derive(Debug, Clone, PartialEq)]
+pub enum SimiuStatus {
+    Planned,
+    Moved,
+    Copied,
+    Linked,
+    /// Restored to its original place by an undo.
+    Restored,
+    /// A copied or linked result that an undo removed again.
+    Removed,
+    Failed,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimiuItem {
+    pub from: String,
+    pub to: String,
+    pub status: SimiuStatus,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimiuApplyOutcome {
+    pub done: i32,
+    pub planned: i32,
+    pub failed: i32,
+    pub items: Vec<SimiuItem>,
+    /// The undo journals written, newest last. Empty for a dry run.
+    pub journals: Vec<String>,
+    pub messages: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimiuUndoRequest {
+    pub journal: String,
+    /// Removes the set folders an apply created, as long as they are empty by then.
+    pub clean_empty_directories: bool,
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct SimiuUndoOutcome {
+    pub done: i32,
+    pub planned: i32,
+    pub failed: i32,
+    pub items: Vec<SimiuItem>,
+    pub messages: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EngineInfo {
     pub core_version: String,

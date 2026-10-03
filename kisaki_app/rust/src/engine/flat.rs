@@ -511,7 +511,7 @@ fn format_bytes(size: u64) -> String {
 }
 
 /// The bridge has no date crate, so the calendar is derived from the epoch directly (UTC).
-fn format_timestamp(timestamp: u64) -> String {
+pub(crate) fn format_timestamp(timestamp: u64) -> String {
     let seconds = i64::try_from(timestamp).unwrap_or(i64::MAX);
     let (days, time_of_day) = (seconds.div_euclid(86_400), seconds.rem_euclid(86_400));
     let (year, month, day) = civil_from_days(days);

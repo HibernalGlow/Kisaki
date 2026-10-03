@@ -64,6 +64,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ScanRequest dco_decode_box_autoadd_scan_request(dynamic raw);
 
   @protected
+  SimiuApplyRequest dco_decode_box_autoadd_simiu_apply_request(dynamic raw);
+
+  @protected
+  SimiuUndoRequest dco_decode_box_autoadd_simiu_undo_request(dynamic raw);
+
+  @protected
   ColumnDef dco_decode_column_def(dynamic raw);
 
   @protected
@@ -145,6 +151,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ScanRow> dco_decode_list_scan_row(dynamic raw);
 
   @protected
+  List<SimiuItem> dco_decode_list_simiu_item(dynamic raw);
+
+  @protected
+  List<SimiuOperation> dco_decode_list_simiu_operation(dynamic raw);
+
+  @protected
   List<ToolSpec> dco_decode_list_tool_spec(dynamic raw);
 
   @protected
@@ -191,6 +203,30 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScanRow dco_decode_scan_row(dynamic raw);
+
+  @protected
+  SimiuApplyOutcome dco_decode_simiu_apply_outcome(dynamic raw);
+
+  @protected
+  SimiuApplyRequest dco_decode_simiu_apply_request(dynamic raw);
+
+  @protected
+  SimiuItem dco_decode_simiu_item(dynamic raw);
+
+  @protected
+  SimiuMode dco_decode_simiu_mode(dynamic raw);
+
+  @protected
+  SimiuOperation dco_decode_simiu_operation(dynamic raw);
+
+  @protected
+  SimiuStatus dco_decode_simiu_status(dynamic raw);
+
+  @protected
+  SimiuUndoOutcome dco_decode_simiu_undo_outcome(dynamic raw);
+
+  @protected
+  SimiuUndoRequest dco_decode_simiu_undo_request(dynamic raw);
 
   @protected
   ToolSpec dco_decode_tool_spec(dynamic raw);
@@ -246,6 +282,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScanRequest sse_decode_box_autoadd_scan_request(SseDeserializer deserializer);
+
+  @protected
+  SimiuApplyRequest sse_decode_box_autoadd_simiu_apply_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SimiuUndoRequest sse_decode_box_autoadd_simiu_undo_request(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ColumnDef sse_decode_column_def(SseDeserializer deserializer);
@@ -329,6 +375,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<ScanRow> sse_decode_list_scan_row(SseDeserializer deserializer);
 
   @protected
+  List<SimiuItem> sse_decode_list_simiu_item(SseDeserializer deserializer);
+
+  @protected
+  List<SimiuOperation> sse_decode_list_simiu_operation(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<ToolSpec> sse_decode_list_tool_spec(SseDeserializer deserializer);
 
   @protected
@@ -375,6 +429,34 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ScanRow sse_decode_scan_row(SseDeserializer deserializer);
+
+  @protected
+  SimiuApplyOutcome sse_decode_simiu_apply_outcome(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SimiuApplyRequest sse_decode_simiu_apply_request(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  SimiuItem sse_decode_simiu_item(SseDeserializer deserializer);
+
+  @protected
+  SimiuMode sse_decode_simiu_mode(SseDeserializer deserializer);
+
+  @protected
+  SimiuOperation sse_decode_simiu_operation(SseDeserializer deserializer);
+
+  @protected
+  SimiuStatus sse_decode_simiu_status(SseDeserializer deserializer);
+
+  @protected
+  SimiuUndoOutcome sse_decode_simiu_undo_outcome(SseDeserializer deserializer);
+
+  @protected
+  SimiuUndoRequest sse_decode_simiu_undo_request(SseDeserializer deserializer);
 
   @protected
   ToolSpec sse_decode_tool_spec(SseDeserializer deserializer);
@@ -448,6 +530,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_scan_request(
     ScanRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_simiu_apply_request(
+    SimiuApplyRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_simiu_undo_request(
+    SimiuUndoRequest self,
     SseSerializer serializer,
   );
 
@@ -551,6 +645,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_scan_row(List<ScanRow> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_simiu_item(
+    List<SimiuItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_simiu_operation(
+    List<SimiuOperation> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_tool_spec(List<ToolSpec> self, SseSerializer serializer);
 
   @protected
@@ -600,6 +706,45 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_scan_row(ScanRow self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_simiu_apply_outcome(
+    SimiuApplyOutcome self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_simiu_apply_request(
+    SimiuApplyRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_simiu_item(SimiuItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_simiu_mode(SimiuMode self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_simiu_operation(
+    SimiuOperation self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_simiu_status(SimiuStatus self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_simiu_undo_outcome(
+    SimiuUndoOutcome self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_simiu_undo_request(
+    SimiuUndoRequest self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_tool_spec(ToolSpec self, SseSerializer serializer);
