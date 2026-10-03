@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'types.freezed.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 class ColumnDef {
   final String key;
@@ -149,6 +149,133 @@ class EngineInfo {
           apiVersion == other.apiVersion &&
           os == other.os &&
           threadLimit == other.threadLimit;
+}
+
+class ExifItem {
+  final String path;
+
+  /// Where the result was written; empty while a file is skipped.
+  final String target;
+  final int tagsRemoved;
+  final ExifStatus status;
+  final String detail;
+
+  const ExifItem({
+    required this.path,
+    required this.target,
+    required this.tagsRemoved,
+    required this.status,
+    required this.detail,
+  });
+
+  @override
+  int get hashCode =>
+      path.hashCode ^
+      target.hashCode ^
+      tagsRemoved.hashCode ^
+      status.hashCode ^
+      detail.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExifItem &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          target == other.target &&
+          tagsRemoved == other.tagsRemoved &&
+          status == other.status &&
+          detail == other.detail;
+}
+
+class ExifOutcome {
+  final int stripped;
+  final int candidates;
+  final int planned;
+  final int skipped;
+  final int failed;
+
+  /// One entry per selected path, in request order.
+  final List<ExifItem> items;
+  final String messages;
+
+  const ExifOutcome({
+    required this.stripped,
+    required this.candidates,
+    required this.planned,
+    required this.skipped,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  @override
+  int get hashCode =>
+      stripped.hashCode ^
+      candidates.hashCode ^
+      planned.hashCode ^
+      skipped.hashCode ^
+      failed.hashCode ^
+      items.hashCode ^
+      messages.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExifOutcome &&
+          runtimeType == other.runtimeType &&
+          stripped == other.stripped &&
+          candidates == other.candidates &&
+          planned == other.planned &&
+          skipped == other.skipped &&
+          failed == other.failed &&
+          items == other.items &&
+          messages == other.messages;
+}
+
+/// Strips EXIF tags from the selection. `override_file` writes back over the original; the default
+/// leaves it untouched and writes a side file, because discarding metadata is not reversible.
+class ExifRequest {
+  /// The scan block that produced the rows, so the engine sees the same options and folders.
+  final ScanRequest scan;
+  final List<String> paths;
+  final bool overrideFile;
+  final bool dryRun;
+
+  const ExifRequest({
+    required this.scan,
+    required this.paths,
+    required this.overrideFile,
+    required this.dryRun,
+  });
+
+  @override
+  int get hashCode =>
+      scan.hashCode ^ paths.hashCode ^ overrideFile.hashCode ^ dryRun.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ExifRequest &&
+          runtimeType == other.runtimeType &&
+          scan == other.scan &&
+          paths == other.paths &&
+          overrideFile == other.overrideFile &&
+          dryRun == other.dryRun;
+}
+
+/// What happened to one selected file.
+enum ExifStatus {
+  /// Written over the original.
+  stripped,
+
+  /// Original untouched, cleaned copy written next to it.
+  candidate,
+  planned,
+
+  /// Nothing to remove, or the engine did not report the file.
+  skipped,
+  failed,
 }
 
 class ExportRequest {

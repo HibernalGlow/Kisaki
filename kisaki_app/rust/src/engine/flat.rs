@@ -143,7 +143,7 @@ impl Scan<'_> {
     }
 
     fn exif_remover(&self) -> EngineOutcome {
-        let mut tool = ExifRemover::new(ExifRemoverParameters::new(string_list(self.store, "exif_ignored_tags", "")));
+        let mut tool = ExifRemover::new(exif_params(self.store));
         apply_common(&mut tool, self.request);
         tool.search(&self.stop, Some(&self.sender));
 
@@ -374,6 +374,11 @@ fn crop_row(entry: &VideoCropEntry) -> EngineRow {
 /// Pixel count of the resolution column; saturating because both factors are `u32`.
 fn resolution_key(width: u32, height: u32) -> i64 {
     i64::from(width).saturating_mul(i64::from(height))
+}
+
+/// Which EXIF tags the checker should leave alone, shared with the EXIF fix so both read one default.
+pub(crate) fn exif_params(store: &FieldStore) -> ExifRemoverParameters {
+    ExifRemoverParameters::new(string_list(store, "exif_ignored_tags", ""))
 }
 
 /// The extension checker's parameter block, shared with the rename fix so both read one default.

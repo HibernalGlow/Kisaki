@@ -28,3 +28,8 @@ Future<RenameOutcome> renameFiles({required RenameRequest request}) =>
 /// destination is skipped unless the request asks for something else.
 Future<MoveOutcome> moveFiles({required MoveRequest request}) =>
     RustLib.instance.api.crateApiActionsMoveFiles(request: request);
+
+/// Strips EXIF tags from the selected photos through the engine's own remover. The original file is
+/// left alone by default and the cleaned copy is written beside it; `override_file` replaces it.
+Future<ExifOutcome> cleanExif({required ExifRequest request}) =>
+    RustLib.instance.api.crateApiActionsCleanExif(request: request);
