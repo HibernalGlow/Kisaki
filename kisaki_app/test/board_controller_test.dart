@@ -436,7 +436,11 @@ void main() {
       '/data/b',
     ]);
     expect(controller.selectedCount, 0);
-    expect(controller.messages, 'one path was locked');
+    expect(
+      controller.messages,
+      'one path was locked\n/data/a',
+      reason: 'the engine summary comes first, then the per-file log',
+    );
     expect(controller.statusText, 'Removed 1 paths, 1 failed');
   });
 
@@ -474,6 +478,37 @@ void main() {
     expect(controller.visibleRows.single.path, '/data/c');
     expect(controller.selectedCount, 0);
     expect(controller.statusText, 'Removed 2 paths');
+  });
+
+  test('the per-file delete log reaches the messages view', () async {
+    engine.deleteOutcome = const DeleteOutcome(
+      affected: 1,
+      errors: 0,
+      reclaimedBytes: 100,
+      messages: '1 file handled',
+      log: <String>['/data/a -> trash', '/data/b -> refused'],
+    );
+    controller
+      ..addIncluded(<String>['/data'])
+      ..selectTool('big_files')
+      ..setDryRun(false);
+    controller.startScan();
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('big_files', <ScanRow>[
+          StubEngine.row('/data/a', size: 100),
+          StubEngine.row('/data/b', size: 200),
+        ]),
+      ),
+    );
+    await drain();
+    controller.toggleSelected(controller.rows.first);
+    controller.requestDelete();
+    await controller.acceptConfirm();
+
+    expect(controller.messages, contains('/data/a -> trash'));
+    expect(controller.messages, contains('/data/b -> refused'));
+    expect(controller.messages, contains('1 file handled'));
   });
 
   test(
