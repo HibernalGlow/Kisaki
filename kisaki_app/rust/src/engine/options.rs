@@ -13,6 +13,9 @@ enum Initial {
     Flag(bool),
     Choice(&'static str),
     Integer(i64),
+    /// A float the engine takes directly (`duration_tolerance_pct`), carried as text because the
+    /// FFI has no float payload. Defaults are written the way they should be displayed ("0.6").
+    Decimal(&'static str),
     Tokens(&'static [&'static str]),
 }
 
@@ -37,19 +40,60 @@ struct Spec {
 const NO_CEILING: i64 = i64::MAX;
 
 const fn flag(id: &'static str, default: bool) -> Spec {
-    Spec { id, kind: FieldKind::Flag, options: &[], min: 0, max: 0, initial: Initial::Flag(default) }
+    Spec {
+        id,
+        kind: FieldKind::Flag,
+        options: &[],
+        min: 0,
+        max: 0,
+        initial: Initial::Flag(default),
+    }
 }
 
 const fn choice(id: &'static str, options: &'static [&'static str], default: &'static str) -> Spec {
-    Spec { id, kind: FieldKind::Choice, options, min: 0, max: 0, initial: Initial::Choice(default) }
+    Spec {
+        id,
+        kind: FieldKind::Choice,
+        options,
+        min: 0,
+        max: 0,
+        initial: Initial::Choice(default),
+    }
 }
 
 const fn integer(id: &'static str, min: i64, max: i64, default: i64) -> Spec {
-    Spec { id, kind: FieldKind::Integer, options: &[], min, max, initial: Initial::Integer(default) }
+    Spec {
+        id,
+        kind: FieldKind::Integer,
+        options: &[],
+        min,
+        max,
+        initial: Initial::Integer(default),
+    }
+}
+
+/// A fractional option. It travels as text, so `min`/`max` describe the whole-number span the
+/// engine asserts on (`0..=1` for fractions, `0..=100` for percentages) rather than a slider range.
+const fn decimal(id: &'static str, min: i64, max: i64, default: &'static str) -> Spec {
+    Spec {
+        id,
+        kind: FieldKind::Text,
+        options: &[],
+        min,
+        max,
+        initial: Initial::Decimal(default),
+    }
 }
 
 const fn tokens(id: &'static str, default: &'static [&'static str]) -> Spec {
-    Spec { id, kind: FieldKind::TokenList, options: &[], min: 0, max: 0, initial: Initial::Tokens(default) }
+    Spec {
+        id,
+        kind: FieldKind::TokenList,
+        options: &[],
+        min: 0,
+        max: 0,
+        initial: Initial::Tokens(default),
+    }
 }
 
 const SPECS: &[Spec] = &[
@@ -73,12 +117,26 @@ const SPECS: &[Spec] = &[
     flag("img_ignore_same_size", false),
     flag("img_ignore_same_resolution", false),
     choice("img_geometric_invariance", &["Off", "MirrorFlip", "MirrorFlipRotate90"], "Off"),
-    // Similar videos
+    // Similar videos - in the order SimilarVideosParameters::new takes them
     integer("vid_tolerance", 0, 20, 2),
     flag("vid_ignore_same_size", false),
+    flag("vid_ignore_same_resolution", false),
     integer("vid_skip_forward", 0, 300, 15),
     integer("vid_hash_duration", 2, 60, 10),
     flag("vid_letterbox_crop", true),
+    integer("vid_window_count", 1, 20, 5),
+    decimal("vid_duration_tolerance_pct", 0, 100, "20"),
+    decimal("vid_min_matching_windows", 0, 1, "0.6"),
+    decimal("vid_subclip_min_match", 0, 1, "0.5"),
+    flag("vid_generate_thumbnails", false),
+    integer("vid_thumbnail_percentage", 0, 100, 10),
+    flag("vid_thumbnail_grid", false),
+    integer("vid_thumbnail_grid_tiles", 2, 6, 2),
+    flag("vid_check_audio_content", false),
+    decimal("vid_audio_similarity_percent", 0, 100, "80"),
+    decimal("vid_audio_max_difference", 0, 10, "3"),
+    decimal("vid_audio_length_ratio", 0, 1, "0.1"),
+    integer("vid_audio_min_duration_seconds", 0, 600, 10),
     // Duplicate music
     choice("mus_check_type", &["Tags", "Fingerprint"], "Tags"),
     flag("mus_approximate", true),
@@ -112,6 +170,7 @@ const SPECS: &[Spec] = &[
     tokens("exif_ignored_tags", &[]),
     // Video optimizer
     choice("vid_opt_mode", &["Crop", "Transcode"], "Transcode"),
+    choice("vid_opt_crop_mechanism", &["BlackBars", "StaticContent"], "BlackBars"),
     tokens("vid_opt_excluded_codecs", &["hevc", "h265", "av1", "vp9"]),
     integer("vid_opt_black_pixel_threshold", 0, 128, 64),
     integer("vid_opt_black_bar_min_percentage", 50, 100, 80),
@@ -125,6 +184,7 @@ impl From<Initial> for FieldPayload {
             Initial::Flag(value) => FieldPayload::Flag(value),
             Initial::Choice(value) => FieldPayload::Choice(value.to_string()),
             Initial::Integer(value) => FieldPayload::Integer(value),
+            Initial::Decimal(value) => FieldPayload::Text(value.to_string()),
             Initial::Tokens(values) => FieldPayload::Tokens(values.iter().map(|value| value.to_string()).collect()),
         }
     }
@@ -168,7 +228,10 @@ fn label_key(id: &str) -> String {
 }
 
 fn to_value(spec: &Spec) -> FieldValue {
-    FieldValue { id: spec.id.to_string(), value: spec.initial.into() }
+    FieldValue {
+        id: spec.id.to_string(),
+        value: spec.initial.into(),
+    }
 }
 
 #[cfg(test)]
