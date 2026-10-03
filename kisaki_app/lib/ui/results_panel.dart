@@ -4,6 +4,7 @@ import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
+import 'assistant_panel.dart';
 import 'filter_panel.dart';
 import 'widgets/primitives.dart';
 
@@ -124,6 +125,18 @@ class _ResultsHeader extends StatelessWidget {
                     '${controller.filters.activeCount}',
                     key: const Key('active-filter-count'),
                     style: palette.text.labelSmall,
+                  ),
+                BoardAction(
+                  key: const Key('open-assistant'),
+                  labelKey: 'assistant-title',
+                  dense: true,
+                  onPressed: () => AssistantPanel.open(context, controller),
+                ),
+                if (controller.selectedCount > 0)
+                  Text(
+                    '${controller.selectedCount}',
+                    key: const Key('assistant-selected-count'),
+                    style: palette.tableFigure(),
                   ),
                 BoardAction(
                   key: const Key('select-all'),

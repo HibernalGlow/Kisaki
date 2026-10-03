@@ -8,6 +8,7 @@ import '../l10n/labels.dart';
 import '../util/format.dart';
 import 'filter_model.dart';
 import 'row_projection.dart';
+import 'selection_model.dart';
 
 export 'row_projection.dart' show GroupSelection;
 
@@ -100,6 +101,11 @@ class BoardController extends ChangeNotifier {
   FilterState _filters = FilterState.defaults();
   final List<FilterPreset> _presets = <FilterPreset>[];
   FilterResult? _filterResult;
+  SelectionConfig _assistant = SelectionConfig.defaults();
+  SelectionHistory _history = createSelectionHistory(const <String>[]);
+  String _assistantMessageKey = '';
+  Map<String, Object> _assistantMessageArgs = const <String, Object>{};
+  bool _assistantMessageIsError = false;
   int _sortColumn = -1;
   bool _sortAscending = true;
 
@@ -463,6 +469,8 @@ class BoardController extends ChangeNotifier {
     _rows = <ScanRow>[];
     _visible = <ScanRow>[];
     _selected.clear();
+    _history = createSelectionHistory(const <String>[]);
+    _clearAssistantMessage();
     _progress = null;
     _outcome = null;
     _messages = '';
@@ -617,6 +625,7 @@ class BoardController extends ChangeNotifier {
     if (!_selected.remove(row.path)) {
       _selected.add(row.path);
     }
+    _commitSelection();
     notifyListeners();
   }
 
@@ -628,6 +637,7 @@ class BoardController extends ChangeNotifier {
         _selected.remove(row.path);
       }
     }
+    _commitSelection();
     notifyListeners();
   }
 
@@ -654,7 +664,142 @@ class BoardController extends ChangeNotifier {
       return;
     }
     _selected.clear();
+    _commitSelection();
     notifyListeners();
+  }
+
+  /// The assistant works on the groups the table shows, so a filtered-out row is never touched.
+  List<List<ScanRow>> get assistantGroups => groupsOf(_visible, _tool);
+
+  SelectionConfig get assistant => _assistant;
+  bool get canUndoSelection => _history.canUndo;
+  bool get canRedoSelection => _history.canRedo;
+  bool get assistantMessageIsError => _assistantMessageIsError;
+  String get assistantMessage => _assistantMessageKey.isEmpty
+      ? ''
+      : Labels.of(_assistantMessageKey, args: _assistantMessageArgs);
+
+  SelectionStats get assistantStats =>
+      selectionStats(assistantGroups, _selected);
+
+  void setAssistantConfig(SelectionConfig next) {
+    _assistant = next;
+    notifyListeners();
+  }
+
+  void resetAssistant() {
+    _assistant = SelectionConfig.defaults();
+    _clearAssistantMessage();
+    notifyListeners();
+  }
+
+  void applyAssistantRule(AssistantRuleKind kind) {
+    final List<List<ScanRow>> groups = assistantGroups;
+    final SelectionResult result = switch (kind) {
+      AssistantRuleKind.group => applyGroupSelection(
+        groups: groups,
+        current: _selected,
+        rule: _assistant.group,
+        mode: _assistant.applyMode,
+      ),
+      AssistantRuleKind.text => applyTextSelection(
+        groups: groups,
+        current: _selected,
+        rule: _assistant.text,
+        mode: _assistant.applyMode,
+      ),
+      AssistantRuleKind.directory => applyDirectorySelection(
+        groups: groups,
+        current: _selected,
+        rule: _assistant.directory,
+        mode: _assistant.applyMode,
+      ),
+    };
+    final String? error = result.error;
+    if (error != null) {
+      _assistantMessageKey = result.directoryRequired
+          ? 'assistant-directory-required'
+          : 'assistant-error';
+      _assistantMessageArgs = <String, Object>{'message': error};
+      _assistantMessageIsError = true;
+      notifyListeners();
+      return;
+    }
+    _selected
+      ..clear()
+      ..addAll(result.paths);
+    _commitSelection();
+    _assistantMessageKey = 'assistant-matched';
+    _assistantMessageArgs = <String, Object>{
+      'matched': result.matchedPaths.length,
+      'affected': result.affectedCount,
+    };
+    _assistantMessageIsError = false;
+    notifyListeners();
+  }
+
+  void invertAssistantSelection() {
+    final List<String> paths = invertSelection(assistantGroups, _selected);
+    _selected
+      ..clear()
+      ..addAll(paths);
+    _commitSelection();
+    notifyListeners();
+  }
+
+  void selectAllAssistantEntries() {
+    final List<String> paths = selectAllEntries(assistantGroups);
+    _selected
+      ..clear()
+      ..addAll(paths);
+    _commitSelection();
+    notifyListeners();
+  }
+
+  void undoSelection() {
+    _applyHistory(undoSelectionHistory(_history));
+  }
+
+  void redoSelection() {
+    _applyHistory(redoSelectionHistory(_history));
+  }
+
+  String exportAssistant() => serializeSelectionConfig(_assistant);
+
+  bool importAssistant(String document) {
+    try {
+      _assistant = parseSelectionConfig(document);
+    } on FormatException catch (error) {
+      _assistantMessageKey = 'assistant-error';
+      _assistantMessageArgs = <String, Object>{'message': error.message};
+      _assistantMessageIsError = true;
+      notifyListeners();
+      return false;
+    }
+    _clearAssistantMessage();
+    notifyListeners();
+    return true;
+  }
+
+  void _clearAssistantMessage() {
+    _assistantMessageKey = '';
+    _assistantMessageArgs = const <String, Object>{};
+    _assistantMessageIsError = false;
+  }
+
+  void _applyHistory(SelectionHistory next) {
+    if (identical(next, _history)) {
+      return;
+    }
+    _history = next;
+    _selected
+      ..clear()
+      ..addAll(next.present);
+    notifyListeners();
+  }
+
+  void _commitSelection() {
+    _history = pushSelectionHistory(_history, _selected);
   }
 
   List<ScanRow> get selectedRows =>

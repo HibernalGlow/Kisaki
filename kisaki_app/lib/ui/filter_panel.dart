@@ -587,21 +587,10 @@ class _Section extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: BoardTokens.gap),
-      child: FlatCard(
-        child: Padding(
-          padding: const EdgeInsets.all(BoardTokens.gap),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              MicroHeading(Labels.of(labelKey)),
-              const SizedBox(height: BoardTokens.gapSmall),
-              ...children,
-            ],
-          ),
-        ),
-      ),
+    return SectionCard(
+      key: Key(labelKey),
+      title: Labels.of(labelKey),
+      children: children,
     );
   }
 }
@@ -682,12 +671,11 @@ class _Field extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextField(
+    return BoardField(
       key: Key(keyName),
-      controller: TextEditingController(text: value),
-      maxLines: multiline ? 4 : 1,
-      style: BoardTheme.of(context).text.bodyMedium,
-      decoration: InputDecoration(hintText: Labels.of(labelKey)),
+      labelKey: labelKey,
+      value: value,
+      multiline: multiline,
       onChanged: onChanged,
     );
   }
@@ -829,25 +817,13 @@ class _Dropdown<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // The section heading is the visible name, so the field itself needs an accessible one.
-    return Semantics(
-      container: true,
-      label: Labels.of(keyName),
-      child: DropdownButtonFormField<T>(
-        key: Key(keyName),
-        initialValue: current,
-        // Without this the menu keeps its intrinsic width and overflows narrow slots.
-        isExpanded: true,
-        items: <DropdownMenuItem<T>>[
-          for (final T value in values)
-            DropdownMenuItem(value: value, child: Text(label(value))),
-        ],
-        onChanged: (T? value) {
-          if (value != null) {
-            onChanged(value);
-          }
-        },
-      ),
+    return BoardDropdown<T>(
+      key: Key(keyName),
+      labelKey: keyName,
+      values: values,
+      current: current,
+      label: label,
+      onChanged: onChanged,
     );
   }
 }
