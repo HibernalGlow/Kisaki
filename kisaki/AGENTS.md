@@ -119,7 +119,13 @@ python3 misc/find_unused_slint_translations.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
 python3 misc/find_unused_settings_properties.py kisaki
 python3 misc/delete_unused_krokiet_slint_imports.py kisaki
+python3 kisaki/tools/check_grid.py kisaki
 ```
+
+`check_grid.py` is the enforcement behind "grid first": any raw layout literal in `ui/` that is not a
+multiple of the 4px half-unit fails the run. `ui/globals/theme.slint` defines the scale and is only
+reported, never failed; the window and lane bounds in the layout contract below are measured geometry
+and stay whitelisted. Snap a value to the grid instead of adding a number to that whitelist.
 
 `just fix` runs the whole workspace; prefer the per-package forms so unrelated upstream crates stay
 untouched. A build reported as passing is not evidence - read the log, `build.rs` failures can be
