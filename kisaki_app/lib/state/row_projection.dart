@@ -88,3 +88,19 @@ List<ScanRow> projectRows({
   });
   return result;
 }
+
+/// Port of `formatReversePath`: the leaf comes first, so a long shared prefix stops hiding the part
+/// that actually differs. A path with nothing to reverse is shown as it is.
+String formatReversePath(String path) {
+  final String normalized = path.replaceAll(r'\', '/');
+  final String prefix = normalized.startsWith('//') ? '//' : '';
+  final List<String> parts = normalized
+      .substring(prefix.length)
+      .split('/')
+      .where((String part) => part.isNotEmpty)
+      .toList();
+  if (parts.length < 2) {
+    return path;
+  }
+  return parts.reversed.join(' \u2039 ');
+}

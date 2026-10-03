@@ -427,6 +427,8 @@ class Labels {
     'label-max-size': 'Maximum size (KiB)',
     'label-min-size': 'Minimum size (KiB)',
     'label-no-options': 'This scanner has no additional options.',
+    'label-reverse-path': 'Path last',
+    'label-wrap-text': 'Wrap text',
     'label-recursive': 'Recursive search',
     'label-reference': 'Reference folder',
     'label-thumbnails': 'Thumbnails',

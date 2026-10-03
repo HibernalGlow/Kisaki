@@ -12,6 +12,7 @@ import 'filter_model.dart';
 import 'group_organize.dart';
 import 'image_comparison.dart';
 import 'row_projection.dart';
+import 'row_selection.dart';
 import 'selection_model.dart';
 import 'similar_folders.dart';
 import 'simiu_model.dart';
@@ -119,6 +120,9 @@ class BoardController extends ChangeNotifier {
   String? _previewPath;
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
+  String _selectionAnchor = '';
+  bool _reversePath = false;
+  bool _wrapText = false;
   final Map<String, double> _columnWidths = <String, double>{};
   bool _showThumbnails = true;
   OrganizeOptions _organize = const OrganizeOptions();
@@ -708,18 +712,70 @@ class BoardController extends ChangeNotifier {
     );
   }
 
-  /// The rows a drag rectangle covered become the selection, or join it when a modifier is held.
-  void applyBoxSelection(Iterable<String> paths, {required bool additive}) {
-    if (additive) {
-      _selected.addAll(paths);
-    } else {
-      _selected
-        ..clear()
-        ..addAll(paths);
+  /// The rows a drag rectangle covered become the selection; Ctrl or Command adds, Alt subtracts.
+  void applyBoxSelection(Iterable<String> paths, BoxMode mode) {
+    final List<String> next = applyBoxPaths(
+      _selected.toList(),
+      paths.where((String path) => !isReferencePath(path)).toList(),
+      mode,
+    );
+    _selected
+      ..clear()
+      ..addAll(next);
+    _commitSelection();
+    notifyListeners();
+  }
+
+  bool isReferencePath(String path) =>
+      _rows.any((ScanRow row) => row.path == path && row.isReference);
+
+  /// Port of the reference's click rules: plain picks one, Ctrl/Cmd adds, Shift extends the range
+  /// from the last row clicked without a modifier.
+  void clickSelect(
+    ScanRow row, {
+    required bool additive,
+    required bool ranged,
+  }) {
+    final bool checked = !_selected.contains(row.path);
+    final ClickMode mode = ranged
+        ? ClickMode.range
+        : additive
+        ? ClickMode.toggle
+        : ClickMode.replace;
+    final List<String> next = applyResultSelection(
+      current: _selected.toList(),
+      visible: _visible,
+      path: row.path,
+      checked: checked,
+      mode: mode,
+      anchor: _selectionAnchor,
+    );
+    _selected
+      ..clear()
+      ..addAll(next);
+    if (!ranged) {
+      _selectionAnchor = row.path;
     }
     _commitSelection();
     notifyListeners();
   }
+
+  /// Display toggles the reference exposes for the table body.
+  bool get reversePath => _reversePath;
+  bool get wrapText => _wrapText;
+
+  void setReversePath(bool value) {
+    _reversePath = value;
+    notifyListeners();
+  }
+
+  void setWrapText(bool value) {
+    _wrapText = value;
+    notifyListeners();
+  }
+
+  String shownPath(ScanRow row) =>
+      _reversePath ? formatReversePath(row.path) : row.path;
 
   void selectAllVisible() {
     for (final ScanRow row in _visible) {
