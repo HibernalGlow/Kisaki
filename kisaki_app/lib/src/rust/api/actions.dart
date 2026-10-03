@@ -22,3 +22,9 @@ Future<String> exportResults({required ExportRequest request}) =>
 /// result is a name: bad names and bad extensions. A dry run reports the plan without touching disk.
 Future<RenameOutcome> renameFiles({required RenameRequest request}) =>
     RustLib.instance.api.crateApiActionsRenameFiles(request: request);
+
+/// Moves or copies the selection into a destination folder. czkawka_core has no move API, so this is
+/// the one action the frontend owns outright. A dry run plans it, and a name already in the
+/// destination is skipped unless the request asks for something else.
+Future<MoveOutcome> moveFiles({required MoveRequest request}) =>
+    RustLib.instance.api.crateApiActionsMoveFiles(request: request);

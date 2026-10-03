@@ -27,7 +27,7 @@
 // Section: imports
 
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1626947234;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 31292044;
 
 // Section: executor
 
@@ -243,6 +243,35 @@ fn wire__crate__api__schema__list_tools_impl(
         },
     )
 }
+fn wire__crate__api__actions__move_files_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "move_files",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::types::MoveRequest>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::actions::move_files(api_request).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__actions__rename_files_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -372,6 +401,20 @@ impl SseDecode for crate::api::types::ColumnDef {
             flex: var_flex,
             min_width: var_minWidth,
             align_right: var_alignRight,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::ConflictPolicy {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::ConflictPolicy::Skip,
+            1 => crate::api::types::ConflictPolicy::Overwrite,
+            2 => crate::api::types::ConflictPolicy::Rename,
+            3 => crate::api::types::ConflictPolicy::Error,
+            _ => unreachable!("Invalid variant for ConflictPolicy: {}", inner),
         };
     }
 }
@@ -589,6 +632,18 @@ impl SseDecode for Vec<crate::api::types::FieldValue> {
     }
 }
 
+impl SseDecode for Vec<crate::api::types::MoveItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::types::MoveItem>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<i64> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -646,6 +701,91 @@ impl SseDecode for Vec<crate::api::types::ToolSpec> {
             ans_.push(<crate::api::types::ToolSpec>::sse_decode(deserializer));
         }
         return ans_;
+    }
+}
+
+impl SseDecode for crate::api::types::MoveAction {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::MoveAction::Move,
+            1 => crate::api::types::MoveAction::Copy,
+            _ => unreachable!("Invalid variant for MoveAction: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::MoveItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_from = <String>::sse_decode(deserializer);
+        let mut var_to = <String>::sse_decode(deserializer);
+        let mut var_status = <crate::api::types::MoveStatus>::sse_decode(deserializer);
+        let mut var_detail = <String>::sse_decode(deserializer);
+        return crate::api::types::MoveItem {
+            from: var_from,
+            to: var_to,
+            status: var_status,
+            detail: var_detail,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::MoveOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_moved = <i32>::sse_decode(deserializer);
+        let mut var_copied = <i32>::sse_decode(deserializer);
+        let mut var_planned = <i32>::sse_decode(deserializer);
+        let mut var_skipped = <i32>::sse_decode(deserializer);
+        let mut var_failed = <i32>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::types::MoveItem>>::sse_decode(deserializer);
+        let mut var_messages = <String>::sse_decode(deserializer);
+        return crate::api::types::MoveOutcome {
+            moved: var_moved,
+            copied: var_copied,
+            planned: var_planned,
+            skipped: var_skipped,
+            failed: var_failed,
+            items: var_items,
+            messages: var_messages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::MoveRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_paths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_destination = <String>::sse_decode(deserializer);
+        let mut var_action = <crate::api::types::MoveAction>::sse_decode(deserializer);
+        let mut var_conflict = <crate::api::types::ConflictPolicy>::sse_decode(deserializer);
+        let mut var_preserveStructure = <bool>::sse_decode(deserializer);
+        let mut var_dryRun = <bool>::sse_decode(deserializer);
+        return crate::api::types::MoveRequest {
+            paths: var_paths,
+            destination: var_destination,
+            action: var_action,
+            conflict: var_conflict,
+            preserve_structure: var_preserveStructure,
+            dry_run: var_dryRun,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::MoveStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::MoveStatus::Moved,
+            1 => crate::api::types::MoveStatus::Copied,
+            2 => crate::api::types::MoveStatus::Planned,
+            3 => crate::api::types::MoveStatus::Skipped,
+            4 => crate::api::types::MoveStatus::Failed,
+            _ => unreachable!("Invalid variant for MoveStatus: {}", inner),
+        };
     }
 }
 
@@ -904,8 +1044,9 @@ fn pde_ffi_dispatcher_primary_impl(
         2 => wire__crate__api__actions__delete_files_impl(port, ptr, rust_vec_len, data_len),
         4 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
         6 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__actions__move_files_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -923,7 +1064,7 @@ fn pde_ffi_dispatcher_sync_impl(
         5 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
         7 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
         8 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -946,6 +1087,24 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::ColumnDef {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ColumnDef {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ColumnDef> for crate::api::types::ColumnDef {
     fn into_into_dart(self) -> crate::api::types::ColumnDef {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::ConflictPolicy {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Skip => 0.into_dart(),
+            Self::Overwrite => 1.into_dart(),
+            Self::Rename => 2.into_dart(),
+            Self::Error => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ConflictPolicy {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ConflictPolicy> for crate::api::types::ConflictPolicy {
+    fn into_into_dart(self) -> crate::api::types::ConflictPolicy {
         self
     }
 }
@@ -1092,6 +1251,100 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::FieldValue {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::FieldValue {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::FieldValue> for crate::api::types::FieldValue {
     fn into_into_dart(self) -> crate::api::types::FieldValue {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::MoveAction {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Move => 0.into_dart(),
+            Self::Copy => 1.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::MoveAction {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::MoveAction> for crate::api::types::MoveAction {
+    fn into_into_dart(self) -> crate::api::types::MoveAction {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::MoveItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.from.into_into_dart().into_dart(),
+            self.to.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::MoveItem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::MoveItem> for crate::api::types::MoveItem {
+    fn into_into_dart(self) -> crate::api::types::MoveItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::MoveOutcome {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.moved.into_into_dart().into_dart(),
+            self.copied.into_into_dart().into_dart(),
+            self.planned.into_into_dart().into_dart(),
+            self.skipped.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.messages.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::MoveOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::MoveOutcome> for crate::api::types::MoveOutcome {
+    fn into_into_dart(self) -> crate::api::types::MoveOutcome {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::MoveRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.paths.into_into_dart().into_dart(),
+            self.destination.into_into_dart().into_dart(),
+            self.action.into_into_dart().into_dart(),
+            self.conflict.into_into_dart().into_dart(),
+            self.preserve_structure.into_into_dart().into_dart(),
+            self.dry_run.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::MoveRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::MoveRequest> for crate::api::types::MoveRequest {
+    fn into_into_dart(self) -> crate::api::types::MoveRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::MoveStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Moved => 0.into_dart(),
+            Self::Copied => 1.into_dart(),
+            Self::Planned => 2.into_dart(),
+            Self::Skipped => 3.into_dart(),
+            Self::Failed => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::MoveStatus {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::MoveStatus> for crate::api::types::MoveStatus {
+    fn into_into_dart(self) -> crate::api::types::MoveStatus {
         self
     }
 }
@@ -1343,6 +1596,24 @@ impl SseEncode for crate::api::types::ColumnDef {
     }
 }
 
+impl SseEncode for crate::api::types::ConflictPolicy {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::ConflictPolicy::Skip => 0,
+                crate::api::types::ConflictPolicy::Overwrite => 1,
+                crate::api::types::ConflictPolicy::Rename => 2,
+                crate::api::types::ConflictPolicy::Error => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for crate::api::types::DeleteOutcome {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1516,6 +1787,16 @@ impl SseEncode for Vec<crate::api::types::FieldValue> {
     }
 }
 
+impl SseEncode for Vec<crate::api::types::MoveItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::types::MoveItem>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<i64> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1563,6 +1844,76 @@ impl SseEncode for Vec<crate::api::types::ToolSpec> {
         for item in self {
             <crate::api::types::ToolSpec>::sse_encode(item, serializer);
         }
+    }
+}
+
+impl SseEncode for crate::api::types::MoveAction {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::MoveAction::Move => 0,
+                crate::api::types::MoveAction::Copy => 1,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::types::MoveItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.from, serializer);
+        <String>::sse_encode(self.to, serializer);
+        <crate::api::types::MoveStatus>::sse_encode(self.status, serializer);
+        <String>::sse_encode(self.detail, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::MoveOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.moved, serializer);
+        <i32>::sse_encode(self.copied, serializer);
+        <i32>::sse_encode(self.planned, serializer);
+        <i32>::sse_encode(self.skipped, serializer);
+        <i32>::sse_encode(self.failed, serializer);
+        <Vec<crate::api::types::MoveItem>>::sse_encode(self.items, serializer);
+        <String>::sse_encode(self.messages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::MoveRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.paths, serializer);
+        <String>::sse_encode(self.destination, serializer);
+        <crate::api::types::MoveAction>::sse_encode(self.action, serializer);
+        <crate::api::types::ConflictPolicy>::sse_encode(self.conflict, serializer);
+        <bool>::sse_encode(self.preserve_structure, serializer);
+        <bool>::sse_encode(self.dry_run, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::MoveStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::MoveStatus::Moved => 0,
+                crate::api::types::MoveStatus::Copied => 1,
+                crate::api::types::MoveStatus::Planned => 2,
+                crate::api::types::MoveStatus::Skipped => 3,
+                crate::api::types::MoveStatus::Failed => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 
@@ -1743,10 +2094,11 @@ mod io {
 
     // Section: imports
 
-    use super::*;
     use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
+
+    use super::*;
 
     // Section: boilerplate
 
@@ -1763,12 +2115,12 @@ mod web {
 
     // Section: imports
 
-    use super::*;
     use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-    use flutter_rust_bridge::for_generated::wasm_bindgen;
     use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco, wasm_bindgen};
     use flutter_rust_bridge::{Handler, IntoIntoDart};
+
+    use super::*;
 
     // Section: boilerplate
 

@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'types.freezed.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 class ColumnDef {
   final String key;
@@ -44,6 +44,17 @@ class ColumnDef {
           flex == other.flex &&
           minWidth == other.minWidth &&
           alignRight == other.alignRight;
+}
+
+/// What to do when the destination already holds the requested name. `Skip` is the default because
+/// a GUI action must never destroy a file the user did not choose to replace.
+enum ConflictPolicy {
+  skip,
+  overwrite,
+
+  /// Takes `name (1).ext`, `name (2).ext`, ... until a slot is free.
+  rename,
+  error,
 }
 
 class DeleteOutcome {
@@ -246,6 +257,128 @@ class FieldValue {
           id == other.id &&
           value == other.value;
 }
+
+/// Whether the original stays where it is.
+enum MoveAction { move, copy }
+
+class MoveItem {
+  final String from;
+  final String to;
+  final MoveStatus status;
+  final String detail;
+
+  const MoveItem({
+    required this.from,
+    required this.to,
+    required this.status,
+    required this.detail,
+  });
+
+  @override
+  int get hashCode =>
+      from.hashCode ^ to.hashCode ^ status.hashCode ^ detail.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MoveItem &&
+          runtimeType == other.runtimeType &&
+          from == other.from &&
+          to == other.to &&
+          status == other.status &&
+          detail == other.detail;
+}
+
+class MoveOutcome {
+  final int moved;
+  final int copied;
+  final int planned;
+  final int skipped;
+  final int failed;
+
+  /// One entry per selected path, in request order.
+  final List<MoveItem> items;
+  final String messages;
+
+  const MoveOutcome({
+    required this.moved,
+    required this.copied,
+    required this.planned,
+    required this.skipped,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  @override
+  int get hashCode =>
+      moved.hashCode ^
+      copied.hashCode ^
+      planned.hashCode ^
+      skipped.hashCode ^
+      failed.hashCode ^
+      items.hashCode ^
+      messages.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MoveOutcome &&
+          runtimeType == other.runtimeType &&
+          moved == other.moved &&
+          copied == other.copied &&
+          planned == other.planned &&
+          skipped == other.skipped &&
+          failed == other.failed &&
+          items == other.items &&
+          messages == other.messages;
+}
+
+/// Moves or copies the selection into one destination folder.
+class MoveRequest {
+  final List<String> paths;
+  final String destination;
+  final MoveAction action;
+  final ConflictPolicy conflict;
+
+  /// Mirrors each file's folder trail under the filesystem root instead of dropping everything
+  /// into the destination flat.
+  final bool preserveStructure;
+  final bool dryRun;
+
+  const MoveRequest({
+    required this.paths,
+    required this.destination,
+    required this.action,
+    required this.conflict,
+    required this.preserveStructure,
+    required this.dryRun,
+  });
+
+  @override
+  int get hashCode =>
+      paths.hashCode ^
+      destination.hashCode ^
+      action.hashCode ^
+      conflict.hashCode ^
+      preserveStructure.hashCode ^
+      dryRun.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is MoveRequest &&
+          runtimeType == other.runtimeType &&
+          paths == other.paths &&
+          destination == other.destination &&
+          action == other.action &&
+          conflict == other.conflict &&
+          preserveStructure == other.preserveStructure &&
+          dryRun == other.dryRun;
+}
+
+/// What happened to one selected file.
+enum MoveStatus { moved, copied, planned, skipped, failed }
 
 class ProgressUpdate {
   final String stageLabelKey;

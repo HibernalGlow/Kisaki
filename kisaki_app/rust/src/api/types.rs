@@ -188,6 +188,67 @@ pub struct RenameOutcome {
     pub messages: String,
 }
 
+/// Whether the original stays where it is.
+#[derive(Debug, Clone, PartialEq)]
+pub enum MoveAction {
+    Move,
+    Copy,
+}
+
+/// What to do when the destination already holds the requested name. `Skip` is the default because
+/// a GUI action must never destroy a file the user did not choose to replace.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ConflictPolicy {
+    Skip,
+    Overwrite,
+    /// Takes `name (1).ext`, `name (2).ext`, ... until a slot is free.
+    Rename,
+    Error,
+}
+
+/// Moves or copies the selection into one destination folder.
+#[derive(Debug, Clone, PartialEq)]
+pub struct MoveRequest {
+    pub paths: Vec<String>,
+    pub destination: String,
+    pub action: MoveAction,
+    pub conflict: ConflictPolicy,
+    /// Mirrors each file's folder trail under the filesystem root instead of dropping everything
+    /// into the destination flat.
+    pub preserve_structure: bool,
+    pub dry_run: bool,
+}
+
+/// What happened to one selected file.
+#[derive(Debug, Clone, PartialEq)]
+pub enum MoveStatus {
+    Moved,
+    Copied,
+    Planned,
+    Skipped,
+    Failed,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MoveItem {
+    pub from: String,
+    pub to: String,
+    pub status: MoveStatus,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct MoveOutcome {
+    pub moved: i32,
+    pub copied: i32,
+    pub planned: i32,
+    pub skipped: i32,
+    pub failed: i32,
+    /// One entry per selected path, in request order.
+    pub items: Vec<MoveItem>,
+    pub messages: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EngineInfo {
     pub core_version: String,

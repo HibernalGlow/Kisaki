@@ -270,60 +270,210 @@ void main() {
   // The rename verb is reachable from Dart only through the generated API so far: the board's
   // KisakiEngine interface would need a new member, and every implementer of that interface lives
   // in the parallel lane. This drives the FFI directly to prove the shipped dylib really does it.
-  test('renaming through the bridge fixes the selected bad names only', () async {
-    final root = await Directory.systemTemp.createTemp('kisaki_rename_');
-    final canonicalRoot = await root.resolveSymbolicLinks();
-    addTearDown(() => root.delete(recursive: true));
-    await _write(root, ' leading.txt', 'a');
-    await _write(root, 'emoji_😀.txt', 'a');
-    await _write(root, 'plain.txt', 'a');
+  test(
+    'renaming through the bridge fixes the selected bad names only',
+    () async {
+      final root = await Directory.systemTemp.createTemp('kisaki_rename_');
+      final canonicalRoot = await root.resolveSymbolicLinks();
+      addTearDown(() => root.delete(recursive: true));
+      await _write(root, ' leading.txt', 'a');
+      await _write(root, 'emoji_😀.txt', 'a');
+      await _write(root, 'plain.txt', 'a');
 
-    final selected = await _badNamePaths(engine, root.path);
-    expect(selected, hasLength(2), reason: 'the two bad names are the selection');
+      final selected = await _badNamePaths(engine, root.path);
+      expect(
+        selected,
+        hasLength(2),
+        reason: 'the two bad names are the selection',
+      );
 
-    final dry = await g_actions.renameFiles(
-      request: _rename('bad_names', root.path, selected, dryRun: true),
-    );
-    expect((dry.renamed, dry.planned, dry.failed), (0, 2, 0));
-    expect(dry.items.map((item) => item.status), everyElement(g.RenameStatus.planned));
-    expect(
-      File('$canonicalRoot/ leading.txt').existsSync(),
-      isTrue,
-      reason: 'a dry run must leave the file where it is',
-    );
+      final dry = await g_actions.renameFiles(
+        request: _rename('bad_names', root.path, selected, dryRun: true),
+      );
+      expect((dry.renamed, dry.planned, dry.failed), (0, 2, 0));
+      expect(
+        dry.items.map((item) => item.status),
+        everyElement(g.RenameStatus.planned),
+      );
+      expect(
+        File('$canonicalRoot/ leading.txt').existsSync(),
+        isTrue,
+        reason: 'a dry run must leave the file where it is',
+      );
 
-    final applied = await g_actions.renameFiles(
-      request: _rename('bad_names', root.path, selected, dryRun: false),
-    );
-    expect((applied.renamed, applied.failed), (2, 0), reason: applied.messages);
-    expect(File('$canonicalRoot/leading.txt').readAsStringSync(), 'a');
-    expect(File('$canonicalRoot/emoji_.txt').readAsStringSync(), 'a');
-    expect(
-      File('$canonicalRoot/ leading.txt').existsSync(),
-      isFalse,
-      reason: 'the old spelling has to be gone',
-    );
+      final applied = await g_actions.renameFiles(
+        request: _rename('bad_names', root.path, selected, dryRun: false),
+      );
+      expect(
+        (applied.renamed, applied.failed),
+        (2, 0),
+        reason: applied.messages,
+      );
+      expect(File('$canonicalRoot/leading.txt').readAsStringSync(), 'a');
+      expect(File('$canonicalRoot/emoji_.txt').readAsStringSync(), 'a');
+      expect(
+        File('$canonicalRoot/ leading.txt').existsSync(),
+        isFalse,
+        reason: 'the old spelling has to be gone',
+      );
 
-    // The untouched file proves the run was scoped to the selection, not to the whole scan.
-    expect(File('$canonicalRoot/plain.txt').existsSync(), isTrue);
-  }, timeout: const Timeout(Duration(minutes: 3)));
+      // The untouched file proves the run was scoped to the selection, not to the whole scan.
+      expect(File('$canonicalRoot/plain.txt').existsSync(), isTrue);
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
 
-  test('the bridge renames a file whose extension contradicts its content', () async {
-    final root = await Directory.systemTemp.createTemp('kisaki_bext_');
-    final canonicalRoot = await root.resolveSymbolicLinks();
-    addTearDown(() => root.delete(recursive: true));
-    // A PNG signature inside a .jpg name: only the engine's own content check can say so.
-    final file = File('${root.path}/photo.jpg');
-    await file.writeAsBytes(<int>[0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d]);
+  test(
+    'the bridge renames a file whose extension contradicts its content',
+    () async {
+      final root = await Directory.systemTemp.createTemp('kisaki_bext_');
+      final canonicalRoot = await root.resolveSymbolicLinks();
+      addTearDown(() => root.delete(recursive: true));
+      // A PNG signature inside a .jpg name: only the engine's own content check can say so.
+      final file = File('${root.path}/photo.jpg');
+      await file.writeAsBytes(<int>[
+        0x89,
+        0x50,
+        0x4e,
+        0x47,
+        0x0d,
+        0x0a,
+        0x1a,
+        0x0a,
+        0x00,
+        0x00,
+        0x00,
+        0x0d,
+      ]);
 
-    final outcome = await g_actions.renameFiles(
-      request: _rename('bad_extensions', root.path, ['$canonicalRoot/photo.jpg'], dryRun: false),
-    );
+      final outcome = await g_actions.renameFiles(
+        request: _rename('bad_extensions', root.path, [
+          '$canonicalRoot/photo.jpg',
+        ], dryRun: false),
+      );
 
-    expect((outcome.renamed, outcome.failed), (1, 0), reason: '${outcome.items}');
-    expect(outcome.items.single.to, '$canonicalRoot/photo.png');
-    expect(File('$canonicalRoot/photo.png').readAsBytesSync().sublist(0, 4), <int>[0x89, 0x50, 0x4e, 0x47]);
-  }, timeout: const Timeout(Duration(minutes: 3)));
+      expect(
+        (outcome.renamed, outcome.failed),
+        (1, 0),
+        reason: '${outcome.items}',
+      );
+      expect(outcome.items.single.to, '$canonicalRoot/photo.png');
+      expect(
+        File('$canonicalRoot/photo.png').readAsBytesSync().sublist(0, 4),
+        <int>[0x89, 0x50, 0x4e, 0x47],
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+
+  test(
+    'the bridge moves a selection and never overwrites by default',
+    () async {
+      final root = await Directory.systemTemp.createTemp('kisaki_move_');
+      final canonicalRoot = await root.resolveSymbolicLinks();
+      addTearDown(() => root.delete(recursive: true));
+      final one = await _write(root, 'in/one.txt', '1');
+      final two = await _write(root, 'in/two.txt', '2');
+      final destination = await Directory('${root.path}/out').create();
+      final canonicalDestination = await destination.resolveSymbolicLinks();
+      // Occupy the name the second file would take, so the default policy has something to refuse.
+      await File('$canonicalDestination/two.txt').writeAsString('already');
+
+      final paths = [one.path, two.path];
+      // The dry run reports the refusal too, so the plan says what would really happen: one file
+      // moves and the colliding one is left where it is.
+      final dry = await g_actions.moveFiles(
+        request: _move(paths, canonicalDestination, dryRun: true),
+      );
+      expect(
+        (dry.planned, dry.moved, dry.skipped, dry.failed),
+        (1, 0, 1, 0),
+        reason: '${dry.items}',
+      );
+      expect(dry.items[1].to, '$canonicalDestination/two.txt');
+      expect(dry.items[1].detail, 'Target already exists');
+      expect(
+        destination
+            .listSync()
+            .whereType<File>()
+            .map((file) => file.path.split('/').last)
+            .toList()
+          ..sort(),
+        ['two.txt'],
+        reason: 'a planned move must not write anything',
+      );
+
+      final moved = await g_actions.moveFiles(
+        request: _move(paths, canonicalDestination, dryRun: false),
+      );
+      expect(
+        (moved.moved, moved.skipped, moved.failed),
+        (1, 1, 0),
+        reason: moved.messages,
+      );
+      expect(File('$canonicalDestination/one.txt').readAsStringSync(), '1');
+      expect(
+        File('$canonicalDestination/two.txt').readAsStringSync(),
+        'already',
+        reason: 'the skip policy keeps the occupant',
+      );
+      expect(
+        File('$canonicalRoot/in/two.txt').existsSync(),
+        isTrue,
+        reason: 'a refused file stays put',
+      );
+      expect(
+        File('$canonicalRoot/in/one.txt').existsSync(),
+        isFalse,
+        reason: 'a move leaves nothing behind',
+      );
+      expect(moved.messages, contains('Completed 1 operation(s)'));
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
+
+  test(
+    'the bridge copies instead of moving and renames around a collision',
+    () async {
+      final root = await Directory.systemTemp.createTemp('kisaki_copy_');
+      addTearDown(() => root.delete(recursive: true));
+      final source = await _write(root, 'in/frame.png', 'image');
+      final destination = await Directory('${root.path}/out').create();
+      final canonicalDestination = await destination.resolveSymbolicLinks();
+      await File('$canonicalDestination/frame.png').writeAsString('first');
+
+      final copied = await g_actions.moveFiles(
+        request: _move(
+          [source.path],
+          canonicalDestination,
+          action: g.MoveAction.copy,
+          conflict: g.ConflictPolicy.rename,
+          dryRun: false,
+        ),
+      );
+
+      expect(
+        (copied.copied, copied.moved, copied.failed),
+        (1, 0, 0),
+        reason: '${copied.items}',
+      );
+      expect(copied.items.single.to, '$canonicalDestination/frame (1).png');
+      expect(
+        File(source.path).existsSync(),
+        isTrue,
+        reason: 'a copy leaves the original alone',
+      );
+      expect(
+        File('$canonicalDestination/frame.png').readAsStringSync(),
+        'first',
+      );
+      expect(
+        File('$canonicalDestination/frame (1).png').readAsStringSync(),
+        'image',
+      );
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
 }
 
 Future<List<String>> _badNamePaths(KisakiEngine engine, String rootPath) async {
@@ -352,7 +502,12 @@ Future<List<String>> _badNamePaths(KisakiEngine engine, String rootPath) async {
 
 /// A rename request as the board would send it. The scan block carries no option fields, so the
 /// engine works from its own defaults, and the paths keep the spelling the scan reported.
-g.RenameRequest _rename(String tool, String rootPath, List<String> paths, {required bool dryRun}) {
+g.RenameRequest _rename(
+  String tool,
+  String rootPath,
+  List<String> paths, {
+  required bool dryRun,
+}) {
   return g.RenameRequest(
     tool: tool,
     scan: g.ScanRequest(
@@ -370,6 +525,25 @@ g.RenameRequest _rename(String tool, String rootPath, List<String> paths, {requi
       fields: const [],
     ),
     paths: paths,
+    dryRun: dryRun,
+  );
+}
+
+/// A move request as the board would send it: the destination already uses the spelling the
+/// filesystem reports, and the defaults are the reference frontend's - move, never overwrite.
+g.MoveRequest _move(
+  List<String> paths,
+  String destination, {
+  g.MoveAction action = g.MoveAction.move,
+  g.ConflictPolicy conflict = g.ConflictPolicy.skip,
+  required bool dryRun,
+}) {
+  return g.MoveRequest(
+    paths: paths,
+    destination: destination,
+    action: action,
+    conflict: conflict,
+    preserveStructure: false,
     dryRun: dryRun,
   );
 }
