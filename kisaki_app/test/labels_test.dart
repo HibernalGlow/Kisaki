@@ -168,19 +168,35 @@ void main() {
 
   test('status placeholders are substituted, never shown raw', () {
     expect(
-      Labels.of('status_found', args: <String, Object>{'files': 3, 'groups': 2, 'size': '1.5 MiB'}),
+      Labels.of(
+        'status_found',
+        args: <String, Object>{'files': 3, 'groups': 2, 'size': '1.5 MiB'},
+      ),
       'Found 3 files in 2 groups (1.5 MiB)',
     );
     expect(
-      Labels.of('plan_header', args: <String, Object>{'count': 4, 'size': '9 B', 'verb': 'move to trash'}),
+      Labels.of(
+        'plan_header',
+        args: <String, Object>{
+          'count': 4,
+          'size': '9 B',
+          'verb': 'move to trash',
+        },
+      ),
       'Plan for 4 paths (9 B): move to trash',
     );
     expect(
-      Labels.of('confirm_delete_body', args: <String, Object>{'count': 1, 'size': '1 B'}),
+      Labels.of(
+        'confirm_delete_body',
+        args: <String, Object>{'count': 1, 'size': '1 B'},
+      ),
       'This will remove 1 paths (1 B) for real.',
     );
     expect(Labels.of('status_scanning'), 'Scanning...');
-    expect(Labels.of('status_scanning', args: <String, Object>{'ignored': 1}), 'Scanning...');
+    expect(
+      Labels.of('status_scanning', args: <String, Object>{'ignored': 1}),
+      'Scanning...',
+    );
   });
 
   test('an unknown key still reads as a label, not as the raw id', () {

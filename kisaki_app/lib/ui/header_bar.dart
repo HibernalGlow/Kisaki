@@ -40,7 +40,9 @@ class HeaderBar extends StatelessWidget {
           const SizedBox(width: BoardTokens.gap),
           BoardAction(
             labelKey: 'action-theme',
-            icon: controller.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+            icon: controller.dark
+                ? Icons.light_mode_outlined
+                : Icons.dark_mode_outlined,
             dense: true,
             onPressed: controller.toggleTheme,
           ),
@@ -65,12 +67,17 @@ class _ScannerPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
-    final String label = controller.tool == null ? Labels.of('tool-selector') : Labels.of(controller.tool!.labelKey);
+    final String label = controller.tool == null
+        ? Labels.of('tool-selector')
+        : Labels.of(controller.tool!.labelKey);
     return GestureDetector(
       key: const Key('scanner-picker'),
       onTap: () => KisakiOverlays.openToolMenu(context, controller),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gap, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BoardTokens.gap,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: palette.raised,
           borderRadius: BorderRadius.circular(BoardTokens.radius),
@@ -79,7 +86,8 @@ class _ScannerPicker extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            if (controller.tool != null) GlyphTile(glyph: controller.tool!.glyph, size: 18),
+            if (controller.tool != null)
+              GlyphTile(glyph: controller.tool!.glyph, size: 18),
             const SizedBox(width: BoardTokens.gapSmall),
             Text(
               label,
@@ -111,7 +119,10 @@ class _ScanControl extends StatelessWidget {
       key: const Key('scan-control'),
       onTap: running ? controller.stopScan : () => controller.startScan(),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gap * 1.5, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: BoardTokens.gap * 1.5,
+          vertical: 6,
+        ),
         decoration: BoxDecoration(
           color: running ? palette.dangerSoft : palette.primary,
           borderRadius: BorderRadius.circular(BoardTokens.radius),
@@ -156,7 +167,10 @@ class _ProgressRail extends StatelessWidget {
           controller.statusText,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(fontSize: BoardTokens.fsLabel, color: palette.fgMuted),
+          style: TextStyle(
+            fontSize: BoardTokens.fsLabel,
+            color: palette.fgMuted,
+          ),
         ),
         const SizedBox(height: BoardTokens.gapSmall),
         SizedBox(
@@ -170,7 +184,9 @@ class _ProgressRail extends StatelessWidget {
                     minHeight: 3,
                     backgroundColor: palette.hairline,
                     valueColor: AlwaysStoppedAnimation<Color>(
-                      controller.phase == ScanPhase.failed ? palette.danger : palette.primary,
+                      controller.phase == ScanPhase.failed
+                          ? palette.danger
+                          : palette.primary,
                     ),
                   ),
                 ),

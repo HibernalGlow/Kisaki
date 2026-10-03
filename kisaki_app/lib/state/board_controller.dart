@@ -115,10 +115,13 @@ class BoardController extends ChangeNotifier {
   List<String> get reference => List<String>.unmodifiable(_reference);
   List<String> get excludedPaths => List<String>.unmodifiable(_excludedPaths);
   List<String> get excludedItems => List<String>.unmodifiable(_excludedItems);
-  List<String> get allowedExtensions => List<String>.unmodifiable(_allowedExtensions);
-  List<String> get excludedExtensions => List<String>.unmodifiable(_excludedExtensions);
+  List<String> get allowedExtensions =>
+      List<String>.unmodifiable(_allowedExtensions);
+  List<String> get excludedExtensions =>
+      List<String>.unmodifiable(_excludedExtensions);
   ScanPhase get phase => _phase;
-  bool get scanning => _phase == ScanPhase.running || _phase == ScanPhase.stopping;
+  bool get scanning =>
+      _phase == ScanPhase.running || _phase == ScanPhase.stopping;
   ProgressUpdate? get progress => _progress;
   ScanOutcome? get outcome => _outcome;
   String get statusText => Labels.of(_statusKey, args: _statusArgs);
@@ -222,7 +225,8 @@ class BoardController extends ChangeNotifier {
     _clearResults();
   }
 
-  FieldValue valueOf(String id) => _values[id] ?? FieldValue(id: id, value: const FieldPayloadText(''));
+  FieldValue valueOf(String id) =>
+      _values[id] ?? FieldValue(id: id, value: const FieldPayloadText(''));
 
   void setFieldValue(String id, FieldPayload payload) {
     _values[id] = FieldValue(id: id, value: payload);
@@ -233,16 +237,22 @@ class BoardController extends ChangeNotifier {
 
   void addReference(Iterable<String> paths) => _addInto(_reference, paths);
 
-  void addExcludedPath(Iterable<String> paths) => _addInto(_excludedPaths, paths);
+  void addExcludedPath(Iterable<String> paths) =>
+      _addInto(_excludedPaths, paths);
 
-  void addExcludedItem(Iterable<String> patterns) => _addInto(_excludedItems, patterns);
+  void addExcludedItem(Iterable<String> patterns) =>
+      _addInto(_excludedItems, patterns);
 
-  void addAllowedExtension(Iterable<String> extensions) => _addInto(_allowedExtensions, extensions);
+  void addAllowedExtension(Iterable<String> extensions) =>
+      _addInto(_allowedExtensions, extensions);
 
-  void addExcludedExtension(Iterable<String> extensions) => _addInto(_excludedExtensions, extensions);
+  void addExcludedExtension(Iterable<String> extensions) =>
+      _addInto(_excludedExtensions, extensions);
 
   void _addInto(List<String> target, Iterable<String> values) {
-    final Iterable<String> fresh = values.map((String value) => value.trim()).where((String value) => value.isNotEmpty);
+    final Iterable<String> fresh = values
+        .map((String value) => value.trim())
+        .where((String value) => value.isNotEmpty);
     if (fresh.isEmpty) {
       return;
     }
@@ -262,9 +272,11 @@ class BoardController extends ChangeNotifier {
 
   void removeExcludedItem(int index) => _removeAt(_excludedItems, index);
 
-  void removeAllowedExtension(int index) => _removeAt(_allowedExtensions, index);
+  void removeAllowedExtension(int index) =>
+      _removeAt(_allowedExtensions, index);
 
-  void removeExcludedExtension(int index) => _removeAt(_excludedExtensions, index);
+  void removeExcludedExtension(int index) =>
+      _removeAt(_excludedExtensions, index);
 
   void _removeAt(List<String> target, int index) {
     if (index < 0 || index >= target.length) {
@@ -358,31 +370,33 @@ class BoardController extends ChangeNotifier {
     _phase = ScanPhase.running;
     _setStatus('status_scanning');
     _scanSubscription?.cancel();
-    _scanSubscription = engine.startScan(buildRequest()).listen(
-      (ScanEvent event) {
-        if (generation != _generation) {
-          return;
-        }
-        _handleEvent(event);
-      },
-      onError: (Object error, StackTrace stack) {
-        if (generation != _generation) {
-          return;
-        }
-        _fail(error.toString());
-        notifyListeners();
-      },
-      onDone: () {
-        if (generation != _generation) {
-          return;
-        }
-        if (_phase == ScanPhase.running || _phase == ScanPhase.stopping) {
-          // The bridge promises exactly one terminal event before the stream closes.
-          _fail('Scan stream ended without a result');
-          notifyListeners();
-        }
-      },
-    );
+    _scanSubscription = engine
+        .startScan(buildRequest())
+        .listen(
+          (ScanEvent event) {
+            if (generation != _generation) {
+              return;
+            }
+            _handleEvent(event);
+          },
+          onError: (Object error, StackTrace stack) {
+            if (generation != _generation) {
+              return;
+            }
+            _fail(error.toString());
+            notifyListeners();
+          },
+          onDone: () {
+            if (generation != _generation) {
+              return;
+            }
+            if (_phase == ScanPhase.running || _phase == ScanPhase.stopping) {
+              // The bridge promises exactly one terminal event before the stream closes.
+              _fail('Scan stream ended without a result');
+              notifyListeners();
+            }
+          },
+        );
     notifyListeners();
     return true;
   }
@@ -489,9 +503,11 @@ class BoardController extends ChangeNotifier {
     );
   }
 
-  List<ScanRow> groupMembers(int groupIndex) => _rows.where((ScanRow row) => row.groupIndex == groupIndex).toList();
+  List<ScanRow> groupMembers(int groupIndex) =>
+      _rows.where((ScanRow row) => row.groupIndex == groupIndex).toList();
 
-  GroupSelection groupSelection(int groupIndex) => groupSelectionOf(groupMembers(groupIndex), _selected);
+  GroupSelection groupSelection(int groupIndex) =>
+      groupSelectionOf(groupMembers(groupIndex), _selected);
 
   bool isSelected(ScanRow row) => _selected.contains(row.path);
 
@@ -518,7 +534,10 @@ class BoardController extends ChangeNotifier {
     if (members.isEmpty) {
       return;
     }
-    setGroupSelected(groupIndex, groupSelectionOf(members, _selected) != GroupSelection.all);
+    setGroupSelected(
+      groupIndex,
+      groupSelectionOf(members, _selected) != GroupSelection.all,
+    );
   }
 
   void selectAllVisible() {
@@ -536,7 +555,8 @@ class BoardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  List<ScanRow> get selectedRows => _rows.where((ScanRow row) => _selected.contains(row.path)).toList();
+  List<ScanRow> get selectedRows =>
+      _rows.where((ScanRow row) => _selected.contains(row.path)).toList();
 
   /// Asks the confirm overlay first; the destructive path only runs from [acceptConfirm].
   void requestDelete() {
@@ -552,7 +572,9 @@ class BoardController extends ChangeNotifier {
       bodyKey: dryRun ? 'confirm_dry_run_body' : 'confirm_delete_body',
       args: <String, Object>{
         'count': targets.length,
-        'size': humanBytes(targets.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes)),
+        'size': humanBytes(
+          targets.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes),
+        ),
       },
       dryRun: dryRun,
     );
@@ -597,13 +619,23 @@ class BoardController extends ChangeNotifier {
         // failed to delete would otherwise vanish while the file is still on disk.
         _setStatus(
           'status_removed_partial',
-          args: <String, Object>{'removed': outcome.affected, 'failed': outcome.errors},
+          args: <String, Object>{
+            'removed': outcome.affected,
+            'failed': outcome.errors,
+          },
         );
         _selected.clear();
       } else {
-        _setStatus('status_removed_all', args: <String, Object>{'count': outcome.affected});
-        final Set<String> removed = targets.map((ScanRow row) => row.path).toSet();
-        _rows = _rows.where((ScanRow row) => !removed.contains(row.path)).toList();
+        _setStatus(
+          'status_removed_all',
+          args: <String, Object>{'count': outcome.affected},
+        );
+        final Set<String> removed = targets
+            .map((ScanRow row) => row.path)
+            .toSet();
+        _rows = _rows
+            .where((ScanRow row) => !removed.contains(row.path))
+            .toList();
         _selected.removeAll(removed);
         _recomputeVisible();
       }
@@ -636,7 +668,10 @@ class BoardController extends ChangeNotifier {
       );
       _setStatus('status_exported', args: <String, Object>{'folder': folder});
     } catch (error) {
-      _setStatus('status_export_failed', args: <String, Object>{'error': '$error'});
+      _setStatus(
+        'status_export_failed',
+        args: <String, Object>{'error': '$error'},
+      );
     } finally {
       _actionRunning = false;
       notifyListeners();

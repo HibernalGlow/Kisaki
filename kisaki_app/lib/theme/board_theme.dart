@@ -69,30 +69,26 @@ class BoardPalette {
 
   /// Group identity is the `chart_*` cycle plus a printed group number, never colour alone.
   Color chartByIndex(int index) => const <Color>[
-        Color(0xFF4F8CFF),
-        Color(0xFF3FB950),
-        Color(0xFFF0A92E),
-        Color(0xFFA855F7),
-        Color(0xFF06B6D4),
-      ][index % 5];
+    Color(0xFF4F8CFF),
+    Color(0xFF3FB950),
+    Color(0xFFF0A92E),
+    Color(0xFFA855F7),
+    Color(0xFF06B6D4),
+  ][index % 5];
 
   Color _d(Color darkColor, Color lightColor) => dark ? darkColor : lightColor;
 
   TextTheme get text => TextTheme(
-        displaySmall: _style(BoardTokens.fsMetric, FontWeight.w600, fg),
-        titleMedium: _style(BoardTokens.fsTitle, FontWeight.w600, fg),
-        titleSmall: _style(BoardTokens.fsLabel, FontWeight.w600, fgMuted),
-        bodyMedium: _style(BoardTokens.fsBody, FontWeight.w400, fg),
-        bodySmall: _style(BoardTokens.fsLabel, FontWeight.w400, fgMuted),
-        labelSmall: _style(BoardTokens.fsCaption, FontWeight.w600, fgMuted),
-      );
+    displaySmall: _style(BoardTokens.fsMetric, FontWeight.w600, fg),
+    titleMedium: _style(BoardTokens.fsTitle, FontWeight.w600, fg),
+    titleSmall: _style(BoardTokens.fsLabel, FontWeight.w600, fgMuted),
+    bodyMedium: _style(BoardTokens.fsBody, FontWeight.w400, fg),
+    bodySmall: _style(BoardTokens.fsLabel, FontWeight.w400, fgMuted),
+    labelSmall: _style(BoardTokens.fsCaption, FontWeight.w600, fgMuted),
+  );
 
-  TextStyle _style(double size, FontWeight weight, Color color) => TextStyle(
-        fontSize: size,
-        fontWeight: weight,
-        color: color,
-        height: 1.25,
-      );
+  TextStyle _style(double size, FontWeight weight, Color color) =>
+      TextStyle(fontSize: size, fontWeight: weight, color: color, height: 1.25);
 }
 
 class BoardTheme extends InheritedWidget {
@@ -103,7 +99,8 @@ class BoardTheme extends InheritedWidget {
   BoardPalette get palette => BoardPalette(dark: dark);
 
   static BoardPalette of(BuildContext context) {
-    final BoardTheme? theme = context.dependOnInheritedWidgetOfExactType<BoardTheme>();
+    final BoardTheme? theme = context
+        .dependOnInheritedWidgetOfExactType<BoardTheme>();
     return theme?.palette ?? BoardPalette(dark: true);
   }
 
@@ -144,20 +141,30 @@ ThemeData boardThemeData(BoardPalette palette) {
         borderRadius: BorderRadius.circular(BoardTokens.radius),
       ),
     ),
-    dividerTheme: DividerThemeData(color: palette.hairline, thickness: 1, space: 1),
+    dividerTheme: DividerThemeData(
+      color: palette.hairline,
+      thickness: 1,
+      space: 1,
+    ),
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected) ? palette.primary : palette.sunken,
+        (states) => states.contains(WidgetState.selected)
+            ? palette.primary
+            : palette.sunken,
       ),
       side: BorderSide(color: palette.border),
       shape: const RoundedRectangleBorder(),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected) ? palette.fgInverted : palette.fgMuted,
+        (states) => states.contains(WidgetState.selected)
+            ? palette.fgInverted
+            : palette.fgMuted,
       ),
       trackColor: WidgetStateProperty.resolveWith(
-        (states) => states.contains(WidgetState.selected) ? palette.primary : palette.sunken,
+        (states) => states.contains(WidgetState.selected)
+            ? palette.primary
+            : palette.sunken,
       ),
       trackOutlineColor: WidgetStatePropertyAll<Color>(palette.border),
     ),

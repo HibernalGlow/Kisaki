@@ -121,7 +121,8 @@ class FieldValue {
   final String id;
   final FieldPayload value;
 
-  FieldValue withValue(FieldPayload payload) => FieldValue(id: id, value: payload);
+  FieldValue withValue(FieldPayload payload) =>
+      FieldValue(id: id, value: payload);
 }
 
 class ScanRequest {

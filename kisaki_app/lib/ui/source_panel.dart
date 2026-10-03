@@ -66,7 +66,11 @@ class _PathsTab extends StatelessWidget {
   final BoardController controller;
   final PathPicker? picker;
 
-  Future<void> _pick(BuildContext context, PathRequest request, void Function(Iterable<String>) apply) async {
+  Future<void> _pick(
+    BuildContext context,
+    PathRequest request,
+    void Function(Iterable<String>) apply,
+  ) async {
     final List<String>? paths = picker != null
         ? await picker!(context, request)
         : await showManualPathSheet(context);
@@ -116,14 +120,19 @@ class _PathsTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.all(BoardTokens.pad),
       children: <Widget>[
-        _IncludedBlock(controller: controller, onPick: (PathRequest request) => _pick(context, request, controller.addIncluded)),
+        _IncludedBlock(
+          controller: controller,
+          onPick: (PathRequest request) =>
+              _pick(context, request, controller.addIncluded),
+        ),
         if (tool != null && tool.supportsReference) ...<Widget>[
           const SizedBox(height: BoardTokens.gap),
           const Hairline(),
           const SizedBox(height: BoardTokens.gap),
           _ReferenceBlock(
             controller: controller,
-            onPick: (PathRequest request) => _pick(context, request, controller.addReference),
+            onPick: (PathRequest request) =>
+                _pick(context, request, controller.addReference),
           ),
         ],
         for (final _BlockSpec block in blocks) ...<Widget>[
@@ -133,8 +142,16 @@ class _PathsTab extends StatelessWidget {
         const SizedBox(height: BoardTokens.gap),
         const Hairline(),
         const SizedBox(height: BoardTokens.gap),
-        ToggleRow(labelKey: 'label-recursive', value: controller.recursive, onChanged: controller.setRecursive),
-        ToggleRow(labelKey: 'label-cache', value: controller.useCache, onChanged: controller.setUseCache),
+        ToggleRow(
+          labelKey: 'label-recursive',
+          value: controller.recursive,
+          onChanged: controller.setRecursive,
+        ),
+        ToggleRow(
+          labelKey: 'label-cache',
+          value: controller.useCache,
+          onChanged: controller.setUseCache,
+        ),
         const SizedBox(height: BoardTokens.gap),
         Row(
           children: <Widget>[
@@ -181,8 +198,16 @@ class _IncludedBlock extends StatelessWidget {
         spacing: BoardTokens.gapSmall,
         runSpacing: BoardTokens.gapSmall,
         children: <Widget>[
-          BoardAction(labelKey: 'action-add-dirs', dense: true, onPressed: () => onPick(PathRequest.directory)),
-          BoardAction(labelKey: 'action-add-files', dense: true, onPressed: () => onPick(PathRequest.file)),
+          BoardAction(
+            labelKey: 'action-add-dirs',
+            dense: true,
+            onPressed: () => onPick(PathRequest.directory),
+          ),
+          BoardAction(
+            labelKey: 'action-add-files',
+            dense: true,
+            onPressed: () => onPick(PathRequest.file),
+          ),
         ],
       ),
     );
@@ -206,7 +231,11 @@ class _ReferenceBlock extends StatelessWidget {
         removeAt: controller.removeReference,
         clear: controller.clearReference,
       ),
-      footer: BoardAction(labelKey: 'action-add-dirs', dense: true, onPressed: () => onPick(PathRequest.directory)),
+      footer: BoardAction(
+        labelKey: 'action-add-dirs',
+        dense: true,
+        onPressed: () => onPick(PathRequest.directory),
+      ),
     );
   }
 }
@@ -240,7 +269,11 @@ class _Block extends StatelessWidget {
 }
 
 class _SizeField extends StatefulWidget {
-  const _SizeField({required this.labelKey, required this.value, required this.onChanged});
+  const _SizeField({
+    required this.labelKey,
+    required this.value,
+    required this.onChanged,
+  });
 
   final String labelKey;
   final String value;
@@ -279,7 +312,7 @@ class _SizeFieldState extends State<_SizeField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        MicroHeading(widget.labelKey),
+        MicroHeading(Labels.of(widget.labelKey)),
         const SizedBox(height: BoardTokens.gapSmall),
         TextField(
           key: Key('size-field-${widget.labelKey}'),
@@ -307,14 +340,16 @@ class _AlgorithmTab extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.all(BoardTokens.pad),
       itemCount: fields.length,
-      separatorBuilder: (BuildContext context, int index) => const SizedBox(height: BoardTokens.gap),
+      separatorBuilder: (BuildContext context, int index) =>
+          const SizedBox(height: BoardTokens.gap),
       itemBuilder: (BuildContext context, int index) {
         final FieldDef def = fields[index];
         return FieldControl(
           key: ValueKey<String>('${controller.tool?.id}-${def.id}'),
           def: def,
           value: controller.valueOf(def.id),
-          onChanged: (FieldPayload payload) => controller.setFieldValue(def.id, payload),
+          onChanged: (FieldPayload payload) =>
+              controller.setFieldValue(def.id, payload),
         );
       },
     );
@@ -323,7 +358,12 @@ class _AlgorithmTab extends StatelessWidget {
 
 /// Renders one option from its declared kind, so a new engine field needs no UI change.
 class FieldControl extends StatelessWidget {
-  const FieldControl({required this.def, required this.value, required this.onChanged, super.key});
+  const FieldControl({
+    required this.def,
+    required this.value,
+    required this.onChanged,
+    super.key,
+  });
 
   final FieldDef def;
   final FieldValue value;
@@ -360,7 +400,9 @@ class FieldControl extends StatelessWidget {
       case FieldKind.tokenList:
         return _TokenField(
           def: def,
-          tokens: payload is FieldPayloadTokens ? payload.value : const <String>[],
+          tokens: payload is FieldPayloadTokens
+              ? payload.value
+              : const <String>[],
           onChanged: onChanged,
         );
     }
@@ -368,7 +410,11 @@ class FieldControl extends StatelessWidget {
 }
 
 class _ChoiceField extends StatelessWidget {
-  const _ChoiceField({required this.def, required this.selected, required this.onChanged});
+  const _ChoiceField({
+    required this.def,
+    required this.selected,
+    required this.onChanged,
+  });
 
   final FieldDef def;
   final String selected;
@@ -380,7 +426,7 @@ class _ChoiceField extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        MicroHeading(def.labelKey),
+        MicroHeading(Labels.of(def.labelKey)),
         const SizedBox(height: BoardTokens.gapSmall),
         Wrap(
           spacing: BoardTokens.gapSmall,
@@ -392,11 +438,16 @@ class _ChoiceField extends StatelessWidget {
               behavior: HitTestBehavior.opaque,
               onTap: () => onChanged(FieldPayloadChoice(option)),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gap, vertical: 5),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: BoardTokens.gap,
+                  vertical: 5,
+                ),
                 decoration: BoxDecoration(
                   color: active ? palette.primary : palette.raised,
                   borderRadius: BorderRadius.circular(BoardTokens.radius),
-                  border: Border.all(color: active ? palette.primary : palette.border),
+                  border: Border.all(
+                    color: active ? palette.primary : palette.border,
+                  ),
                 ),
                 child: Text(
                   Labels.of(option),
@@ -416,7 +467,11 @@ class _ChoiceField extends StatelessWidget {
 }
 
 class _IntegerField extends StatefulWidget {
-  const _IntegerField({required this.def, required this.number, required this.onChanged});
+  const _IntegerField({
+    required this.def,
+    required this.number,
+    required this.onChanged,
+  });
 
   final FieldDef def;
   final int number;
@@ -455,18 +510,23 @@ class _IntegerFieldState extends State<_IntegerField> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        MicroHeading(widget.def.labelKey),
+        MicroHeading(Labels.of(widget.def.labelKey)),
         const SizedBox(height: BoardTokens.gapSmall),
         TextField(
           key: Key('field-${widget.def.id}'),
           controller: _text,
           keyboardType: TextInputType.number,
           style: TextStyle(fontSize: BoardTokens.fsBody, color: palette.fg),
-          onChanged: (String raw) => widget.onChanged(FieldPayloadInteger(int.tryParse(raw.trim()) ?? 0)),
+          onChanged: (String raw) => widget.onChanged(
+            FieldPayloadInteger(int.tryParse(raw.trim()) ?? 0),
+          ),
         ),
         Text(
           '${widget.def.min} .. ${widget.def.max}',
-          style: TextStyle(fontSize: BoardTokens.fsCaption, color: palette.fgFaint),
+          style: TextStyle(
+            fontSize: BoardTokens.fsCaption,
+            color: palette.fgFaint,
+          ),
         ),
       ],
     );
@@ -474,7 +534,11 @@ class _IntegerFieldState extends State<_IntegerField> {
 }
 
 class _TextFieldControl extends StatefulWidget {
-  const _TextFieldControl({required this.def, required this.text, required this.onChanged});
+  const _TextFieldControl({
+    required this.def,
+    required this.text,
+    required this.onChanged,
+  });
 
   final FieldDef def;
   final String text;
@@ -513,13 +577,14 @@ class _TextFieldControlState extends State<_TextFieldControl> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
-        MicroHeading(widget.def.labelKey),
+        MicroHeading(Labels.of(widget.def.labelKey)),
         const SizedBox(height: BoardTokens.gapSmall),
         TextField(
           key: Key('field-${widget.def.id}'),
           controller: _text,
           style: TextStyle(fontSize: BoardTokens.fsBody, color: palette.fg),
-          onChanged: (String value) => widget.onChanged(FieldPayloadText(value)),
+          onChanged: (String value) =>
+              widget.onChanged(FieldPayloadText(value)),
         ),
       ],
     );
@@ -527,7 +592,11 @@ class _TextFieldControlState extends State<_TextFieldControl> {
 }
 
 class _TokenField extends StatefulWidget {
-  const _TokenField({required this.def, required this.tokens, required this.onChanged});
+  const _TokenField({
+    required this.def,
+    required this.tokens,
+    required this.onChanged,
+  });
 
   final FieldDef def;
   final List<String> tokens;

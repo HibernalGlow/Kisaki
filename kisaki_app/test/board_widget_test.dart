@@ -28,14 +28,20 @@ void main() {
   Future<void> seedGroupedResults(WidgetTester tester) async {
     controller.addIncluded(<String>['/data']);
     controller.startScan();
-    engine.emit(ScanEventCompleted(StubEngine.outcome('duplicate_files', <ScanRow>[
-      StubEngine.row('/data/alpha.bin', group: 0, start: true),
-      StubEngine.row('/data/beta.bin', group: 0),
-    ])));
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('duplicate_files', <ScanRow>[
+          StubEngine.row('/data/alpha.bin', group: 0, start: true),
+          StubEngine.row('/data/beta.bin', group: 0),
+        ]),
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
-  testWidgets('the board lays out the header and the three lanes', (WidgetTester tester) async {
+  testWidgets('the board lays out the header and the three lanes', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
 
     expect(find.text('Kisaki'), findsOneWidget);
@@ -47,7 +53,9 @@ void main() {
     expect(find.text('Duplicate files'), findsOneWidget);
   });
 
-  testWidgets('the scanner menu switches tool and reloads its options', (WidgetTester tester) async {
+  testWidgets('the scanner menu switches tool and reloads its options', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
 
     await tester.tap(find.byKey(const Key('scanner-picker')));
@@ -61,20 +69,31 @@ void main() {
     expect(find.text('Big files'), findsOneWidget);
   });
 
-  testWidgets('scanning with no paths added explains itself instead of calling the engine', (WidgetTester tester) async {
+  testWidgets(
+    'scanning with no paths added explains itself instead of calling the engine',
+    (WidgetTester tester) async {
+      await pumpBoard(tester);
+
+      await tester.tap(find.byKey(const Key('scan-control')));
+      await tester.pumpAndSettle();
+
+      expect(engine.requests, isEmpty);
+      expect(
+        find.text('Add at least one included directory before scanning'),
+        findsWidgets,
+      );
+    },
+  );
+
+  testWidgets('a typed path and a scan fill the results table', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
 
-    await tester.tap(find.byKey(const Key('scan-control')));
-    await tester.pumpAndSettle();
-
-    expect(engine.requests, isEmpty);
-    expect(find.text('Add at least one included directory before scanning'), findsWidgets);
-  });
-
-  testWidgets('a typed path and a scan fill the results table', (WidgetTester tester) async {
-    await pumpBoard(tester);
-
-    await tester.enterText(find.byKey(const Key('token-field-Included')), '/data/set');
+    await tester.enterText(
+      find.byKey(const Key('token-field-Included')),
+      '/data/set',
+    );
     await tester.tap(find.byKey(const Key('token-add-Included')));
     await tester.pumpAndSettle();
     expect(controller.included, <String>['/data/set']);
@@ -84,11 +103,15 @@ void main() {
     await tester.pump();
     expect(controller.scanning, isTrue);
 
-    engine.emit(ScanEventCompleted(StubEngine.outcome('duplicate_files', <ScanRow>[
-      StubEngine.row('/data/alpha.bin', group: 0, start: true),
-      StubEngine.row('/data/beta.bin', group: 0),
-      StubEngine.row('/data/gamma.bin', group: 1, start: true),
-    ])));
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('duplicate_files', <ScanRow>[
+          StubEngine.row('/data/alpha.bin', group: 0, start: true),
+          StubEngine.row('/data/beta.bin', group: 0),
+          StubEngine.row('/data/gamma.bin', group: 1, start: true),
+        ]),
+      ),
+    );
     await tester.pumpAndSettle();
 
     expect(find.byKey(const Key('results-list')), findsOneWidget);
@@ -98,30 +121,35 @@ void main() {
     expect(find.textContaining('Found 3 files in 2 groups'), findsWidgets);
   });
 
-  testWidgets('selecting rows and confirming a dry run reaches the engine once', (WidgetTester tester) async {
-    await pumpBoard(tester);
-    await seedGroupedResults(tester);
+  testWidgets(
+    'selecting rows and confirming a dry run reaches the engine once',
+    (WidgetTester tester) async {
+      await pumpBoard(tester);
+      await seedGroupedResults(tester);
 
-    await tester.tap(find.byKey(const Key('row-select-/data/alpha.bin')));
-    await tester.pumpAndSettle();
-    expect(controller.selectedCount, 1);
+      await tester.tap(find.byKey(const Key('row-select-/data/alpha.bin')));
+      await tester.pumpAndSettle();
+      expect(controller.selectedCount, 1);
 
-    await tester.tap(find.byKey(const Key('delete-selected')));
-    await tester.pumpAndSettle();
-    expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);
-    expect(find.textContaining('Dry run: plans 1 paths'), findsOneWidget);
-    expect(engine.deletes, isEmpty);
+      await tester.tap(find.byKey(const Key('delete-selected')));
+      await tester.pumpAndSettle();
+      expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);
+      expect(find.textContaining('Dry run: plans 1 paths'), findsOneWidget);
+      expect(engine.deletes, isEmpty);
 
-    await tester.tap(find.byKey(const Key('confirm-accept')));
-    await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm-accept')));
+      await tester.pumpAndSettle();
 
-    expect(engine.deletes.length, 1);
-    expect(engine.deletes.single.dryRun, isTrue);
-    expect(controller.rows.length, 2);
-    expect(controller.confirm, isNull);
-  });
+      expect(engine.deletes.length, 1);
+      expect(engine.deletes.single.dryRun, isTrue);
+      expect(controller.rows.length, 2);
+      expect(controller.confirm, isNull);
+    },
+  );
 
-  testWidgets('cancelling the confirm dialog does not touch the filesystem', (WidgetTester tester) async {
+  testWidgets('cancelling the confirm dialog does not touch the filesystem', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
     await seedGroupedResults(tester);
 
@@ -137,16 +165,22 @@ void main() {
     expect(controller.rows.length, 2);
   });
 
-  testWidgets('a group toggle selects the whole block from the strip', (WidgetTester tester) async {
+  testWidgets('a group toggle selects the whole block from the strip', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
 
     controller.addIncluded(<String>['/data']);
     controller.startScan();
-    engine.emit(ScanEventCompleted(StubEngine.outcome('duplicate_files', <ScanRow>[
-      StubEngine.row('/data/alpha.bin', group: 0, start: true),
-      StubEngine.row('/data/beta.bin', group: 0),
-      StubEngine.row('/data/gamma.bin', group: 1, start: true),
-    ])));
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('duplicate_files', <ScanRow>[
+          StubEngine.row('/data/alpha.bin', group: 0, start: true),
+          StubEngine.row('/data/beta.bin', group: 0),
+          StubEngine.row('/data/gamma.bin', group: 1, start: true),
+        ]),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('group-toggle-1')));
@@ -155,27 +189,39 @@ void main() {
     expect(controller.isSelected(controller.rows.last), isTrue);
   });
 
-  testWidgets('the theme toggle repaints without losing scan state', (WidgetTester tester) async {
+  testWidgets('the theme toggle repaints without losing scan state', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
     await seedGroupedResults(tester);
 
-    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.brightness, Brightness.dark);
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.brightness,
+      Brightness.dark,
+    );
 
     await tester.tap(find.text('Toggle theme'));
     await tester.pumpAndSettle();
 
     expect(controller.dark, isFalse);
     expect(controller.rows.length, 2);
-    expect(tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.brightness, Brightness.light);
+    expect(
+      tester.widget<MaterialApp>(find.byType(MaterialApp)).theme?.brightness,
+      Brightness.light,
+    );
   });
 
-  testWidgets('collapsed lanes shrink to a single letter and expand again', (WidgetTester tester) async {
+  testWidgets('collapsed lanes shrink to a single letter and expand again', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
 
-    await tester.tap(find.descendant(
-      of: find.byKey(const Key('lane-S')),
-      matching: find.byType(IconButton),
-    ));
+    await tester.tap(
+      find.descendant(
+        of: find.byKey(const Key('lane-S')),
+        matching: find.byType(IconButton),
+      ),
+    );
     await tester.pumpAndSettle();
     expect(controller.layout.sourceCollapsed, isTrue);
     expect(find.byType(SourcePanel), findsNothing);
@@ -187,15 +233,21 @@ void main() {
     expect(find.text('SCAN CONDITIONS'), findsOneWidget);
   });
 
-  testWidgets('column headers sort and the filter narrows the list', (WidgetTester tester) async {
+  testWidgets('column headers sort and the filter narrows the list', (
+    WidgetTester tester,
+  ) async {
     await pumpBoard(tester);
 
     controller.addIncluded(<String>['/data']);
     controller.startScan();
-    engine.emit(ScanEventCompleted(StubEngine.outcome('big_files', <ScanRow>[
-      StubEngine.row('/data/small.bin', size: 10),
-      StubEngine.row('/data/large.bin', size: 9000),
-    ])));
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('big_files', <ScanRow>[
+          StubEngine.row('/data/small.bin', size: 10),
+          StubEngine.row('/data/large.bin', size: 9000),
+        ]),
+      ),
+    );
     await tester.pumpAndSettle();
 
     await tester.tap(find.byKey(const Key('column-header-Size')));

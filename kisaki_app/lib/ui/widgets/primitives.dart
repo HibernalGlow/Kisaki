@@ -41,7 +41,8 @@ class KeyHeading extends StatelessWidget {
   final Widget? trailing;
 
   @override
-  Widget build(BuildContext context) => MicroHeading(Labels.of(labelKey), trailing: trailing);
+  Widget build(BuildContext context) =>
+      MicroHeading(Labels.of(labelKey), trailing: trailing);
 
   /// Path lists and extension lists are edited as one token line per entry.
 }
@@ -64,7 +65,12 @@ class Hairline extends StatelessWidget {
 
 /// Flat 1px-bordered surface used for every card in the board.
 class FlatCard extends StatelessWidget {
-  const FlatCard({required this.child, this.padding, this.filled = false, super.key});
+  const FlatCard({
+    required this.child,
+    this.padding,
+    this.filled = false,
+    super.key,
+  });
 
   final Widget child;
   final EdgeInsets? padding;
@@ -87,7 +93,12 @@ class FlatCard extends StatelessWidget {
 
 /// Typographic marker tile - Kisaki has no icon assets by design.
 class GlyphTile extends StatelessWidget {
-  const GlyphTile({required this.glyph, this.active = false, this.size = 22, super.key});
+  const GlyphTile({
+    required this.glyph,
+    this.active = false,
+    this.size = 22,
+    super.key,
+  });
 
   final String glyph;
   final bool active;
@@ -118,7 +129,12 @@ class GlyphTile extends StatelessWidget {
 }
 
 class MetricTile extends StatelessWidget {
-  const MetricTile({required this.labelKey, required this.value, this.accent, super.key});
+  const MetricTile({
+    required this.labelKey,
+    required this.value,
+    this.accent,
+    super.key,
+  });
 
   final String labelKey;
   final String value;
@@ -131,7 +147,7 @@ class MetricTile extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
-        MicroHeading(labelKey),
+        MicroHeading(Labels.of(labelKey)),
         const SizedBox(height: BoardTokens.gapSmall),
         Text(
           value,
@@ -170,7 +186,10 @@ class EmptyState extends StatelessWidget {
             const SizedBox(height: BoardTokens.gapSmall),
             Text(
               detail!,
-              style: TextStyle(fontSize: BoardTokens.fsLabel, color: palette.fgFaint),
+              style: TextStyle(
+                fontSize: BoardTokens.fsLabel,
+                color: palette.fgFaint,
+              ),
             ),
           ],
         ],
@@ -210,13 +229,19 @@ class BoardAction extends StatelessWidget {
         decoration: BoxDecoration(
           color: enabled ? palette.raised : palette.sunken,
           borderRadius: BorderRadius.circular(BoardTokens.radius),
-          border: Border.all(color: enabled && tone != null ? tone! : palette.border),
+          border: Border.all(
+            color: enabled && tone != null ? tone! : palette.border,
+          ),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
             if (icon != null) ...<Widget>[
-              Icon(icon, size: 14, color: enabled ? (tone ?? palette.fg) : palette.fgFaint),
+              Icon(
+                icon,
+                size: 14,
+                color: enabled ? (tone ?? palette.fg) : palette.fgFaint,
+              ),
               const SizedBox(width: BoardTokens.gapSmall),
             ],
             Text(
@@ -235,7 +260,13 @@ class BoardAction extends StatelessWidget {
 }
 
 class ToggleRow extends StatelessWidget {
-  const ToggleRow({required this.labelKey, required this.value, required this.onChanged, this.hint, super.key});
+  const ToggleRow({
+    required this.labelKey,
+    required this.value,
+    required this.onChanged,
+    this.hint,
+    super.key,
+  });
 
   final String labelKey;
   final bool value;
@@ -250,14 +281,17 @@ class ToggleRow extends StatelessWidget {
       children: <Widget>[
         Row(
           children: <Widget>[
-            Expanded(child: MicroHeading(labelKey)),
+            Expanded(child: MicroHeading(Labels.of(labelKey))),
             Switch(value: value, onChanged: onChanged),
           ],
         ),
         if (hint != null)
           Text(
             hint!,
-            style: TextStyle(fontSize: BoardTokens.fsCaption, color: palette.fgFaint),
+            style: TextStyle(
+              fontSize: BoardTokens.fsCaption,
+              color: palette.fgFaint,
+            ),
           ),
       ],
     );
