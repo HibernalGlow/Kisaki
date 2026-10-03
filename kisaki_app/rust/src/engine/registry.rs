@@ -226,7 +226,7 @@ static TOOLS: &[Entry] = &[
         label_key: "tool_bad_extensions",
         grouped: false,
         columns: &[COL_CURRENT_EXT, COL_PROPER_GROUP, COL_PROPER_EXT, COL_MODIFIED],
-        field_ids: NO_FIELDS,
+        field_ids: &["bext_include_files_without_extension"],
     },
     Entry {
         id: "bad_names",
@@ -235,7 +235,14 @@ static TOOLS: &[Entry] = &[
         label_key: "tool_bad_names",
         grouped: false,
         columns: &[COL_NEW_NAME, COL_SIZE, COL_MODIFIED],
-        field_ids: NO_FIELDS,
+        field_ids: &[
+            "name_uppercase_extension",
+            "name_emoji_used",
+            "name_space_at_start_or_end",
+            "name_non_ascii_graphical",
+            "name_remove_duplicated_non_alphanumeric",
+            "name_allowed_charset",
+        ],
     },
     Entry {
         id: "exif_remover",

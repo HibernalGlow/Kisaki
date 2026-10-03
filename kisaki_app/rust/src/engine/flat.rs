@@ -125,7 +125,10 @@ impl Scan<'_> {
     }
 
     fn bad_extensions(&self) -> EngineOutcome {
-        let mut tool = BadExtensions::new(BadExtensionsParameters::new());
+        let params = BadExtensionsParameters {
+            include_files_without_extension: flag_or(self.store, "bext_include_files_without_extension", false),
+        };
+        let mut tool = BadExtensions::new(params);
         apply_common(&mut tool, self.request);
         tool.search(&self.stop, Some(&self.sender));
 
@@ -134,7 +137,7 @@ impl Scan<'_> {
     }
 
     fn bad_names(&self) -> EngineOutcome {
-        let mut tool = BadNames::new(BadNamesParameters::new(NameIssues::all()));
+        let mut tool = BadNames::new(BadNamesParameters::new(name_issues(self.store)));
         apply_common(&mut tool, self.request);
         tool.search(&self.stop, Some(&self.sender));
 
@@ -376,6 +379,32 @@ fn resolution_key(width: u32, height: u32) -> i64 {
     i64::from(width).saturating_mul(i64::from(height))
 }
 
+/// Which name problems to look for. An unset option keeps the value `NameIssues::all()` uses, so a
+/// request sent without these fields scans exactly as it did before they were exposed.
+fn name_issues(store: &FieldStore) -> NameIssues {
+    NameIssues {
+        uppercase_extension: flag_or(store, "name_uppercase_extension", true),
+        emoji_used: flag_or(store, "name_emoji_used", true),
+        space_at_start_or_end: flag_or(store, "name_space_at_start_or_end", true),
+        non_ascii_graphical: flag_or(store, "name_non_ascii_graphical", true),
+        remove_duplicated_non_alphanumeric: flag_or(store, "name_remove_duplicated_non_alphanumeric", true),
+        restricted_charset_allowed: allowed_charset(store),
+    }
+}
+
+/// The extra characters a name may contain. Clearing the field switches the restriction off, which
+/// core spells `None`; leaving it out keeps the engine default set.
+fn allowed_charset(store: &FieldStore) -> Option<Vec<char>> {
+    let default = || NameIssues::all().restricted_charset_allowed;
+    let raw = match store.payload("name_allowed_charset") {
+        None | Some(FieldPayload::Flag(_) | FieldPayload::Integer(_)) => return default(),
+        Some(FieldPayload::Text(text)) => text.clone(),
+        Some(FieldPayload::Tokens(values)) => values.join(""),
+        Some(FieldPayload::Choice(value)) => value.clone(),
+    };
+    if raw.is_empty() { None } else { Some(raw.chars().collect()) }
+}
+
 /// A missing option keeps the default the Slint frontend used, so a request sent without the
 /// option registry still scans exactly like the reference frontend.
 fn flag_or(store: &FieldStore, id: &str, default: bool) -> bool {
@@ -514,6 +543,57 @@ mod tests {
                 })
                 .collect(),
         )
+    }
+
+    #[test]
+    fn unset_name_options_keep_the_engines_all_issues_defaults() {
+        let unset = FieldStore::new(Vec::new());
+        let issues = name_issues(&unset);
+        let all = NameIssues::all();
+
+        assert!(issues.uppercase_extension);
+        assert!(issues.emoji_used);
+        assert!(issues.space_at_start_or_end);
+        assert!(issues.non_ascii_graphical);
+        assert!(issues.remove_duplicated_non_alphanumeric);
+        assert_eq!(issues.restricted_charset_allowed, all.restricted_charset_allowed);
+        assert!(!issues.is_empty(), "an unset request must still look for problems");
+    }
+
+    #[test]
+    fn name_flags_turn_off_one_at_a_time() {
+        let store = store(&[("name_uppercase_extension", FieldPayload::Flag(false)), ("name_emoji_used", FieldPayload::Flag(false))]);
+        let issues = name_issues(&store);
+
+        assert!(!issues.uppercase_extension);
+        assert!(!issues.emoji_used);
+        assert!(issues.space_at_start_or_end, "untouched flags keep their default");
+        assert!(issues.non_ascii_graphical);
+    }
+
+    #[test]
+    fn an_empty_charset_switches_the_restriction_off() {
+        let cleared = store(&[("name_allowed_charset", FieldPayload::Text(String::new()))]);
+        assert_eq!(name_issues(&cleared).restricted_charset_allowed, None);
+
+        let typed = store(&[("name_allowed_charset", FieldPayload::Text("ab ".to_string()))]);
+        assert_eq!(name_issues(&typed).restricted_charset_allowed, Some(vec!['a', 'b', ' ']));
+
+        let tokens = store(&[("name_allowed_charset", FieldPayload::Tokens(vec!["a".to_string(), "-".to_string()]))]);
+        assert_eq!(name_issues(&tokens).restricted_charset_allowed, Some(vec!['a', '-']));
+    }
+
+    #[test]
+    fn every_bad_names_option_resolves_to_a_default() {
+        let tool = crate::engine::registry::tools()
+            .into_iter()
+            .find(|tool| tool.id == "bad_names")
+            .expect("bad_names is registered");
+        let ids: Vec<&str> = tool.field_ids.iter().map(String::as_str).collect();
+
+        let defaults = crate::engine::options::defaults(&ids);
+        assert_eq!(defaults.len(), ids.len(), "a bad_names field id has no option registry entry");
+        assert!(defaults.iter().any(|field| field.id == "name_allowed_charset"));
     }
 
     #[test]

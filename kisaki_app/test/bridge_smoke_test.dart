@@ -200,6 +200,70 @@ void main() {
     );
     expect(engine.isScanning(), isFalse);
   }, timeout: const Timeout(Duration(minutes: 4)));
+
+  test('bad names honour the option flags', () async {
+    final root = await Directory.systemTemp.createTemp('kisaki_names_');
+    final canonicalRoot = await root.resolveSymbolicLinks();
+    addTearDown(() => root.delete(recursive: true));
+    await _write(root, ' leading.txt', 'a');
+    await _write(root, 'emoji_😀.txt', 'a');
+    await _write(root, 'plain.txt', 'a');
+
+    Future<ScanOutcome> scanWith(Map<String, FieldPayload> overrides) async {
+      final fields = <FieldValue>[
+        for (final field in engine.defaultFields('bad_names'))
+          FieldValue(id: field.id, value: overrides[field.id] ?? field.value),
+      ];
+      final events = await engine
+          .startScan(
+            ScanRequest(
+              tool: 'bad_names',
+              included: [root.path],
+              reference: const [],
+              excludedPaths: const [],
+              excludedItems: const [],
+              allowedExtensions: const [],
+              excludedExtensions: const [],
+              recursive: true,
+              useCache: false,
+              minSizeKib: '',
+              maxSizeKib: '',
+              fields: fields,
+            ),
+          )
+          .toList();
+      final outcome = events.whereType<ScanEventCompleted>().single.outcome;
+      return outcome;
+    }
+
+    // The defaults check every issue, so both offending names come back and plain.txt does not.
+    final defaults = await scanWith(const {});
+    expect(defaults.critical, isNull, reason: defaults.messages);
+    expect(defaults.rows.map((row) => row.path).toSet(), {
+      '$canonicalRoot/ leading.txt',
+      '$canonicalRoot/emoji_😀.txt',
+    }, reason: 'only the two bad names should be reported');
+    expect(defaults.fileCount, 2);
+
+    // Switching every check off has to change the result, otherwise the flags never reached
+    // czkawka_core and the assertion above was reading a fixed scan. The engine refuses outright.
+    const allOff = <String, FieldPayload>{
+      'name_uppercase_extension': FieldPayloadFlag(false),
+      'name_emoji_used': FieldPayloadFlag(false),
+      'name_space_at_start_or_end': FieldPayloadFlag(false),
+      'name_non_ascii_graphical': FieldPayloadFlag(false),
+      'name_remove_duplicated_non_alphanumeric': FieldPayloadFlag(false),
+      'name_allowed_charset': FieldPayloadText(''),
+    };
+    final disabled = await scanWith(allOff);
+    expect(disabled.fileCount, 0);
+    expect(disabled.rows, isEmpty);
+    expect(
+      disabled.critical,
+      contains('no bad name option'),
+      reason: 'core must report why the scan stopped: ${disabled.critical}',
+    );
+  }, timeout: const Timeout(Duration(minutes: 3)));
 }
 
 Future<File> _write(Directory root, String relative, String content) async {
