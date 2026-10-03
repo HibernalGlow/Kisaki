@@ -2,13 +2,14 @@ use std::collections::{HashMap, HashSet};
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 
 use czkawka_core::common::fs_ops::{remove_folder_if_contains_only_empty_folders, remove_single_file, remove_single_folder};
 use czkawka_core::common::model::ToolType;
 
 use crate::api::types::{DeleteOutcome, DeleteRequest, ExportRequest, ScanRow, ToolSpec};
-use crate::engine::registry;
+use crate::engine::{registry, runner};
 
 /// What a delete run decides to do with one requested row.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
@@ -25,23 +26,31 @@ enum Disposition {
     Removed,
     Failed,
     Protected,
+    /// A row the run never attempted because the user stopped it.
+    Stopped,
 }
 
 /// Deletes or trashes rows through the engine's own file operations so trash behaviour matches
 /// the other frontends. Ported from the Slint frontend's action module.
 pub fn delete(request: DeleteRequest) -> Result<DeleteOutcome, String> {
+    delete_stopping(request, &runner::operation_stop())
+}
+
+/// The same run against a flag the caller owns, so stopping is testable without shared state.
+pub(crate) fn delete_stopping(request: DeleteRequest, stop: &AtomicBool) -> Result<DeleteOutcome, String> {
     let tool_type = registry::tool_type(&request.tool).ok_or_else(|| format!("Unknown scanner '{}'", request.tool))?;
     let roles = classify(&request.rows);
 
     if request.dry_run {
         // The plan is built from row data alone: no path is stat'd, opened or modified.
         let results: Vec<Option<Result<(), String>>> = (0..request.rows.len()).map(|_| None).collect();
-        return Ok(assemble(&request, &roles, &results));
+        return Ok(assemble(&request, &roles, &results, false));
     }
 
     let targets: Vec<usize> = roles.iter().enumerate().filter(|(_, role)| **role == Role::Delete).map(|(index, _)| index).collect();
     let folders = matches!(tool_type, ToolType::EmptyFolders);
-    let removals = remove_rows(&request.rows, &targets, folders, request.delete_to_trash);
+    let removals = remove_rows(&request.rows, &targets, folders, request.delete_to_trash, stop);
+    let stopped = stop.load(Ordering::Relaxed);
 
     let mut results: Vec<Option<Result<(), String>>> = (0..request.rows.len()).map(|_| None).collect();
     for (index, result) in removals {
@@ -49,7 +58,7 @@ pub fn delete(request: DeleteRequest) -> Result<DeleteOutcome, String> {
             *slot = Some(result);
         }
     }
-    Ok(assemble(&request, &roles, &results))
+    Ok(assemble(&request, &roles, &results, stopped))
 }
 
 /// Reference rows are read-only and only counted, never removed. A group without a reference row
@@ -91,7 +100,7 @@ fn classify(rows: &[ScanRow]) -> Vec<Role> {
 /// Removes targets on several threads because deletion is I/O bound, and returns one result per
 /// attempted row index. A panicked worker is reported as a failure for its whole chunk, so its
 /// bytes can never be counted as freed.
-fn remove_rows(rows: &[ScanRow], targets: &[usize], folders: bool, to_trash: bool) -> Vec<(usize, Result<(), String>)> {
+fn remove_rows(rows: &[ScanRow], targets: &[usize], folders: bool, to_trash: bool, stop: &AtomicBool) -> Vec<(usize, Result<(), String>)> {
     if targets.is_empty() {
         return Vec::new();
     }
@@ -106,7 +115,14 @@ fn remove_rows(rows: &[ScanRow], targets: &[usize], folders: bool, to_trash: boo
                 let job = chunk.clone();
                 scope.spawn(move || {
                     job.into_iter()
-                        .filter_map(|index| rows.get(index).map(|row| (index, remove_row(row, folders, to_trash))))
+                        .filter_map(|index| {
+                            // A stopped run reports nothing for the row, which assemble reads as
+                            // "never attempted", so no byte can be counted as freed.
+                            if stop.load(Ordering::Relaxed) {
+                                return None;
+                            }
+                            rows.get(index).map(|row| (index, remove_row(row, folders, to_trash)))
+                        })
                         .collect::<Vec<(usize, Result<(), String>)>>()
                 })
             })
@@ -144,7 +160,7 @@ fn remove_row(row: &ScanRow, folders: bool, to_trash: bool) -> Result<(), String
 }
 
 /// Turns per-row decisions into the reported outcome: one log line per row, in request order.
-fn assemble(request: &DeleteRequest, roles: &[Role], results: &[Option<Result<(), String>>]) -> DeleteOutcome {
+fn assemble(request: &DeleteRequest, roles: &[Role], results: &[Option<Result<(), String>>], stopped: bool) -> DeleteOutcome {
     let mut log = Vec::with_capacity(request.rows.len());
     let mut affected = 0_i32;
     let mut errors = 0_i32;
@@ -152,14 +168,14 @@ fn assemble(request: &DeleteRequest, roles: &[Role], results: &[Option<Result<()
 
     for ((index, row), result) in request.rows.iter().enumerate().zip(results) {
         let role = roles.get(index).copied().unwrap_or(Role::Delete);
-        let line = log_line(request, row, role, result.as_ref());
+        let line = log_line(request, row, role, result.as_ref(), stopped);
         match line.1 {
             Disposition::Planned | Disposition::Removed => {
                 affected += 1;
                 reclaimed_bytes = reclaimed_bytes.saturating_add(row.size_bytes.max(0));
             }
             Disposition::Failed => errors += 1,
-            Disposition::Protected => {}
+            Disposition::Protected | Disposition::Stopped => {}
         }
         log.push(line.0);
     }
@@ -168,12 +184,12 @@ fn assemble(request: &DeleteRequest, roles: &[Role], results: &[Option<Result<()
         affected,
         errors,
         reclaimed_bytes,
-        messages: summarize(request, roles, affected, errors, reclaimed_bytes),
+        messages: summarize(request, roles, affected, errors, reclaimed_bytes, stopped),
         log,
     }
 }
 
-fn log_line(request: &DeleteRequest, row: &ScanRow, role: Role, result: Option<&Result<(), String>>) -> (String, Disposition) {
+fn log_line(request: &DeleteRequest, row: &ScanRow, role: Role, result: Option<&Result<(), String>>, stopped: bool) -> (String, Disposition) {
     match role {
         Role::SkipReference => (format!("Skipped reference {}", row.name), Disposition::Protected),
         Role::SpareKeeper => (format!("Kept one copy {}", row.name), Disposition::Protected),
@@ -181,6 +197,7 @@ fn log_line(request: &DeleteRequest, row: &ScanRow, role: Role, result: Option<&
             (true, _) => (format!("{} {}", action(request.delete_to_trash, true), row.name), Disposition::Planned),
             (false, Some(Ok(()))) => (format!("{} {}", action(request.delete_to_trash, false), row.name), Disposition::Removed),
             (false, Some(Err(error))) => (format!("Failed to {} \"{}\": {error}", plain(request.delete_to_trash), row.path), Disposition::Failed),
+            (false, None) if stopped => (format!("Not {}: the run was stopped", plain(request.delete_to_trash)), Disposition::Stopped),
             (false, None) => (
                 format!("Failed to {} \"{}\": removal was not attempted", plain(request.delete_to_trash), row.path),
                 Disposition::Failed,
@@ -202,7 +219,7 @@ fn plain(to_trash: bool) -> &'static str {
     if to_trash { "trash" } else { "delete" }
 }
 
-fn summarize(request: &DeleteRequest, roles: &[Role], affected: i32, errors: i32, reclaimed_bytes: i64) -> String {
+fn summarize(request: &DeleteRequest, roles: &[Role], affected: i32, errors: i32, reclaimed_bytes: i64, stopped: bool) -> String {
     let action = action(request.delete_to_trash, request.dry_run);
     let mut text = format!("{action} {affected} items, {} ({reclaimed_bytes} bytes)", human_size(reclaimed_bytes));
     let references = count_role(roles, Role::SkipReference);
@@ -215,6 +232,9 @@ fn summarize(request: &DeleteRequest, roles: &[Role], affected: i32, errors: i32
     }
     if errors > 0 {
         text = format!("{text}, {errors} failed");
+    }
+    if stopped {
+        text = format!("{text}, stopped by request");
     }
     text
 }
@@ -539,6 +559,31 @@ mod tests {
         let rows = vec![row("first", 50, 0, false), row("second", 50, 0, false)];
         let roles = classify(&rows);
         assert_eq!(roles, vec![Role::SpareKeeper, Role::Delete]);
+    }
+
+    #[test]
+    fn a_stopped_delete_reports_nothing_as_removed() {
+        // Flat rows, so neither is spared as a group keeper and both are real delete targets.
+        let rows = vec![row("copy", 10, -1, false), row("second", 20, -1, false)];
+        let roles = classify(&rows);
+        assert_eq!(roles, vec![Role::Delete, Role::Delete]);
+        let outcome = assemble(&delete_request(rows, false, false), &roles, &[None, None], true);
+        assert_eq!((outcome.affected, outcome.errors, outcome.reclaimed_bytes), (0, 0, 0));
+        assert!(outcome.log.iter().all(|line| line.ends_with("the run was stopped")), "{:?}", outcome.log);
+        assert!(outcome.messages.ends_with("stopped by request"), "{}", outcome.messages);
+
+        // The same shape without a stop is a failed attempt, so the branch above cannot pass vacuously.
+        let unattempted = assemble(&delete_request(vec![row("copy", 10, -1, false)], false, false), &[Role::Delete], &[None], false);
+        assert_eq!((unattempted.affected, unattempted.errors), (0, 1));
+        assert!(unattempted.log[0].contains("removal was not attempted"), "{:?}", unattempted.log);
+    }
+
+    #[test]
+    fn a_stopped_delete_never_attempts_a_row() {
+        let stop = AtomicBool::new(true);
+        let outcome = delete_stopping(delete_request(vec![row("ghost", 5, -1, false)], false, false), &stop).expect("stopped run");
+        assert_eq!((outcome.affected, outcome.errors), (0, 0));
+        assert_eq!(outcome.log, vec!["Not delete: the run was stopped".to_string()]);
     }
 
     #[test]
