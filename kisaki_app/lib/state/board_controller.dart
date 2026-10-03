@@ -8,6 +8,7 @@ import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../util/format.dart';
 import 'activity_log.dart';
+import 'analysis_stats.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
 import 'group_organize.dart';
@@ -25,6 +26,7 @@ import 'selection_rules.dart';
 export 'row_projection.dart' show GroupSelection;
 
 part 'board_activity.dart';
+part 'board_analysis.dart';
 part 'board_display.dart';
 part 'board_operations.dart';
 part 'board_source_lists.dart';
