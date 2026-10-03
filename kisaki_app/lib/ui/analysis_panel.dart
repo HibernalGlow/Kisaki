@@ -24,9 +24,18 @@ class AnalysisPanel extends StatelessWidget {
           spacing: BoardTokens.gap * 2,
           runSpacing: BoardTokens.gap,
           children: <Widget>[
-            MetricTile(labelKey: 'metric-files', value: '${controller.fileCount}'),
-            MetricTile(labelKey: 'metric-groups', value: '${controller.groupCount}'),
-            MetricTile(labelKey: 'metric-total', value: humanBytes(controller.totalBytes)),
+            MetricTile(
+              labelKey: 'metric-files',
+              value: '${controller.fileCount}',
+            ),
+            MetricTile(
+              labelKey: 'metric-groups',
+              value: '${controller.groupCount}',
+            ),
+            MetricTile(
+              labelKey: 'metric-total',
+              value: humanBytes(controller.totalBytes),
+            ),
             MetricTile(
               labelKey: 'metric-reclaimable',
               value: humanBytes(controller.reclaimableBytes),
@@ -37,7 +46,10 @@ class AnalysisPanel extends StatelessWidget {
               value: '${controller.selectedCount}',
               accent: controller.selectedCount > 0 ? palette.primary : null,
             ),
-            MetricTile(labelKey: 'metric-selected-size', value: controller.selectedSizeText),
+            MetricTile(
+              labelKey: 'metric-selected-size',
+              value: controller.selectedSizeText,
+            ),
           ],
         ),
         const SizedBox(height: BoardTokens.gap * 2),
@@ -68,7 +80,10 @@ class AnalysisPanel extends StatelessWidget {
                 labelKey: 'action-delete',
                 icon: Icons.delete_outline_rounded,
                 tone: controller.selectedCount == 0 ? null : palette.danger,
-                onPressed: controller.selectedCount == 0 || controller.actionRunning ? null : controller.requestDelete,
+                onPressed:
+                    controller.selectedCount == 0 || controller.actionRunning
+                    ? null
+                    : controller.requestDelete,
               ),
             ),
             const SizedBox(width: BoardTokens.gap),
@@ -85,7 +100,8 @@ class AnalysisPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: BoardTokens.gap * 2),
-        if (controller.messages.isNotEmpty || controller.critical != null) ...<Widget>[
+        if (controller.messages.isNotEmpty ||
+            controller.critical != null) ...<Widget>[
           const Hairline(),
           const SizedBox(height: BoardTokens.gap),
           BoardAction(
@@ -111,16 +127,32 @@ class _PlanBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
     final List<ScanRow> targets = controller.selectedRows;
-    final int bytes = targets.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes);
-    final String verb = Labels.of(controller.dryRun ? 'label-dry-run' : (controller.moveToTrash ? 'plan_files_to_trash' : 'plan_files_to_delete'));
-    final List<String> preview = targets.take(8).map((ScanRow row) => row.path).toList();
+    final int bytes = targets.fold<int>(
+      0,
+      (int sum, ScanRow row) => sum + row.sizeBytes,
+    );
+    final String verb = Labels.of(
+      controller.dryRun
+          ? 'label-dry-run'
+          : (controller.moveToTrash
+                ? 'plan_files_to_trash'
+                : 'plan_files_to_delete'),
+    );
+    final List<String> preview = targets
+        .take(8)
+        .map((ScanRow row) => row.path)
+        .toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: <Widget>[
         Text(
           Labels.of(
             'plan_header',
-            args: <String, Object>{'count': targets.length, 'size': humanBytes(bytes), 'verb': verb},
+            args: <String, Object>{
+              'count': targets.length,
+              'size': humanBytes(bytes),
+              'verb': verb,
+            },
           ),
           style: TextStyle(
             fontSize: BoardTokens.fsLabel,
@@ -134,12 +166,21 @@ class _PlanBlock extends StatelessWidget {
             path,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(fontSize: BoardTokens.fsCaption, color: palette.fg),
+            style: TextStyle(
+              fontSize: BoardTokens.fsCaption,
+              color: palette.fg,
+            ),
           ),
         if (targets.length > preview.length)
           Text(
-            Labels.of('plan_more', args: <String, Object>{'count': targets.length - preview.length}),
-            style: TextStyle(fontSize: BoardTokens.fsCaption, color: palette.fgFaint),
+            Labels.of(
+              'plan_more',
+              args: <String, Object>{'count': targets.length - preview.length},
+            ),
+            style: TextStyle(
+              fontSize: BoardTokens.fsCaption,
+              color: palette.fgFaint,
+            ),
           ),
       ],
     );

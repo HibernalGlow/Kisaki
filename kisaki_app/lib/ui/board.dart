@@ -126,11 +126,14 @@ class _KisakiBoardState extends State<KisakiBoard> {
             child: Padding(
               padding: const EdgeInsets.all(BoardTokens.gap),
               child: LayoutBuilder(
-                builder: (BuildContext context, BoxConstraints constraints) => _Lanes(
-                  controller: controller,
-                  picker: widget.picker,
-                  available: constraints.maxWidth.isFinite ? constraints.maxWidth : BoardTokens.minWindowWidth,
-                ),
+                builder: (BuildContext context, BoxConstraints constraints) =>
+                    _Lanes(
+                      controller: controller,
+                      picker: widget.picker,
+                      available: constraints.maxWidth.isFinite
+                          ? constraints.maxWidth
+                          : BoardTokens.minWindowWidth,
+                    ),
               ),
             ),
           ),
@@ -142,7 +145,11 @@ class _KisakiBoardState extends State<KisakiBoard> {
 
 /// Source and results lanes keep their own width; analysis takes whatever is left.
 class _Lanes extends StatelessWidget {
-  const _Lanes({required this.controller, required this.picker, required this.available});
+  const _Lanes({
+    required this.controller,
+    required this.picker,
+    required this.available,
+  });
 
   final BoardController controller;
   final PathPicker? picker;
@@ -155,11 +162,18 @@ class _Lanes extends StatelessWidget {
     final LaneLayout layout = controller.layout;
     final double sourceWidth = layout.sourceCollapsed
         ? BoardTokens.laneCollapsedWidth
-        : layout.sourceWidth.clamp(BoardTokens.sourceLaneMin, BoardTokens.sourceLaneMax);
+        : layout.sourceWidth.clamp(
+            BoardTokens.sourceLaneMin,
+            BoardTokens.sourceLaneMax,
+          );
     final double resultsWidth = layout.resultsCollapsed
         ? BoardTokens.laneCollapsedWidth
-        : layout.resultsWidth.clamp(BoardTokens.resultsLaneMin, BoardTokens.resultsLaneMax);
-    final double reserved = sourceWidth + resultsWidth + _handleWidth * 2 + BoardTokens.gap * 2;
+        : layout.resultsWidth.clamp(
+            BoardTokens.resultsLaneMin,
+            BoardTokens.resultsLaneMax,
+          );
+    final double reserved =
+        sourceWidth + resultsWidth + _handleWidth * 2 + BoardTokens.gap * 2;
     final bool fits = reserved + 220 <= available;
 
     return Row(

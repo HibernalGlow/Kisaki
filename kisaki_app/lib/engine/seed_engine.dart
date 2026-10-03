@@ -42,7 +42,10 @@ class SeedEngine implements KisakiEngine {
   };
 
   /// Scanners whose hits really carry no payload, mirrored so the metrics read sensibly.
-  static const Set<String> _zeroSized = <String>{'empty_folders', 'empty_files'};
+  static const Set<String> _zeroSized = <String>{
+    'empty_folders',
+    'empty_files',
+  };
 
   /// Display text per column key; only `size` and `modified` are computed from the row itself.
   static const Map<String, List<String>> _vocabulary = <String, List<String>>{
@@ -58,10 +61,19 @@ class SeedEngine implements KisakiEngine {
     'genre': <String>['Rock', 'Jazz', 'Electronic', 'Ambient', 'Unknown'],
     'destination': <String>['missing target', 'moved target', 'self loop'],
     'error': <String>['No such file or directory'],
-    'errors': <String>['unsupported format', 'truncated header', 'checksum mismatch'],
+    'errors': <String>[
+      'unsupported format',
+      'truncated header',
+      'checksum mismatch',
+    ],
     'new_name': <String>['renamed_1', 'renamed_2', 'renamed_3'],
     'tags': <String>['camera, date', 'gps, date', 'none'],
-    'info': <String>['crop 12x0', 'crop 0x24', 'no black bars', 'transcode to h264'],
+    'info': <String>[
+      'crop 12x0',
+      'crop 0x24',
+      'no black bars',
+      'transcode to h264',
+    ],
     'current_extension': <String>['jpg', 'png', 'mp4', 'mkv'],
     'proper_group': <String>['image', 'video', 'audio', 'archive'],
     'proper_extension': <String>['png', 'mp4', 'flac', 'zip'],
@@ -81,11 +93,11 @@ class SeedEngine implements KisakiEngine {
 
   @override
   EngineInfo engineInfo() => EngineInfo(
-        coreVersion: 'seed',
-        apiVersion: 1,
-        os: Platform.operatingSystem,
-        threadLimit: Platform.numberOfProcessors,
-      );
+    coreVersion: 'seed',
+    apiVersion: 1,
+    os: Platform.operatingSystem,
+    threadLimit: Platform.numberOfProcessors,
+  );
 
   @override
   bool isScanning() => _scanning;
@@ -101,9 +113,14 @@ class SeedEngine implements KisakiEngine {
 
   @override
   Stream<ScanEvent> startScan(ScanRequest request) async* {
-    final List<String> roots = <String>[...request.included, ...request.reference];
+    final List<String> roots = <String>[
+      ...request.included,
+      ...request.reference,
+    ];
     if (roots.isEmpty) {
-      yield const ScanEventFailed('Seed scan needs at least one included or reference path');
+      yield const ScanEventFailed(
+        'Seed scan needs at least one included or reference path',
+      );
       return;
     }
 
@@ -113,20 +130,25 @@ class SeedEngine implements KisakiEngine {
     try {
       int reached = 0;
       for (final int percent in _ticks) {
-        yield ScanEventProgress(ProgressUpdate(
-          stageLabelKey: 'status_scanning',
-          current: percent,
-          total: 100,
-          percent: percent,
-          detail: 'seed ${request.tool}',
-        ));
+        yield ScanEventProgress(
+          ProgressUpdate(
+            stageLabelKey: 'status_scanning',
+            current: percent,
+            total: 100,
+            percent: percent,
+            detail: 'seed ${request.tool}',
+          ),
+        );
         await Future<void>.delayed(const Duration(milliseconds: 60));
         reached = percent;
         if (_stopRequested) {
           break;
         }
       }
-      final List<String> scanned = _traversed(roots, _stopRequested ? reached : 100);
+      final List<String> scanned = _traversed(
+        roots,
+        _stopRequested ? reached : 100,
+      );
       final List<ScanRow> rows = _rows(request, tool, scanned);
       yield ScanEventCompleted(_outcome(request, tool, rows, _stopRequested));
     } finally {
@@ -143,7 +165,10 @@ class SeedEngine implements KisakiEngine {
     ];
     final int bytes = request.dryRun
         ? 0
-        : request.rows.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes);
+        : request.rows.fold<int>(
+            0,
+            (int sum, ScanRow row) => sum + row.sizeBytes,
+          );
     return DeleteOutcome(
       affected: request.dryRun ? 0 : request.rows.length,
       errors: 0,
@@ -176,19 +201,40 @@ class SeedEngine implements KisakiEngine {
     int groupIndex = 0;
     for (final String root in roots) {
       final String directory = _trimSlashes(root);
-      final bool isReference = supportsReference && request.reference.contains(root);
+      final bool isReference =
+          supportsReference && request.reference.contains(root);
       if (!grouped) {
         for (int hit = 0; hit < _flatRowsPerRoot; hit++) {
-          rows.add(_row(tool, directory, suffix, counter,
-              groupIndex: -1, groupSize: 0, isGroupStart: false, isReference: isReference));
+          rows.add(
+            _row(
+              tool,
+              directory,
+              suffix,
+              counter,
+              groupIndex: -1,
+              groupSize: 0,
+              isGroupStart: false,
+              isReference: isReference,
+            ),
+          );
           counter++;
         }
         continue;
       }
       for (int group = 0; group < _groupsPerRoot; group++) {
         for (int member = 0; member < _membersPerGroup; member++) {
-          rows.add(_row(tool, directory, suffix, counter, groupIndex: groupIndex,
-              groupSize: _membersPerGroup, isGroupStart: member == 0, isReference: isReference));
+          rows.add(
+            _row(
+              tool,
+              directory,
+              suffix,
+              counter,
+              groupIndex: groupIndex,
+              groupSize: _membersPerGroup,
+              isGroupStart: member == 0,
+              isReference: isReference,
+            ),
+          );
           counter++;
         }
         groupIndex++;
@@ -199,14 +245,21 @@ class SeedEngine implements KisakiEngine {
 
   /// One fake hit: name and metrics come from `counter`, so the same request always renders
   /// the same table.
-  ScanRow _row(ToolSpec? tool, String directory, String suffix, int counter,
-      {required int groupIndex,
-      required int groupSize,
-      required bool isGroupStart,
-      required bool isReference}) {
+  ScanRow _row(
+    ToolSpec? tool,
+    String directory,
+    String suffix,
+    int counter, {
+    required int groupIndex,
+    required int groupSize,
+    required bool isGroupStart,
+    required bool isReference,
+  }) {
     final String name = 'seed_${counter + 1}$suffix';
     final bool empty = _zeroSized.contains(tool?.id ?? '');
-    final int sizeBytes = empty ? 0 : 4096 + (counter * 7919) % (8 * 1024 * 1024);
+    final int sizeBytes = empty
+        ? 0
+        : 4096 + (counter * 7919) % (8 * 1024 * 1024);
     final int modifiedTs = _baseTs + counter * 5400;
     final List<String> cells = <String>[];
     final List<int> sortKeys = <int>[];
@@ -227,8 +280,14 @@ class SeedEngine implements KisakiEngine {
   }
 
   /// One display string and one numeric sort key per declared column, in column order.
-  void _fillCells(ToolSpec? tool, int counter, int sizeBytes, int modifiedTs, List<String> cells,
-      List<int> sortKeys) {
+  void _fillCells(
+    ToolSpec? tool,
+    int counter,
+    int sizeBytes,
+    int modifiedTs,
+    List<String> cells,
+    List<int> sortKeys,
+  ) {
     for (final ColumnDef column in tool?.columns ?? const <ColumnDef>[]) {
       final String id = _columnId(column);
       switch (id) {
@@ -247,10 +306,20 @@ class SeedEngine implements KisakiEngine {
     }
   }
 
-  ScanOutcome _outcome(ScanRequest request, ToolSpec? tool, List<ScanRow> rows, bool stopped) {
-    final int total = rows.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes);
-    final Set<int> groups =
-        rows.map((ScanRow row) => row.groupIndex).where((int index) => index >= 0).toSet();
+  ScanOutcome _outcome(
+    ScanRequest request,
+    ToolSpec? tool,
+    List<ScanRow> rows,
+    bool stopped,
+  ) {
+    final int total = rows.fold<int>(
+      0,
+      (int sum, ScanRow row) => sum + row.sizeBytes,
+    );
+    final Set<int> groups = rows
+        .map((ScanRow row) => row.groupIndex)
+        .where((int index) => index >= 0)
+        .toSet();
     return ScanOutcome(
       tool: request.tool,
       rows: rows,
@@ -280,7 +349,8 @@ class SeedEngine implements KisakiEngine {
         kept[row.groupIndex] = row.sizeBytes;
       }
     }
-    return total - kept.values.fold<int>(0, (int sum, int value) => sum + value);
+    return total -
+        kept.values.fold<int>(0, (int sum, int value) => sum + value);
   }
 
   static String _suffixFor(String toolId) {
