@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/filter_apply.dart';
 import '../state/filter_model.dart';
 import '../theme/board_theme.dart';
 import 'widgets/primitives.dart';
