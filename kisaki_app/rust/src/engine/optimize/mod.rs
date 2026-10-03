@@ -5,6 +5,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, Ordering};
 
 use czkawka_core::common::ffmpeg_utils::check_if_ffprobe_ffmpeg_exists;
+use czkawka_core::common::tool_data::CommonData;
 use czkawka_core::common::traits::Search;
 use czkawka_core::tools::video_optimizer::core::{fix_video_crop, process_video};
 use czkawka_core::tools::video_optimizer::{
@@ -37,13 +38,14 @@ pub fn optimize(request: &OptimizeRequest) -> Result<OptimizeOutcome, String> {
                 return Err("The scan options are set to the crop mode, so a transcode fix has nothing to work from".to_string());
             }
             let fix = transcode_fix(options)?;
-            prepare(request, params, stop, |file, entry| {
+            prepare(request, params, stop, |file, entry, warnings| {
                 planned(
                     file,
                     transcode_target(file, options.overwrite_original),
                     OptimizeStatus::Transcoded,
                     entry,
                     Work::Transcode(fix.clone()),
+                    warnings,
                 )
             })
         }
@@ -53,10 +55,17 @@ pub fn optimize(request: &OptimizeRequest) -> Result<OptimizeOutcome, String> {
             }
             let mechanism = flat::crop_mechanism_of(&store)?;
             let fix = crop_fix(options, mechanism)?;
-            prepare(request, params, stop, move |file, entry| {
+            prepare(request, params, stop, move |file, entry, warnings| {
                 let rectangle = entry.map(|entry| entry.crop).unwrap_or_default();
                 let work = Work::Crop(VideoCropSingleFixParams { crop_rectangle: rectangle, ..fix });
-                planned(file, crop_target(file, options.overwrite_original, mechanism), OptimizeStatus::Cropped, entry, work)
+                planned(
+                    file,
+                    crop_target(file, options.overwrite_original, mechanism),
+                    OptimizeStatus::Cropped,
+                    entry,
+                    work,
+                    warnings,
+                )
             })
         }
         _ => Err("Exactly one of transcode or crop options must be supplied".to_string()),
@@ -97,20 +106,30 @@ fn prepare(
     request: &OptimizeRequest,
     params: VideoOptimizerParameters,
     stop: Arc<AtomicBool>,
-    plan: impl Fn(&Path, Option<&Scanned>) -> Prepared,
+    plan: impl Fn(&Path, Option<&Scanned>, &[String]) -> Prepared,
 ) -> Result<OptimizeOutcome, String> {
-    let found = scan(request, params)?;
+    let Scan { found, warnings } = scan(request, params)?;
     let items = request
         .paths
         .iter()
-        .map(|path| settle(request, plan(Path::new(path), found.get(&fix::resolved(Path::new(path)))), &stop))
+        .map(|path| {
+            let file = Path::new(path);
+            settle(request, plan(file, found.get(&fix::resolved(file)), &warnings), &stop)
+        })
         .collect();
     Ok(summarise(items))
 }
 
+/// The candidate list plus what the engine said on the way: a file it dropped never reaches the list,
+/// so its reason only survives in the warnings.
+struct Scan {
+    found: HashMap<PathBuf, Scanned>,
+    warnings: Vec<String>,
+}
+
 /// Turns the engine's answer about one file into work: an unflagged file is skipped, an unanalyzable
 /// one reports the engine's error, and anything else is on its way to being rewritten.
-fn planned(file: &Path, target: PathBuf, success: OptimizeStatus, entry: Option<&Scanned>, work: Work) -> Prepared {
+fn planned(file: &Path, target: PathBuf, success: OptimizeStatus, entry: Option<&Scanned>, work: Work, warnings: &[String]) -> Prepared {
     match entry {
         Some(entry) => Prepared {
             file: file.to_path_buf(),
@@ -123,14 +142,23 @@ fn planned(file: &Path, target: PathBuf, success: OptimizeStatus, entry: Option<
                 None => work,
             },
         },
-        None => Prepared {
-            file: file.to_path_buf(),
-            target,
-            codec: String::new(),
-            size_before: 0,
-            success,
-            work: Work::Nothing(format!("The engine does not ask to optimize {}", file.display())),
-        },
+        None => {
+            // An engine complaint naming this file is a failure it hit while looking at it; silence
+            // means the file simply is not on the list any more.
+            let reason = warnings.iter().find(|warning| warning.contains(&file.to_string_lossy().to_string()));
+            let work = match reason {
+                Some(warning) => Work::Broken(warning.clone()),
+                None => Work::Nothing(format!("The engine does not ask to optimize {}", file.display())),
+            };
+            Prepared {
+                file: file.to_path_buf(),
+                target,
+                codec: String::new(),
+                size_before: 0,
+                success,
+                work,
+            }
+        }
     }
 }
 
@@ -195,7 +223,7 @@ fn gate(request: &OptimizeRequest, file: &Path, target: &Path, stop: &Arc<Atomic
 
 /// Re-runs the optimizer scan over the folders holding the selection. Every selected file sits
 /// directly inside its own parent, so a non-recursive scan of those parents still reaches all of them.
-fn scan(request: &OptimizeRequest, params: VideoOptimizerParameters) -> Result<HashMap<PathBuf, Scanned>, String> {
+fn scan(request: &OptimizeRequest, params: VideoOptimizerParameters) -> Result<Scan, String> {
     let mut scan = request.scan.clone();
     scan.included = fix::parent_dirs(&request.paths);
     scan.reference = Vec::new();
@@ -208,7 +236,8 @@ fn scan(request: &OptimizeRequest, params: VideoOptimizerParameters) -> Result<H
     apply_common(&mut tool, &scan);
     tool.search(&Arc::new(AtomicBool::new(false)), None);
 
-    Ok(match request.transcode {
+    let warnings = tool.get_text_messages().warnings.clone();
+    let found: HashMap<PathBuf, Scanned> = match request.transcode {
         Some(_) => tool
             .get_video_transcode_entries()
             .iter()
@@ -239,7 +268,8 @@ fn scan(request: &OptimizeRequest, params: VideoOptimizerParameters) -> Result<H
                 )
             })
             .collect(),
-    })
+    };
+    Ok(Scan { found, warnings })
 }
 
 fn transcode_fix(options: &TranscodeOptions) -> Result<VideoTranscodeFixParams, String> {
