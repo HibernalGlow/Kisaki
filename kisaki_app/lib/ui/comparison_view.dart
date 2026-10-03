@@ -64,7 +64,7 @@ class ComparisonView extends StatelessWidget {
               width: (viewport.width * 0.96).clamp(360.0, 1240.0),
               height: (viewport.height * 0.9).clamp(320.0, 880.0),
               child: active == null
-                  ? const ComparisonMissingImage(path: null)
+                  ? const MissingImage(path: null)
                   : Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
@@ -188,7 +188,7 @@ class _TargetStrip extends StatelessWidget {
                       ),
                       color: palette.sunken,
                     ),
-                    child: ComparisonFileImage(
+                    child: DiskImage(
                       path: row.path,
                       fit: BoxFit.cover,
                       placeholder: const SizedBox.shrink(),

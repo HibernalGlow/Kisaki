@@ -339,13 +339,21 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(Labels.fallbackKeys, isEmpty);
+    // Scoped to the dialog: the image scanner's own tab strip also reads "Images", and counting it
+    // here would make this gauge measure the wrong thing.
     expect(
-      find.textContaining(Labels.of('filter-category-images')),
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.textContaining(Labels.of('filter-category-images')),
+      ),
       findsOneWidget,
       reason: 'the sweep has to reach the category chips',
     );
     expect(
-      find.textContaining(Labels.of('filter-extension-none')),
+      find.descendant(
+        of: find.byType(AlertDialog),
+        matching: find.textContaining(Labels.of('filter-extension-none')),
+      ),
       findsOneWidget,
       reason: 'a suffix-free row is its own chip in the reference',
     );

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 
 import '../engine/kisaki_engine.dart';
 import '../engine/models.dart';
@@ -11,6 +12,7 @@ import 'filter_model.dart';
 import 'image_comparison.dart';
 import 'row_projection.dart';
 import 'selection_model.dart';
+import 'similar_folders.dart';
 import 'selection_rules.dart';
 
 export 'row_projection.dart' show GroupSelection;
@@ -110,6 +112,7 @@ class BoardController extends ChangeNotifier {
   Map<String, Object> _assistantMessageArgs = const <String, Object>{};
   bool _assistantMessageIsError = false;
   ComparisonState _comparison = const ComparisonState();
+  bool _folderView = false;
   int _sortColumn = -1;
   bool _sortAscending = true;
 
@@ -476,6 +479,7 @@ class BoardController extends ChangeNotifier {
     _history = createSelectionHistory(const <String>[]);
     _clearAssistantMessage();
     _comparison = const ComparisonState();
+    _folderView = false;
     _progress = null;
     _outcome = null;
     _messages = '';
@@ -710,6 +714,36 @@ class BoardController extends ChangeNotifier {
   /// The assistant and the comparison dialog work on the groups the table shows, so a filtered-out
   /// row is never touched.
   List<List<ScanRow>> get boardGroups => groupsOf(_visible, _tool);
+
+  /// Only the image scanner rolls its groups up into folders, like the reference's view switch.
+  bool get supportsFolderView => _tool?.id == 'similar_images';
+  bool get folderView => _folderView && supportsFolderView;
+  void setFolderView(bool value) {
+    if (_folderView == value) {
+      return;
+    }
+    _folderView = value;
+    notifyListeners();
+  }
+
+  /// The header search box filters the folder roll-up too, which is what the reference feeds in.
+  List<FolderStat> get similarFolders {
+    final String needle = _filter.trim().toLowerCase();
+    final List<FolderStat> stats = buildSimilarFolders(boardGroups);
+    if (needle.isEmpty) {
+      return stats;
+    }
+    return stats
+        .where((FolderStat stat) => stat.path.toLowerCase().contains(needle))
+        .toList();
+  }
+
+  /// Puts text on the clipboard and reports it, so a copy has a readback instead of a silent action.
+  Future<void> copyText(String text) async {
+    await Clipboard.setData(ClipboardData(text: text));
+    _setStatus('status_copied', args: <String, Object>{'path': text});
+    notifyListeners();
+  }
 
   SelectionConfig get assistant => _assistant;
   bool get canUndoSelection => _history.canUndo;
