@@ -7,7 +7,11 @@ from pathlib import Path
 
 CORE_MANIFEST = "czkawka_core/Cargo.toml"
 CRATES = ["czkawka_core", "czkawka_cli", "czkawka_gui", "krokiet", "cedinia", "kisaki", "kisaki_app/rust"]
-METAINFOS = ["data/com.github.qarmin.czkawka.metainfo.xml", "data/io.github.qarmin.krokiet.metainfo.xml", "data/com.github.hibernerglow.kisaki.metainfo.xml"]
+METAINFOS = [
+    "data/com.github.qarmin.czkawka.metainfo.xml",
+    "data/io.github.qarmin.krokiet.metainfo.xml",
+    "data/com.github.hibernerglow.kisaki.metainfo.xml",
+]
 
 
 @dataclass
@@ -61,12 +65,8 @@ def build_rules(old: str, new: str, iso_date: str) -> list[Rule]:
         Rule(".github/ISSUE_TEMPLATE/bug_report.md", f"version: {esc},", f"version: {new},"),
         Rule(".github/ISSUE_TEMPLATE/bug_report.md", f"e.g. {esc} cli/gui", f"e.g. {new} cli/gui"),
     ]
-    old_major_minor = ".".join(old.split(".")[:2])
-    new_major_minor = ".".join(new.split(".")[:2])
-    if old_major_minor != new_major_minor:
-        rules.append(
-            Rule("README.md", f"about the {re.escape(old_major_minor)} release", f"about the {new_major_minor} release")
-        )
+    # Upstream also rewrites its "You can read more about the X.Y release" sentence here, but the Kisaki
+    # README has no release-article paragraph, so that rule would match 0 times and abort every minor bump.
     for crate in CRATES:
         manifest = f"{crate}/Cargo.toml"
         rules.append(Rule(manifest, f'^version = "{esc}"$', f'version = "{new}"'))
@@ -122,7 +122,6 @@ def main() -> None:
     print(format_green(f"Changed version {old_version} -> {new_version} ({iso_date}) in {len(contents)} files"))
     print(format_yellow("Remaining manual steps:"))
     print(format_yellow("  - add the Changelog.md entry with the release date"))
-    print(format_yellow("  - update the release article links in README.md"))
     print(format_yellow("  - regenerate cedinia/THIRD_PARTY_LICENSES.txt with `just gen_cedinia_licenses`"))
     print(format_yellow("  - bump `versionCode` in cedinia/android/app/build.gradle.kts before a Play Store upload"))
 
