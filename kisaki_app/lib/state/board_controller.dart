@@ -117,6 +117,7 @@ class BoardController extends ChangeNotifier {
   ComparisonState _comparison = const ComparisonState();
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
+  final Map<String, double> _columnWidths = <String, double>{};
   OrganizeOptions _organize = const OrganizeOptions();
   VideoOptions _video = const VideoOptions();
   OptimizeOutcome? _videoOutcome;
@@ -723,6 +724,38 @@ class BoardController extends ChangeNotifier {
   /// The assistant and the comparison dialog work on the groups the table shows, so a filtered-out
   /// row is never touched.
   List<List<ScanRow>> get boardGroups => groupsOf(_visible, _tool);
+
+  /// Widths the reader dragged, keyed `tool:column`, so each scanner keeps its own layout.
+  Map<String, double> get columnWidths => _columnWidths;
+
+  void setColumnWidth(String columnKey, double width, double minWidth) {
+    final String toolId = _tool?.id ?? '';
+    if (toolId.isEmpty) {
+      return;
+    }
+    final double clamped = width < minWidth ? minWidth : width;
+    final String key = '$toolId:$columnKey';
+    if (_columnWidths[key] == clamped) {
+      return;
+    }
+    _columnWidths[key] = clamped;
+    notifyListeners();
+  }
+
+  /// Gives every column of the current scanner back to the flexed layout.
+  void resetColumnWidths() {
+    final String prefix = '${_tool?.id ?? ''}:';
+    final List<String> owned = _columnWidths.keys
+        .where((String key) => key.startsWith(prefix))
+        .toList();
+    if (owned.isEmpty) {
+      return;
+    }
+    _columnWidths.removeWhere(
+      (String key, double value) => owned.contains(key),
+    );
+    notifyListeners();
+  }
 
   /// Only the image scanner rolls its groups up into folders, like the reference's view switch.
   /// The reference hides that switch while Simiu sets are being planned, because the sets replace
