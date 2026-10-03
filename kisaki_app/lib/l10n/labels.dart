@@ -27,7 +27,7 @@ class Labels {
     if (parts.isEmpty) {
       return key;
     }
-    final StringBuffer text = StringBuffer(parts.first.toUpperCase());
+    final StringBuffer text = StringBuffer('${parts.first[0].toUpperCase()}${parts.first.substring(1)}');
     for (final String part in parts.skip(1)) {
       text.write(' ${part[0].toUpperCase()}${part.substring(1)}');
     }
@@ -116,6 +116,7 @@ class Labels {
     'col_title': 'Title',
     'col_year': 'Year',
     'confirm_delete_body': 'This will remove { \$count } paths ({ \$size }) for real.',
+    'confirm_delete_title': 'Delete the selected files?',
     'confirm_dry_run_body': 'Dry run: plans { \$count } paths ({ \$size }) and changes nothing.',
     'plan_files_to_delete': 'delete permanently',
     'plan_files_to_trash': 'move to trash',
