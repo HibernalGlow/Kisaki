@@ -6,6 +6,7 @@ import '../engine/kisaki_engine.dart';
 import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../util/format.dart';
+import 'filter_model.dart';
 import 'row_projection.dart';
 
 export 'row_projection.dart' show GroupSelection;
@@ -96,6 +97,9 @@ class BoardController extends ChangeNotifier {
   List<ScanRow> _visible = <ScanRow>[];
   final Set<String> _selected = <String>{};
   String _filter = '';
+  FilterState _filters = FilterState.defaults();
+  final List<FilterPreset> _presets = <FilterPreset>[];
+  FilterResult? _filterResult;
   int _sortColumn = -1;
   bool _sortAscending = true;
 
@@ -464,6 +468,8 @@ class BoardController extends ChangeNotifier {
     _messages = '';
     _critical = null;
     _filter = '';
+    _filters = FilterState.defaults();
+    _filterResult = null;
     _sortColumn = -1;
     _sortAscending = true;
     if (!keepStatus) {
@@ -494,13 +500,106 @@ class BoardController extends ChangeNotifier {
   }
 
   void _recomputeVisible() {
-    _visible = projectRows(
+    // The header search box is the reference's quick-text dimension, so it feeds the same state the
+    // filter dialog edits instead of being a second, narrower filtering path.
+    final FilterState state = _filters.copy()
+      ..textPattern = _filter.trim()
+      ..textEnabled = _filter.trim().isNotEmpty;
+    final FilterResult result = applyFilters(
       rows: _rows,
+      selected: _selected,
+      state: state,
       tool: _tool,
-      filter: _filter,
+    );
+    _filters = state;
+    _filterResult = result;
+    _visible = projectRows(
+      rows: result.rows,
+      tool: _tool,
+      filter: '',
       sortColumn: _sortColumn,
       sortAscending: _sortAscending,
     );
+  }
+
+  FilterState get filters => _filters;
+  List<FilterPreset> get filterPresets => List<FilterPreset>.unmodifiable(_presets);
+  FilterStats get filterStats =>
+      _filterResult?.stats ??
+      FilterStats(
+        totalItems: _rows.length,
+        filteredItems: _visible.length,
+        totalGroups: 0,
+        filteredGroups: 0,
+        selectedItems: _selected.length,
+        activeFilterCount: _filters.activeCount,
+        extensions: const <ExtensionStat>[],
+        categories: const <CategoryStat>[],
+      );
+  String get filterPatternError =>
+      _filterResult?.pathPatternError ?? _filterResult?.textPatternError ?? '';
+
+  /// Replaces the whole filter state; the dialog edits a copy and commits it here.
+  void setFilters(FilterState next) {
+    _filters = next;
+    _recomputeVisible();
+    notifyListeners();
+  }
+
+  void resetFilters() {
+    _filters = FilterState.defaults();
+    _filter = '';
+    _recomputeVisible();
+    notifyListeners();
+  }
+
+  void applyBuiltinPreset(BuiltinPreset preset) {
+    _filters = FilterState.fromPreset(preset);
+    _filter = _filters.textPattern;
+    _recomputeVisible();
+    notifyListeners();
+  }
+
+  /// Overwrites a preset with the same name, like the reference's save button.
+  void saveFilterPreset(String name) {
+    final String trimmed = name.trim();
+    if (trimmed.isEmpty) {
+      return;
+    }
+    final int existing = _presets.indexWhere(
+      (FilterPreset preset) => preset.name == trimmed,
+    );
+    final FilterPreset preset = FilterPreset(
+      id: existing >= 0 ? _presets[existing].id : 'filter-${DateTime.now().millisecondsSinceEpoch}',
+      name: trimmed,
+      state: _filters.copy(),
+    );
+    if (existing >= 0) {
+      _presets[existing] = preset;
+    } else {
+      _presets.add(preset);
+    }
+    notifyListeners();
+  }
+
+  void removeFilterPreset(String id) {
+    _presets.removeWhere((FilterPreset preset) => preset.id == id);
+    notifyListeners();
+  }
+
+  String exportFilterPresets() => serializeFilterPresets(_presets);
+
+  /// `false` keeps the current presets and the caller can show [filterPatternError]'s sibling.
+  bool importFilterPresets(String text) {
+    try {
+      _presets
+        ..clear()
+        ..addAll(parseFilterPresets(text));
+      notifyListeners();
+      return true;
+    } on FormatException {
+      return false;
+    }
   }
 
   List<ScanRow> groupMembers(int groupIndex) =>
