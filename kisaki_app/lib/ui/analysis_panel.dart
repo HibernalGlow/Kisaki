@@ -7,6 +7,7 @@ import '../theme/board_theme.dart';
 import '../theme/swiss_grid.dart';
 import '../util/format.dart';
 import 'activity_log_panel.dart';
+import 'analysis_stats_card.dart';
 import 'exif_card.dart';
 import 'organize_card.dart';
 import 'overlays.dart';
@@ -77,6 +78,13 @@ class AnalysisPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: BoardTokens.section),
+        if (controller.rows.isNotEmpty) ...<Widget>[
+          AnalysisStatsCard(
+            controller: controller,
+            key: const Key('analysis-card'),
+          ),
+          const SizedBox(height: BoardTokens.gap * 2),
+        ],
         if (controller.supportsGroupOrganize) ...<Widget>[
           OrganizeCard(controller: controller, key: const Key('organize-card')),
           const SizedBox(height: BoardTokens.gap * 2),
