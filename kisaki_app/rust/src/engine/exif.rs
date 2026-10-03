@@ -215,6 +215,26 @@ mod tests {
         assert!(error.contains("No files selected"), "unexpected: {error}");
     }
 
+    #[test]
+    fn a_stopped_exif_run_writes_nothing() {
+        let root = scratch("exif_stopped");
+        let photo = copy_fixture(&root, "photo.jpg");
+        let stop = AtomicBool::new(true);
+
+        let outcome = strip_stopping(&request(std::slice::from_ref(&photo), false, false), &stop).expect("stopped run");
+        assert_eq!((outcome.stripped, outcome.candidates, outcome.failed, outcome.skipped), (0, 0, 0, 1));
+        assert_eq!(outcome.items[0].detail, "The run was stopped");
+        assert!(!root.join("photo.czkawka_cleaned_exif.jpg").exists(), "a stopped run writes no side file");
+
+        // The same request with an idle flag does produce the side file, so the check is not vacuous.
+        let idle = AtomicBool::new(false);
+        let outcome = strip_stopping(&request(std::slice::from_ref(&photo), false, false), &idle).expect("idle run");
+        assert_eq!((outcome.candidates, outcome.skipped), (1, 0));
+        assert!(root.join("photo.czkawka_cleaned_exif.jpg").exists(), "the idle run writes the side file");
+
+        fs::remove_dir_all(&root).expect("remove scratch directory");
+    }
+
     fn request(paths: &[PathBuf], override_file: bool, dry_run: bool) -> ExifRequest {
         ExifRequest {
             scan: scan_request(),
