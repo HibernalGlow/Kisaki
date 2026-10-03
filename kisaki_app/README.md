@@ -54,8 +54,11 @@ drift on its own. `packaging/linux_bundle.sh` builds the Linux bundle and puts
 `libkisaki_bridge.so` next to the `kisaki` executable, which is the first directory
 `lib/util/rust_lib.dart` searches; CI runs that script (job `flutter-linux`) because no machine in
 this workspace has a Linux toolchain, and uploads the finished bundle as artifact
-`linux_kisaki_flutter_x86_64` on the default branch. The Windows bundle is not built in CI either,
-since that would need a runner this repository does not use.
+`linux_kisaki_flutter_x86_64` on the default branch. `packaging/windows_bundle.sh` is the Windows
+counterpart: it copies `kisaki_bridge.dll` into `build/windows/x64/runner/Release`, the directory the
+Flutter tool itself reports as its output. No machine here runs Windows, so that script's guards and
+its profile-to-directory mapping were exercised against a stub toolchain only, and CI does not build
+the Flutter app on Windows yet - the workflow's `windows-latest` job builds the Slint frontend.
 
 ## Gates
 
