@@ -14,7 +14,7 @@ One crate, and sixteen lines outside it.
 
 | | |
 |:--|:--|
-| `kisaki/` | 3 975 lines of Rust in 16 files, 2 247 lines of Slint in 12 files |
+| `kisaki/` | 4 045 lines of Rust in 16 files, 2 260 lines of Slint in 12 files |
 | Outside `kisaki/` | `+16 -4` in `Cargo.toml` (workspace member), `justfile`, `misc/run_checks.sh`, `misc/change_version.py`, plus new files `Cargo.lock` entries, `.github/workflows/kisaki.yml`, `data/com.github.hibernerglow.kisaki.desktop` and `.metainfo.xml` |
 | Boundary | `czkawka_core` is never modified to make a UI feature easier, and upstream crates are never restyled - both would destroy future rebases |
 
@@ -88,6 +88,7 @@ workspace:
 cargo clippy -p kisaki --all-targets --all-features -- -D warnings
 python3 misc/find_unused_callbacks.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
+python3 kisaki/tools/check_grid.py kisaki
 ```
 
 ## Safety

@@ -129,3 +129,4 @@ jobs:
           python3 misc/find_unused_slint_translations.py kisaki
           python3 misc/find_unused_callbacks.py kisaki
           python3 misc/find_unused_settings_properties.py kisaki
+          python3 kisaki/tools/check_grid.py kisaki
