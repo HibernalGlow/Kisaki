@@ -24,13 +24,7 @@ use crate::engine::runner::ProgressSender;
 use crate::engine::{EngineOutcome, EngineRow, FieldStore};
 
 /// Scanners whose output is a flat list: empty folders, big files, broken files, bad names, etc.
-pub fn run(
-    spec: &ToolSpec,
-    request: &ScanRequest,
-    store: &FieldStore,
-    sender: ProgressSender,
-    stop: Arc<AtomicBool>,
-) -> Result<EngineOutcome, String> {
+pub fn run(spec: &ToolSpec, request: &ScanRequest, store: &FieldStore, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let scan = Scan { request, store, sender, stop };
     match spec.id.as_str() {
         "empty_folders" => Ok(scan.empty_folders()),
@@ -67,7 +61,11 @@ impl Scan<'_> {
     }
 
     fn big_files(&self) -> EngineOutcome {
-        let mode = if flag_or(self.store, "big_biggest_first", true) { SearchMode::BiggestFiles } else { SearchMode::SmallestFiles };
+        let mode = if flag_or(self.store, "big_biggest_first", true) {
+            SearchMode::BiggestFiles
+        } else {
+            SearchMode::SmallestFiles
+        };
         let count = number_or(self.store, "big_number_of_files", 50).clamp(1, 100_000);
 
         let mut tool = BigFile::new(BigFileParameters::new(usize::try_from(count).unwrap_or(50), mode));
@@ -94,7 +92,11 @@ impl Scan<'_> {
 
     fn temporary_files(&self) -> EngineOutcome {
         let extensions = string_list(self.store, "temp_extension_list", "");
-        let params = if extensions.is_empty() { TemporaryParameters::default() } else { TemporaryParameters { extensions } };
+        let params = if extensions.is_empty() {
+            TemporaryParameters::default()
+        } else {
+            TemporaryParameters { extensions }
+        };
 
         let mut tool = Temporary::new(params);
         apply_common(&mut tool, self.request);
@@ -154,17 +156,20 @@ impl Scan<'_> {
 
         // Thumbnail generation is a desktop preview feature, so both modes ask the engine to skip it.
         let params = match mode {
-            VideoOptimizerMode::VideoCrop => VideoOptimizerParameters::VideoCrop(VideoCropParams::with_custom_params(
-                VideoCroppingMechanism::BlackBars,
-                u8::try_from(bounded(self.store, "vid_opt_black_pixel_threshold", 64, 0, 128)).unwrap_or(64),
-                u8::try_from(bounded(self.store, "vid_opt_black_bar_min_percentage", 80, 50, 100)).unwrap_or(80),
-                usize::try_from(bounded(self.store, "vid_opt_max_samples", 60, 5, 1000)).unwrap_or(60),
-                u32::try_from(bounded(self.store, "vid_opt_min_crop_size", 20, 1, 1000)).unwrap_or(20),
-                false,
-                10,
-                false,
-                2,
-            )),
+            VideoOptimizerMode::VideoCrop => {
+                let mechanism = crop_mechanism(&self.store.choice("vid_opt_crop_mechanism")).map_err(|error| format!("video_optimizer: {error}"))?;
+                VideoOptimizerParameters::VideoCrop(VideoCropParams::with_custom_params(
+                    mechanism,
+                    u8::try_from(bounded(self.store, "vid_opt_black_pixel_threshold", 64, 0, 128)).unwrap_or(64),
+                    u8::try_from(bounded(self.store, "vid_opt_black_bar_min_percentage", 80, 50, 100)).unwrap_or(80),
+                    usize::try_from(bounded(self.store, "vid_opt_max_samples", 60, 5, 1000)).unwrap_or(60),
+                    u32::try_from(bounded(self.store, "vid_opt_min_crop_size", 20, 1, 1000)).unwrap_or(20),
+                    false,
+                    10,
+                    false,
+                    2,
+                ))
+            }
             VideoOptimizerMode::VideoTranscode => VideoOptimizerParameters::VideoTranscode(VideoTranscodeParams::new(
                 string_list(self.store, "vid_opt_excluded_codecs", "hevc,h265,av1,vp9"),
                 false,
@@ -190,7 +195,13 @@ impl Scan<'_> {
 fn finish<T: CommonData>(tool: &T, mut rows: Vec<EngineRow>) -> EngineOutcome {
     rows.sort_unstable_by(|a, b| split_path_compare(a.path.as_path(), b.path.as_path()));
     let (critical, messages) = messages(tool);
-    EngineOutcome { rows, grouped: false, stopped: tool.get_stopped_search(), messages, critical }
+    EngineOutcome {
+        rows,
+        grouped: false,
+        stopped: tool.get_stopped_search(),
+        messages,
+        critical,
+    }
 }
 
 fn messages(tool: &impl CommonData) -> (Option<String>, String) {
@@ -239,16 +250,34 @@ fn error_sort_key(error: ErrorType) -> i64 {
 /// Which file kinds the engine is allowed to open.
 fn checked_types(store: &FieldStore) -> CheckedTypes {
     let mut types = CheckedTypes::NONE;
-    if flag_or(store, "bro_image", true) { types |= CheckedTypes::IMAGE; }
-    if flag_or(store, "bro_archive", true) { types |= CheckedTypes::ARCHIVE; }
-    if flag_or(store, "bro_audio", true) { types |= CheckedTypes::AUDIO; }
-    if flag_or(store, "bro_pdf", true) { types |= CheckedTypes::PDF; }
-    if flag_or(store, "bro_video_ffprobe", false) { types |= CheckedTypes::VIDEO_FFPROBE; }
-    if flag_or(store, "bro_video_ffmpeg", false) { types |= CheckedTypes::VIDEO_FFMPEG; }
-    if flag_or(store, "bro_font", false) { types |= CheckedTypes::FONT; }
-    if flag_or(store, "bro_markup", false) { types |= CheckedTypes::MARKUP; }
+    if flag_or(store, "bro_image", true) {
+        types |= CheckedTypes::IMAGE;
+    }
+    if flag_or(store, "bro_archive", true) {
+        types |= CheckedTypes::ARCHIVE;
+    }
+    if flag_or(store, "bro_audio", true) {
+        types |= CheckedTypes::AUDIO;
+    }
+    if flag_or(store, "bro_pdf", true) {
+        types |= CheckedTypes::PDF;
+    }
+    if flag_or(store, "bro_video_ffprobe", false) {
+        types |= CheckedTypes::VIDEO_FFPROBE;
+    }
+    if flag_or(store, "bro_video_ffmpeg", false) {
+        types |= CheckedTypes::VIDEO_FFMPEG;
+    }
+    if flag_or(store, "bro_font", false) {
+        types |= CheckedTypes::FONT;
+    }
+    if flag_or(store, "bro_markup", false) {
+        types |= CheckedTypes::MARKUP;
+    }
     // The core rejects an empty mask, so fall back to images and archives.
-    if types.is_empty() { types = CheckedTypes::IMAGE | CheckedTypes::ARCHIVE; }
+    if types.is_empty() {
+        types = CheckedTypes::IMAGE | CheckedTypes::ARCHIVE;
+    }
     types
 }
 
@@ -306,9 +335,20 @@ fn exif_row(entry: &ExifEntry) -> EngineRow {
 fn transcode_row(entry: &VideoTranscodeEntry) -> EngineRow {
     let (size, modified) = (entry.size, entry.modified_date);
     let (width, height) = (entry.width, entry.height);
-    let cells =
-        vec![format_bytes(size), entry.codec.clone(), format!("{width}x{height}"), entry.error.clone().unwrap_or_default(), format_timestamp(modified)];
-    EngineRow::new(entry.path.clone(), cells, vec![to_sort_key(size), 0, resolution_key(width, height), 0, to_sort_key(modified)], size, modified)
+    let cells = vec![
+        format_bytes(size),
+        entry.codec.clone(),
+        format!("{width}x{height}"),
+        entry.error.clone().unwrap_or_default(),
+        format_timestamp(modified),
+    ];
+    EngineRow::new(
+        entry.path.clone(),
+        cells,
+        vec![to_sort_key(size), 0, resolution_key(width, height), 0, to_sort_key(modified)],
+        size,
+        modified,
+    )
 }
 
 fn crop_row(entry: &VideoCropEntry) -> EngineRow {
@@ -322,7 +362,13 @@ fn crop_row(entry: &VideoCropEntry) -> EngineRow {
         format!("{left},{top},{right},{bottom}"),
         format_timestamp(modified),
     ];
-    EngineRow::new(entry.path.clone(), cells, vec![to_sort_key(size), 0, resolution_key(width, height), 0, to_sort_key(modified)], size, modified)
+    EngineRow::new(
+        entry.path.clone(),
+        cells,
+        vec![to_sort_key(size), 0, resolution_key(width, height), 0, to_sort_key(modified)],
+        size,
+        modified,
+    )
 }
 
 /// Pixel count of the resolution column; saturating because both factors are `u32`.
@@ -364,9 +410,25 @@ fn parse_optimizer_mode(raw: &str) -> Result<VideoOptimizerMode, String> {
     let trimmed = raw.trim();
     // The option registry may hand back the fluent key instead of the short machine name.
     let name = trimmed.strip_prefix("option_video_optimizer_mode_").unwrap_or(trimmed);
-    name
-        .parse::<VideoOptimizerMode>()
+    name.parse::<VideoOptimizerMode>()
         .map_err(|error| format!("'{raw}' is not a valid operation, expected crop or transcode: {error}"))
+}
+
+/// Which detector picks the crop rectangle. An unset option keeps the engine's own default,
+/// black bars, so a caller that predates the option still gets the previous behaviour.
+fn crop_mechanism(raw: &str) -> Result<VideoCroppingMechanism, String> {
+    let trimmed = raw.trim();
+    if trimmed.is_empty() {
+        return Ok(VideoCroppingMechanism::BlackBars);
+    }
+    // The option registry may hand back the fluent key instead of the short machine name.
+    let name = trimmed.strip_prefix("option_video_crop_mechanism_").unwrap_or(trimmed);
+    let key: String = name.chars().filter(char::is_ascii_alphanumeric).flat_map(char::to_lowercase).collect();
+    match key.as_str() {
+        "blackbars" => Ok(VideoCroppingMechanism::BlackBars),
+        "staticcontent" => Ok(VideoCroppingMechanism::StaticContent),
+        _ => Err(format!("'{raw}' is not a valid cropping mechanism, expected black bars or static content")),
+    }
 }
 
 /// Splits a comma, semicolon or newline separated list into trimmed, quote-free, non-empty parts.
@@ -382,8 +444,17 @@ fn to_sort_key(value: u64) -> i64 {
     i64::try_from(value).unwrap_or(i64::MAX)
 }
 
-const BYTE_UNITS: [(&str, u32); 9] =
-    [("B", 0), ("KiB", 10), ("MiB", 20), ("GiB", 30), ("TiB", 40), ("PiB", 50), ("EiB", 60), ("ZiB", 70), ("YiB", 80)];
+const BYTE_UNITS: [(&str, u32); 9] = [
+    ("B", 0),
+    ("KiB", 10),
+    ("MiB", 20),
+    ("GiB", 30),
+    ("TiB", 40),
+    ("PiB", 50),
+    ("EiB", 60),
+    ("ZiB", 70),
+    ("YiB", 80),
+];
 
 /// Binary sizes with two decimals, matching what the Slint frontend renders.
 fn format_bytes(size: u64) -> String {
@@ -394,7 +465,11 @@ fn format_bytes(size: u64) -> String {
     // Scaling by 100 before the shift keeps the decimals in integer math.
     let hundredths = ((size as u128) * 100 + (1u128 << (shift - 1))) >> shift;
     let (whole, fraction) = (hundredths / 100, hundredths % 100);
-    if fraction == 0 { format!("{whole} {unit}") } else { format!("{whole}.{fraction:02} {unit}") }
+    if fraction == 0 {
+        format!("{whole} {unit}")
+    } else {
+        format!("{whole}.{fraction:02} {unit}")
+    }
 }
 
 /// The bridge has no date crate, so the calendar is derived from the epoch directly (UTC).
@@ -430,7 +505,15 @@ mod tests {
     use crate::api::types::FieldValue;
 
     fn store(entries: &[(&str, FieldPayload)]) -> FieldStore {
-        FieldStore::new(entries.iter().map(|(id, value)| FieldValue { id: (*id).to_string(), value: value.clone() }).collect())
+        FieldStore::new(
+            entries
+                .iter()
+                .map(|(id, value)| FieldValue {
+                    id: (*id).to_string(),
+                    value: value.clone(),
+                })
+                .collect(),
+        )
     }
 
     #[test]
@@ -468,8 +551,22 @@ mod tests {
 
     #[test]
     fn lists_drop_separators_quotes_and_blanks() {
-        assert_eq!(split_list(" jpg, png ;\n\"gif\"  , ,txt,"), vec!["jpg".to_string(), "png".to_string(), "gif".to_string(), "txt".to_string()]);
+        assert_eq!(
+            split_list(" jpg, png ;\n\"gif\"  , ,txt,"),
+            vec!["jpg".to_string(), "png".to_string(), "gif".to_string(), "txt".to_string()]
+        );
         assert!(split_list(" , ; \n ").is_empty());
+    }
+
+    #[test]
+    fn crop_mechanism_accepts_machine_strings_and_keeps_the_default_when_absent() {
+        assert_eq!(crop_mechanism("BlackBars").unwrap(), VideoCroppingMechanism::BlackBars);
+        assert_eq!(crop_mechanism(" StaticContent ").unwrap(), VideoCroppingMechanism::StaticContent);
+        assert_eq!(crop_mechanism("option_video_crop_mechanism_static_content").unwrap(), VideoCroppingMechanism::StaticContent);
+        assert_eq!(crop_mechanism("").unwrap(), VideoCroppingMechanism::BlackBars);
+
+        let error = crop_mechanism("letterbox").unwrap_err();
+        assert!(error.contains("letterbox"), "the rejected value should be quoted: {error}");
     }
 
     #[test]
@@ -516,7 +613,10 @@ mod tests {
 
     #[test]
     fn token_payloads_are_normalised_like_text_lists() {
-        let store = store(&[("exif_ignored_tags", FieldPayload::Tokens(vec![" Make ".to_string(), "".to_string(), "\"Model\"".to_string()]))]);
+        let store = store(&[(
+            "exif_ignored_tags",
+            FieldPayload::Tokens(vec![" Make ".to_string(), "".to_string(), "\"Model\"".to_string()]),
+        )]);
         assert_eq!(string_list(&store, "exif_ignored_tags", ""), vec!["Make".to_string(), "Model".to_string()]);
     }
 
@@ -556,7 +656,11 @@ mod tests {
 
     #[test]
     fn rows_split_their_path_and_carry_no_group_membership() {
-        let row = size_and_date(&FileEntry { path: PathBuf::from("/tmp/example.bin"), size: 2048, modified_date: 1_700_000_000 });
+        let row = size_and_date(&FileEntry {
+            path: PathBuf::from("/tmp/example.bin"),
+            size: 2048,
+            modified_date: 1_700_000_000,
+        });
         assert_eq!(row.name, "example.bin");
         assert_eq!(row.directory, "/tmp");
         assert_eq!(row.cells, vec!["2 KiB".to_string(), "2023-11-14 22:13:20".to_string()]);
@@ -568,7 +672,10 @@ mod tests {
     fn flat_rows_are_ordered_by_directory_then_name() {
         let row = |name: &str| EngineRow::new(Path::new("/x").join(name).to_path_buf(), Vec::new(), Vec::new(), 0, 0);
         let sorted = finish(&EmptyFolder::new(), vec![row("b.txt"), row("a.txt"), row("c.txt")]);
-        assert_eq!(sorted.rows.iter().map(|entry| entry.name.clone()).collect::<Vec<_>>(), vec!["a.txt".to_string(), "b.txt".to_string(), "c.txt".to_string()]);
+        assert_eq!(
+            sorted.rows.iter().map(|entry| entry.name.clone()).collect::<Vec<_>>(),
+            vec!["a.txt".to_string(), "b.txt".to_string(), "c.txt".to_string()]
+        );
         assert!(!sorted.grouped);
     }
 }
