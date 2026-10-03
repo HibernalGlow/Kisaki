@@ -1,15 +1,22 @@
 use std::collections::HashSet;
 use std::fs;
 use std::path::{Component, Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use czkawka_core::common::fs_ops::remove_single_file;
 
 use crate::api::types::{ConflictPolicy, MoveAction, MoveItem, MoveOutcome, MoveRequest, MoveStatus};
+use crate::engine::runner;
 
 /// Moves or copies the selection into one destination folder. The engine owns no move API - its
 /// `fs_ops` only removes, links and symlinks - so this verb is frontend-owned by necessity, and a
 /// dry run plans without touching disk.
 pub fn apply(request: &MoveRequest) -> Result<MoveOutcome, String> {
+    apply_stopping(request, &runner::operation_stop())
+}
+
+/// The same run against a flag the caller owns, so stopping is testable without shared state.
+pub(crate) fn apply_stopping(request: &MoveRequest, stop: &AtomicBool) -> Result<MoveOutcome, String> {
     if request.paths.is_empty() {
         return Err("No files selected".to_string());
     }
@@ -19,7 +26,7 @@ pub fn apply(request: &MoveRequest) -> Result<MoveOutcome, String> {
     let root = PathBuf::from(request.destination.trim());
     let mut claimed: HashSet<String> = HashSet::new();
 
-    let items: Vec<MoveItem> = request.paths.iter().map(|path| relocate_one(request, &root, Path::new(path), &mut claimed)).collect();
+    let items: Vec<MoveItem> = request.paths.iter().map(|path| relocate_one(request, &root, Path::new(path), &mut claimed, stop)).collect();
     Ok(summarise(items))
 }
 
@@ -30,7 +37,10 @@ enum Decision {
     Fail(PathBuf, String),
 }
 
-fn relocate_one(request: &MoveRequest, root: &Path, from: &Path, claimed: &mut HashSet<String>) -> MoveItem {
+fn relocate_one(request: &MoveRequest, root: &Path, from: &Path, claimed: &mut HashSet<String>, stop: &AtomicBool) -> MoveItem {
+    if stop.load(Ordering::Relaxed) {
+        return item(from, None, MoveStatus::Skipped, "The run was stopped".to_string());
+    }
     if !from.exists() {
         return item(from, None, MoveStatus::Failed, "Source path no longer exists".to_string());
     }
@@ -203,6 +213,35 @@ mod tests {
         assert_eq!((outcome.copied, outcome.moved), (1, 0));
         assert!(source.exists(), "a copy keeps the original");
         assert_eq!(fs::read_to_string(destination.join("photo.png")).expect("read the copy"), "bytes");
+
+        fs::remove_dir_all(&root).expect("remove scratch directory");
+    }
+
+    #[test]
+    fn a_stopped_run_moves_nothing() {
+        let root = scratch("stopped");
+        let source = write(&root.join("in"), "clip.mp4", "movie");
+        let destination = root.join("out");
+        let stop = AtomicBool::new(true);
+
+        let outcome = apply_stopping(
+            &request(std::slice::from_ref(&source), &destination, MoveAction::Move, ConflictPolicy::Skip, false, false),
+            &stop,
+        )
+        .expect("stopped run");
+        assert_eq!((outcome.moved, outcome.copied, outcome.skipped), (0, 0, 1));
+        assert_eq!(outcome.items[0].detail, "The run was stopped");
+        assert!(source.exists(), "a stopped run must leave the file where it is");
+        assert!(!destination.exists(), "a stopped run must not even create the folder");
+
+        // The same request with an idle flag does move it, so the assertion above cannot pass vacuously.
+        let idle = AtomicBool::new(false);
+        let outcome = apply_stopping(
+            &request(std::slice::from_ref(&source), &destination, MoveAction::Move, ConflictPolicy::Skip, false, false),
+            &idle,
+        )
+        .expect("idle run");
+        assert_eq!((outcome.moved, outcome.skipped), (1, 0));
 
         fs::remove_dir_all(&root).expect("remove scratch directory");
     }

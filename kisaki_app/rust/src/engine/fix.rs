@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use czkawka_core::common::traits::Search;
 use czkawka_core::tools::bad_extensions::BadExtensions;
@@ -11,13 +11,18 @@ use czkawka_core::tools::bad_names::core::check_and_generate_new_name;
 
 use crate::api::types::{RenameItem, RenameOutcome, RenameRequest, RenameStatus, ScanRequest};
 use crate::engine::config::apply_common;
-use crate::engine::{FieldStore, flat, options};
+use crate::engine::{FieldStore, flat, options, runner};
 
 /// Renames the selected files to what the engine considers correct. The decision is always core's:
 /// bad names go through its own name generator, bad extensions through a fresh content scan.
 /// Only the apply step lives here, because the engine keeps its results private and fixes every
 /// row it holds, while the board acts on a selection.
 pub fn rename(request: &RenameRequest) -> Result<RenameOutcome, String> {
+    rename_stopping(request, &runner::operation_stop())
+}
+
+/// The same run against a flag the caller owns, so stopping is testable without shared state.
+pub(crate) fn rename_stopping(request: &RenameRequest, stop: &AtomicBool) -> Result<RenameOutcome, String> {
     if request.paths.is_empty() {
         return Err("No files selected".to_string());
     }
@@ -27,7 +32,7 @@ pub fn rename(request: &RenameRequest) -> Result<RenameOutcome, String> {
         "bad_extensions" => extension_plans(request, &store)?,
         other => return Err(format!("{other} has no rename fix")),
     };
-    Ok(apply(&plans, request.dry_run))
+    Ok(apply(&plans, request.dry_run, stop))
 }
 
 /// What the engine wants one selected file to become. `to` is absent when the file needs no change.
@@ -120,12 +125,18 @@ pub(crate) fn parent_dirs(paths: &[String]) -> Vec<String> {
 
 /// Applies the plans in request order. The dry run uses the same blocking rules as the real run, so
 /// its plan is what the filesystem would have accepted at the same moment.
-fn apply(plans: &[Plan], dry_run: bool) -> RenameOutcome {
+fn apply(plans: &[Plan], dry_run: bool, stop: &AtomicBool) -> RenameOutcome {
     let mut items = Vec::with_capacity(plans.len());
     let mut claimed: HashSet<PathBuf> = HashSet::new();
     let (mut renamed, mut planned, mut failed, mut skipped) = (0_i32, 0_i32, 0_i32, 0_i32);
 
     for plan in plans {
+        if stop.load(Ordering::Relaxed) {
+            skipped += 1;
+            items.push(item(plan, RenameStatus::Skipped, "The run was stopped".to_string()));
+            continue;
+        }
+
         let Some(to) = plan.to.clone() else {
             skipped += 1;
             items.push(item(plan, RenameStatus::Skipped, String::new()));
