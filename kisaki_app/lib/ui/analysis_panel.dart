@@ -6,6 +6,7 @@ import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
 import '../theme/swiss_grid.dart';
 import '../util/format.dart';
+import 'exif_card.dart';
 import 'overlays.dart';
 import 'simiu_panel.dart';
 import 'widgets/primitives.dart';
@@ -76,6 +77,10 @@ class AnalysisPanel extends StatelessWidget {
         if (controller.supportsSimiuSets &&
             controller.simiu.enabled) ...<Widget>[
           SimiuSetCard(controller: controller),
+          const SizedBox(height: BoardTokens.gap * 2),
+        ],
+        if (controller.supportsExifClean) ...<Widget>[
+          ExifCard(controller: controller, key: const Key('exif-card')),
           const SizedBox(height: BoardTokens.gap * 2),
         ],
         const Hairline(),

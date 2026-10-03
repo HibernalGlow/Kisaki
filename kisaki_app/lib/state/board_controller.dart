@@ -115,6 +115,8 @@ class BoardController extends ChangeNotifier {
   ComparisonState _comparison = const ComparisonState();
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
+  bool _exifOverrideFile = false;
+  ExifOutcome? _exifOutcome;
   int _sortColumn = -1;
   bool _sortAscending = true;
 
@@ -902,6 +904,73 @@ class BoardController extends ChangeNotifier {
   /// A mutation moves files the plan was built from, so the cached plan must not be reused.
   void _invalidatePlan() {
     _simiu.invalidate();
+  }
+
+  bool get supportsExifClean => _tool?.id == 'exif_remover';
+
+  /// Writing over the original is the engine's opt-in; the default keeps the source untouched.
+  bool get exifOverrideFile => _exifOverrideFile;
+  void setExifOverrideFile(bool value) {
+    _exifOverrideFile = value;
+    notifyListeners();
+  }
+
+  /// The engine answers with the per-file tag counts, so the result list is only known after a run.
+  ExifOutcome? get exifOutcome => _exifOutcome;
+
+  void requestCleanExif() {
+    final List<String> paths = selectedRows
+        .map((ScanRow row) => row.path)
+        .toList();
+    if (paths.isEmpty) {
+      _setStatus('status_nothing_selected');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _applyCleanExif(paths);
+    _confirm = ConfirmRequest(
+      titleKey: dryRun ? 'confirm_exif_plan_title' : 'confirm_exif_title',
+      bodyKey: dryRun ? 'confirm_dry_run_body' : 'confirm_exif_body',
+      args: <String, Object>{'count': paths.length},
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _applyCleanExif(List<String> paths) async {
+    _actionRunning = true;
+    _setStatus('status_exif_cleaning');
+    notifyListeners();
+    try {
+      final ExifOutcome outcome = await engine.cleanExif(
+        ExifRequest(
+          scan: buildRequest(),
+          paths: paths,
+          overrideFile: _exifOverrideFile,
+          dryRun: dryRun,
+        ),
+      );
+      _exifOutcome = outcome;
+      _messages = outcome.messages;
+      _setStatus(
+        dryRun ? 'status_exif_planned' : 'status_exif_done',
+        args: <String, Object>{
+          'count': dryRun
+              ? outcome.planned
+              : outcome.stripped + outcome.candidates,
+          'skipped': outcome.skipped,
+        },
+      );
+      if (outcome.failed > 0) {
+        _critical = outcome.messages;
+      }
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
   }
 
   SelectionConfig get assistant => _assistant;

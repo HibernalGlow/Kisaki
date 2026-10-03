@@ -229,6 +229,35 @@ class SeedEngine implements KisakiEngine {
   }
 
   @override
+  Future<ExifOutcome> cleanExif(ExifRequest request) async {
+    // Reading metadata needs the real image codecs, so a seed answer plans and changes nothing.
+    final bool plannedOnly = request.dryRun;
+    final List<ExifItem> items = <ExifItem>[
+      for (final String path in request.paths)
+        ExifItem(
+          path: path,
+          target: plannedOnly
+              ? (request.overrideFile ? path : '$path.cleaned')
+              : '',
+          tagsRemoved: 0,
+          status: plannedOnly ? ExifStatus.planned : ExifStatus.skipped,
+          detail: plannedOnly ? 'seed engine' : 'seed engine reads no metadata',
+        ),
+    ];
+    return ExifOutcome(
+      stripped: 0,
+      candidates: 0,
+      planned: plannedOnly ? request.paths.length : 0,
+      skipped: plannedOnly ? 0 : request.paths.length,
+      failed: 0,
+      items: items,
+      messages: plannedOnly
+          ? 'dry run: ${request.paths.length} seed paths planned, no metadata read'
+          : 'seed engine: no tag is removed',
+    );
+  }
+
+  @override
   Future<String> exportResults(ExportRequest request) async => request.path;
 
   @override
