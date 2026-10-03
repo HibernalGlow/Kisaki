@@ -27,7 +27,7 @@
 // Section: imports
 
 use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
+use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
 use flutter_rust_bridge::{Handler, IntoIntoDart};
 
 // Section: boilerplate
@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -64286847;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1626947234;
 
 // Section: executor
 
@@ -240,6 +240,35 @@ fn wire__crate__api__schema__list_tools_impl(
                 let output_ok = Result::<_, ()>::Ok(crate::api::schema::list_tools())?;
                 Ok(output_ok)
             })())
+        },
+    )
+}
+fn wire__crate__api__actions__rename_files_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "rename_files",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::types::RenameRequest>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::actions::rename_files(api_request).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
         },
     )
 }
@@ -584,6 +613,18 @@ impl SseDecode for Vec<u8> {
     }
 }
 
+impl SseDecode for Vec<crate::api::types::RenameItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::types::RenameItem>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::types::ScanRow> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -633,6 +674,72 @@ impl SseDecode for crate::api::types::ProgressUpdate {
             total: var_total,
             percent: var_percent,
             detail: var_detail,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::RenameItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_from = <String>::sse_decode(deserializer);
+        let mut var_to = <String>::sse_decode(deserializer);
+        let mut var_status = <crate::api::types::RenameStatus>::sse_decode(deserializer);
+        let mut var_detail = <String>::sse_decode(deserializer);
+        return crate::api::types::RenameItem {
+            from: var_from,
+            to: var_to,
+            status: var_status,
+            detail: var_detail,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::RenameOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_renamed = <i32>::sse_decode(deserializer);
+        let mut var_planned = <i32>::sse_decode(deserializer);
+        let mut var_failed = <i32>::sse_decode(deserializer);
+        let mut var_skipped = <i32>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::types::RenameItem>>::sse_decode(deserializer);
+        let mut var_messages = <String>::sse_decode(deserializer);
+        return crate::api::types::RenameOutcome {
+            renamed: var_renamed,
+            planned: var_planned,
+            failed: var_failed,
+            skipped: var_skipped,
+            items: var_items,
+            messages: var_messages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::RenameRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_tool = <String>::sse_decode(deserializer);
+        let mut var_scan = <crate::api::types::ScanRequest>::sse_decode(deserializer);
+        let mut var_paths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_dryRun = <bool>::sse_decode(deserializer);
+        return crate::api::types::RenameRequest {
+            tool: var_tool,
+            scan: var_scan,
+            paths: var_paths,
+            dry_run: var_dryRun,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::RenameStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::RenameStatus::Renamed,
+            1 => crate::api::types::RenameStatus::Planned,
+            2 => crate::api::types::RenameStatus::Failed,
+            3 => crate::api::types::RenameStatus::Skipped,
+            _ => unreachable!("Invalid variant for RenameStatus: {}", inner),
         };
     }
 }
@@ -797,7 +904,8 @@ fn pde_ffi_dispatcher_primary_impl(
         2 => wire__crate__api__actions__delete_files_impl(port, ptr, rust_vec_len, data_len),
         4 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
         6 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -815,7 +923,7 @@ fn pde_ffi_dispatcher_sync_impl(
         5 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
         7 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
         8 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1003,6 +1111,80 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::ProgressUpdate {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ProgressUpdate {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ProgressUpdate> for crate::api::types::ProgressUpdate {
     fn into_into_dart(self) -> crate::api::types::ProgressUpdate {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::RenameItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.from.into_into_dart().into_dart(),
+            self.to.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::RenameItem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::RenameItem> for crate::api::types::RenameItem {
+    fn into_into_dart(self) -> crate::api::types::RenameItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::RenameOutcome {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.renamed.into_into_dart().into_dart(),
+            self.planned.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.skipped.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.messages.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::RenameOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::RenameOutcome> for crate::api::types::RenameOutcome {
+    fn into_into_dart(self) -> crate::api::types::RenameOutcome {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::RenameRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.tool.into_into_dart().into_dart(),
+            self.scan.into_into_dart().into_dart(),
+            self.paths.into_into_dart().into_dart(),
+            self.dry_run.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::RenameRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::RenameRequest> for crate::api::types::RenameRequest {
+    fn into_into_dart(self) -> crate::api::types::RenameRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::RenameStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Renamed => 0.into_dart(),
+            Self::Planned => 1.into_dart(),
+            Self::Failed => 2.into_dart(),
+            Self::Skipped => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::RenameStatus {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::RenameStatus> for crate::api::types::RenameStatus {
+    fn into_into_dart(self) -> crate::api::types::RenameStatus {
         self
     }
 }
@@ -1354,6 +1536,16 @@ impl SseEncode for Vec<u8> {
     }
 }
 
+impl SseEncode for Vec<crate::api::types::RenameItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::types::RenameItem>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::types::ScanRow> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1392,6 +1584,56 @@ impl SseEncode for crate::api::types::ProgressUpdate {
         <i64>::sse_encode(self.total, serializer);
         <i64>::sse_encode(self.percent, serializer);
         <String>::sse_encode(self.detail, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::RenameItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.from, serializer);
+        <String>::sse_encode(self.to, serializer);
+        <crate::api::types::RenameStatus>::sse_encode(self.status, serializer);
+        <String>::sse_encode(self.detail, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::RenameOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.renamed, serializer);
+        <i32>::sse_encode(self.planned, serializer);
+        <i32>::sse_encode(self.failed, serializer);
+        <i32>::sse_encode(self.skipped, serializer);
+        <Vec<crate::api::types::RenameItem>>::sse_encode(self.items, serializer);
+        <String>::sse_encode(self.messages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::RenameRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.tool, serializer);
+        <crate::api::types::ScanRequest>::sse_encode(self.scan, serializer);
+        <Vec<String>>::sse_encode(self.paths, serializer);
+        <bool>::sse_encode(self.dry_run, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::RenameStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::RenameStatus::Renamed => 0,
+                crate::api::types::RenameStatus::Planned => 1,
+                crate::api::types::RenameStatus::Failed => 2,
+                crate::api::types::RenameStatus::Skipped => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 
@@ -1501,11 +1743,10 @@ mod io {
 
     // Section: imports
 
-    use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco};
-    use flutter_rust_bridge::{Handler, IntoIntoDart};
-
     use super::*;
+    use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
+    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
 
@@ -1522,12 +1763,12 @@ mod web {
 
     // Section: imports
 
-    use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
-    use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
-    use flutter_rust_bridge::for_generated::{Lifetimeable, Lockable, transform_result_dco, wasm_bindgen};
-    use flutter_rust_bridge::{Handler, IntoIntoDart};
-
     use super::*;
+    use flutter_rust_bridge::for_generated::byteorder::{NativeEndian, ReadBytesExt, WriteBytesExt};
+    use flutter_rust_bridge::for_generated::wasm_bindgen;
+    use flutter_rust_bridge::for_generated::wasm_bindgen::prelude::*;
+    use flutter_rust_bridge::for_generated::{transform_result_dco, Lifetimeable, Lockable};
+    use flutter_rust_bridge::{Handler, IntoIntoDart};
 
     // Section: boilerplate
 

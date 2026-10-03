@@ -17,3 +17,8 @@ Future<DeleteOutcome> deleteFiles({required DeleteRequest request}) =>
 /// Writes the current result set to disk as JSON or CSV.
 Future<String> exportResults({required ExportRequest request}) =>
     RustLib.instance.api.crateApiActionsExportResults(request: request);
+
+/// Renames the selected files to the names the engine considers correct, for the two tools whose
+/// result is a name: bad names and bad extensions. A dry run reports the plan without touching disk.
+Future<RenameOutcome> renameFiles({required RenameRequest request}) =>
+    RustLib.instance.api.crateApiActionsRenameFiles(request: request);

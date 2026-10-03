@@ -125,10 +125,7 @@ impl Scan<'_> {
     }
 
     fn bad_extensions(&self) -> EngineOutcome {
-        let params = BadExtensionsParameters {
-            include_files_without_extension: flag_or(self.store, "bext_include_files_without_extension", false),
-        };
-        let mut tool = BadExtensions::new(params);
+        let mut tool = BadExtensions::new(bad_extension_params(self.store));
         apply_common(&mut tool, self.request);
         tool.search(&self.stop, Some(&self.sender));
 
@@ -379,9 +376,16 @@ fn resolution_key(width: u32, height: u32) -> i64 {
     i64::from(width).saturating_mul(i64::from(height))
 }
 
+/// The extension checker's parameter block, shared with the rename fix so both read one default.
+pub(crate) fn bad_extension_params(store: &FieldStore) -> BadExtensionsParameters {
+    BadExtensionsParameters {
+        include_files_without_extension: flag_or(store, "bext_include_files_without_extension", false),
+    }
+}
+
 /// Which name problems to look for. An unset option keeps the value `NameIssues::all()` uses, so a
 /// request sent without these fields scans exactly as it did before they were exposed.
-fn name_issues(store: &FieldStore) -> NameIssues {
+pub(crate) fn name_issues(store: &FieldStore) -> NameIssues {
     NameIssues {
         uppercase_extension: flag_or(store, "name_uppercase_extension", true),
         emoji_used: flag_or(store, "name_emoji_used", true),
