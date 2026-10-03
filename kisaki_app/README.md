@@ -58,7 +58,7 @@ the Rust bridge gates.
 Every one of these is part of CI (`.github/workflows/kisaki.yml`, jobs `bridge` and `dart`).
 
 ```bash
-cargo test -p kisaki_bridge                                     # 119 tests
+cargo test -p kisaki_bridge                                     # 121 tests
 cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 cargo fmt -p kisaki_bridge -- --check                           # stable, as CI runs it
 flutter analyze

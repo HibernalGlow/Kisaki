@@ -259,6 +259,25 @@ mod tests {
     }
 
     #[test]
+    fn a_stopped_rename_keeps_every_name() {
+        let dir = scratch("rename_stopped");
+        let chosen = write(&dir, "note .TXT", "one");
+        let stop = AtomicBool::new(true);
+
+        let outcome = rename_stopping(&request("bad_names", std::slice::from_ref(&chosen), false), &stop).expect("stopped run");
+        assert_eq!((outcome.renamed, outcome.failed, outcome.skipped), (0, 0, 1));
+        assert_eq!(outcome.items[0].detail, "The run was stopped");
+        assert!(chosen.exists(), "a stopped rename must leave the file where it is");
+
+        // An idle flag renames the same file, so the assertions above cannot pass vacuously.
+        let idle = AtomicBool::new(false);
+        let outcome = rename_stopping(&request("bad_names", std::slice::from_ref(&chosen), false), &idle).expect("idle run");
+        assert_eq!((outcome.renamed, outcome.skipped), (1, 0));
+
+        fs::remove_dir_all(&dir).expect("remove scratch directory");
+    }
+
+    #[test]
     fn an_occupied_target_is_refused_and_the_source_survives() {
         let dir = scratch("occupied");
         let source = write(&dir, "russian .TXT", "new");
