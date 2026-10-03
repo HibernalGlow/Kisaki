@@ -7,6 +7,7 @@ import '../theme/board_theme.dart';
 import '../theme/swiss_grid.dart';
 import '../util/format.dart';
 import 'overlays.dart';
+import 'simiu_panel.dart';
 import 'widgets/primitives.dart';
 
 /// Right lane: result metrics, the destructive toggles, a plan preview, and actions.
@@ -72,6 +73,11 @@ class AnalysisPanel extends StatelessWidget {
           ],
         ),
         const SizedBox(height: BoardTokens.section),
+        if (controller.supportsSimiuSets &&
+            controller.simiu.enabled) ...<Widget>[
+          SimiuSetCard(controller: controller),
+          const SizedBox(height: BoardTokens.gap * 2),
+        ],
         const Hairline(),
         const SizedBox(height: BoardTokens.gap),
         ToggleRow(
