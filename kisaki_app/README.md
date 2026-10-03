@@ -58,7 +58,7 @@ the Rust bridge gates.
 Every one of these is part of CI (`.github/workflows/kisaki.yml`, jobs `bridge` and `dart`).
 
 ```bash
-cargo test -p kisaki_bridge                                     # 114 tests
+cargo test -p kisaki_bridge                                     # 117 tests
 cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 cargo fmt -p kisaki_bridge -- --check                           # stable, as CI runs it
 flutter analyze
@@ -76,6 +76,12 @@ Every mutating call takes an explicit `dryRun`. A dry run performs nothing: it r
 the same way a real run would, so the plan it reports is the plan that would happen. Deletions and
 cleanup go through `czkawka_core::common::fs_ops`, which is what gives trash behaviour identical to
 the other frontends.
+
+`requestStop` interrupts whichever job is in flight - a scan or one file operation - and only one file
+operation runs at a time, so a stop signal can never hit the wrong batch. Rename, move, EXIF and
+video optimize each stop between files and report the rest as skipped with `The run was stopped`;
+`deleteFiles` and `applySimiuSet` still run to completion, because their per-row result shape and their
+undo journal were built without an interruption point.
 
 | Verb | What it does |
 |---|---|

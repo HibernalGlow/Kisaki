@@ -14,7 +14,7 @@ use czkawka_core::tools::video_optimizer::{
 
 use crate::api::types::{CropOptions, OptimizeItem, OptimizeOutcome, OptimizeRequest, OptimizeStatus, TranscodeOptions};
 use crate::engine::config::apply_common;
-use crate::engine::{fix, flat, options};
+use crate::engine::{fix, flat, options, runner};
 
 /// Re-encodes or crops the selected videos with the engine's own ffmpeg plumbing. Which videos are
 /// worth the work stays the scanner's decision: this verb re-runs the optimizer scan over the folders
@@ -30,7 +30,7 @@ pub fn optimize(request: &OptimizeRequest) -> Result<OptimizeOutcome, String> {
 
     let store = options::store(&request.scan);
     let params = flat::video_params(&store)?;
-    let stop = Arc::new(AtomicBool::new(false));
+    let stop = runner::operation_stop();
 
     match (&request.transcode, &request.crop) {
         (Some(options), None) => {
