@@ -180,6 +180,88 @@ void main() {
     expect(controller.visibleRows, hasLength(3));
   });
 
+  testWidgets('Esc inside the dialog clears the filters and stays open', (
+    WidgetTester tester,
+  ) async {
+    await pumpScannedBoard(tester);
+    controller.setFilters(
+      FilterState.defaults()
+        ..pathEnabled = true
+        ..pathPattern = 'large',
+    );
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('open-filters')));
+    await tester.pumpAndSettle();
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pumpAndSettle();
+
+    expect(controller.filters.activeCount, 0);
+    expect(
+      find.byType(FilterPanel),
+      findsOneWidget,
+      reason: 'resetting is a dialog action, not a reason to close it',
+    );
+  });
+
+  testWidgets('Ctrl+Shift+F closes the dialog it opened', (
+    WidgetTester tester,
+  ) async {
+    await pumpScannedBoard(tester);
+    await tester.tap(find.byKey(const Key('open-filters')));
+    await tester.pumpAndSettle();
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyF);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.shiftLeft);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(FilterPanel), findsNothing);
+  });
+
+  testWidgets('Ctrl+R re-runs the scan without discarding the filters', (
+    WidgetTester tester,
+  ) async {
+    await pumpScannedBoard(tester);
+    controller.setFilters(
+      FilterState.defaults()
+        ..fileSize = RangeFilter(
+          enabled: true,
+          min: 100,
+          max: 100000,
+          unit: SizeUnit.b,
+        ),
+    );
+    await tester.pumpAndSettle();
+    expect(engine.requests, hasLength(1));
+
+    await tester.sendKeyDownEvent(LogicalKeyboardKey.controlLeft);
+    await tester.sendKeyEvent(LogicalKeyboardKey.keyR);
+    await tester.sendKeyUpEvent(LogicalKeyboardKey.controlLeft);
+    await tester.pump();
+    expect(engine.requests, hasLength(2));
+
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('big_files', <ScanRow>[
+          StubEngine.row('/data/small.bin', size: 10),
+          StubEngine.row('/data/large.bin', size: 9000),
+          StubEngine.row('/data/tall.bin', size: 9000),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(
+      controller.filters.fileSize.enabled,
+      isTrue,
+      reason: 'a refresh must keep the work the dialog set up',
+    );
+    expect(controller.visibleRows, hasLength(2));
+  });
+
   test('a label missing from the table is recorded, not disguised', () {
     Labels.fallbackKeys.clear();
     expect(
