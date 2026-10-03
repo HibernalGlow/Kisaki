@@ -10,12 +10,15 @@ pub async fn start_scan(request: ScanRequest, sink: StreamSink<ScanEvent>) -> Re
     runner::spawn(request, sink).await
 }
 
-/// Asks the running scan to stop at the next checkpoint; the partial result is still delivered.
+/// Asks whatever is in flight to stop at its next checkpoint: a scan keeps its partial result, and a
+/// file operation reports the rows it never attempted as stopped. Returns false when nothing runs.
 #[frb(sync)]
 pub fn request_stop() -> bool {
     runner::request_stop()
 }
 
+/// Whether a scan is running. File operations are not scans: they are serialized on their own stop
+/// flag, so a second one is refused rather than started.
 #[frb(sync)]
 pub fn is_scanning() -> bool {
     runner::is_running()
