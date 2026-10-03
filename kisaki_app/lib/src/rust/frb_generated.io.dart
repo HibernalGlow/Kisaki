@@ -38,6 +38,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool dco_decode_bool(dynamic raw);
 
   @protected
+  CropOptions dco_decode_box_autoadd_crop_options(dynamic raw);
+
+  @protected
   DeleteRequest dco_decode_box_autoadd_delete_request(dynamic raw);
 
   @protected
@@ -48,6 +51,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MoveRequest dco_decode_box_autoadd_move_request(dynamic raw);
+
+  @protected
+  OptimizeRequest dco_decode_box_autoadd_optimize_request(dynamic raw);
 
   @protected
   ProgressUpdate dco_decode_box_autoadd_progress_update(dynamic raw);
@@ -68,10 +74,16 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   SimiuUndoRequest dco_decode_box_autoadd_simiu_undo_request(dynamic raw);
 
   @protected
+  TranscodeOptions dco_decode_box_autoadd_transcode_options(dynamic raw);
+
+  @protected
   ColumnDef dco_decode_column_def(dynamic raw);
 
   @protected
   ConflictPolicy dco_decode_conflict_policy(dynamic raw);
+
+  @protected
+  CropOptions dco_decode_crop_options(dynamic raw);
 
   @protected
   DeleteOutcome dco_decode_delete_outcome(dynamic raw);
@@ -137,6 +149,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<MoveItem> dco_decode_list_move_item(dynamic raw);
 
   @protected
+  List<OptimizeItem> dco_decode_list_optimize_item(dynamic raw);
+
+  @protected
   Int64List dco_decode_list_prim_i_64_strict(dynamic raw);
 
   @protected
@@ -174,6 +189,24 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
+
+  @protected
+  CropOptions? dco_decode_opt_box_autoadd_crop_options(dynamic raw);
+
+  @protected
+  TranscodeOptions? dco_decode_opt_box_autoadd_transcode_options(dynamic raw);
+
+  @protected
+  OptimizeItem dco_decode_optimize_item(dynamic raw);
+
+  @protected
+  OptimizeOutcome dco_decode_optimize_outcome(dynamic raw);
+
+  @protected
+  OptimizeRequest dco_decode_optimize_request(dynamic raw);
+
+  @protected
+  OptimizeStatus dco_decode_optimize_status(dynamic raw);
 
   @protected
   ProgressUpdate dco_decode_progress_update(dynamic raw);
@@ -230,6 +263,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ToolSpec dco_decode_tool_spec(dynamic raw);
 
   @protected
+  TranscodeOptions dco_decode_transcode_options(dynamic raw);
+
+  @protected
   int dco_decode_u_8(dynamic raw);
 
   @protected
@@ -250,6 +286,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   bool sse_decode_bool(SseDeserializer deserializer);
 
   @protected
+  CropOptions sse_decode_box_autoadd_crop_options(SseDeserializer deserializer);
+
+  @protected
   DeleteRequest sse_decode_box_autoadd_delete_request(
     SseDeserializer deserializer,
   );
@@ -264,6 +303,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   MoveRequest sse_decode_box_autoadd_move_request(SseDeserializer deserializer);
+
+  @protected
+  OptimizeRequest sse_decode_box_autoadd_optimize_request(
+    SseDeserializer deserializer,
+  );
 
   @protected
   ProgressUpdate sse_decode_box_autoadd_progress_update(
@@ -292,10 +336,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  TranscodeOptions sse_decode_box_autoadd_transcode_options(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   ColumnDef sse_decode_column_def(SseDeserializer deserializer);
 
   @protected
   ConflictPolicy sse_decode_conflict_policy(SseDeserializer deserializer);
+
+  @protected
+  CropOptions sse_decode_crop_options(SseDeserializer deserializer);
 
   @protected
   DeleteOutcome sse_decode_delete_outcome(SseDeserializer deserializer);
@@ -361,6 +413,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<MoveItem> sse_decode_list_move_item(SseDeserializer deserializer);
 
   @protected
+  List<OptimizeItem> sse_decode_list_optimize_item(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Int64List sse_decode_list_prim_i_64_strict(SseDeserializer deserializer);
 
   @protected
@@ -400,6 +457,28 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
+
+  @protected
+  CropOptions? sse_decode_opt_box_autoadd_crop_options(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  TranscodeOptions? sse_decode_opt_box_autoadd_transcode_options(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  OptimizeItem sse_decode_optimize_item(SseDeserializer deserializer);
+
+  @protected
+  OptimizeOutcome sse_decode_optimize_outcome(SseDeserializer deserializer);
+
+  @protected
+  OptimizeRequest sse_decode_optimize_request(SseDeserializer deserializer);
+
+  @protected
+  OptimizeStatus sse_decode_optimize_status(SseDeserializer deserializer);
 
   @protected
   ProgressUpdate sse_decode_progress_update(SseDeserializer deserializer);
@@ -460,6 +539,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ToolSpec sse_decode_tool_spec(SseDeserializer deserializer);
 
   @protected
+  TranscodeOptions sse_decode_transcode_options(SseDeserializer deserializer);
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer);
 
   @protected
@@ -484,6 +566,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_bool(bool self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_crop_options(
+    CropOptions self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_delete_request(
     DeleteRequest self,
     SseSerializer serializer,
@@ -504,6 +592,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_move_request(
     MoveRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_optimize_request(
+    OptimizeRequest self,
     SseSerializer serializer,
   );
 
@@ -544,6 +638,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_transcode_options(
+    TranscodeOptions self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_column_def(ColumnDef self, SseSerializer serializer);
 
   @protected
@@ -551,6 +651,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ConflictPolicy self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_crop_options(CropOptions self, SseSerializer serializer);
 
   @protected
   void sse_encode_delete_outcome(DeleteOutcome self, SseSerializer serializer);
@@ -622,6 +725,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_move_item(List<MoveItem> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_optimize_item(
+    List<OptimizeItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_i_64_strict(
     Int64List self,
     SseSerializer serializer,
@@ -674,6 +783,39 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_crop_options(
+    CropOptions? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_opt_box_autoadd_transcode_options(
+    TranscodeOptions? self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_optimize_item(OptimizeItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_optimize_outcome(
+    OptimizeOutcome self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_optimize_request(
+    OptimizeRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_optimize_status(
+    OptimizeStatus self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_progress_update(
@@ -746,6 +888,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_tool_spec(ToolSpec self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_transcode_options(
+    TranscodeOptions self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_u_8(int self, SseSerializer serializer);

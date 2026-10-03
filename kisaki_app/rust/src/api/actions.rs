@@ -1,10 +1,10 @@
 use flutter_rust_bridge::frb;
 
 use crate::api::types::{
-    DeleteOutcome, DeleteRequest, ExifOutcome, ExifRequest, ExportRequest, MoveOutcome, MoveRequest, RenameOutcome, RenameRequest, SimiuApplyOutcome, SimiuApplyRequest,
-    SimiuUndoOutcome, SimiuUndoRequest,
+    DeleteOutcome, DeleteRequest, ExifOutcome, ExifRequest, ExportRequest, MoveOutcome, MoveRequest, OptimizeOutcome, OptimizeRequest, RenameOutcome, RenameRequest,
+    SimiuApplyOutcome, SimiuApplyRequest, SimiuUndoOutcome, SimiuUndoRequest,
 };
-use crate::engine::{exif, fix, ops, relocate, runner, simiu};
+use crate::engine::{exif, fix, ops, optimize, relocate, runner, simiu};
 
 /// Deletes or trashes the selected rows through the engine's own file operations, so trash
 /// behaviour matches every other frontend. Dry run plans without touching the filesystem.
@@ -54,4 +54,12 @@ pub async fn apply_simiu_set(request: SimiuApplyRequest) -> Result<SimiuApplyOut
 #[frb]
 pub async fn undo_simiu_set(request: SimiuUndoRequest) -> Result<SimiuUndoOutcome, String> {
     runner::blocking(move || simiu::undo(&request)).await
+}
+
+/// Re-encodes or crops the selected videos with the engine's own ffmpeg commands. Which files are
+/// worth the work is decided by a fresh engine scan, so a video the engine no longer flags is skipped
+/// rather than rewritten, and a dry run plans the targets without starting ffmpeg.
+#[frb]
+pub async fn optimize_videos(request: OptimizeRequest) -> Result<OptimizeOutcome, String> {
+    runner::blocking(move || optimize::optimize(&request)).await
 }

@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1857297523;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1826201653;
 
 // Section: executor
 
@@ -330,6 +330,35 @@ fn wire__crate__api__actions__move_files_impl(
         },
     )
 }
+fn wire__crate__api__actions__optimize_videos_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "optimize_videos",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::types::OptimizeRequest>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::actions::optimize_videos(api_request).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__actions__rename_files_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -502,6 +531,20 @@ impl SseDecode for crate::api::types::ConflictPolicy {
             2 => crate::api::types::ConflictPolicy::Rename,
             3 => crate::api::types::ConflictPolicy::Error,
             _ => unreachable!("Invalid variant for ConflictPolicy: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::CropOptions {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_overwriteOriginal = <bool>::sse_decode(deserializer);
+        let mut var_targetCodec = <String>::sse_decode(deserializer);
+        let mut var_quality = <i64>::sse_decode(deserializer);
+        return crate::api::types::CropOptions {
+            overwrite_original: var_overwriteOriginal,
+            target_codec: var_targetCodec,
+            quality: var_quality,
         };
     }
 }
@@ -814,6 +857,18 @@ impl SseDecode for Vec<crate::api::types::MoveItem> {
     }
 }
 
+impl SseDecode for Vec<crate::api::types::OptimizeItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::types::OptimizeItem>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<i64> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -991,6 +1046,103 @@ impl SseDecode for Option<String> {
         } else {
             return None;
         }
+    }
+}
+
+impl SseDecode for Option<crate::api::types::CropOptions> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::types::CropOptions>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for Option<crate::api::types::TranscodeOptions> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<crate::api::types::TranscodeOptions>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
+impl SseDecode for crate::api::types::OptimizeItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_target = <String>::sse_decode(deserializer);
+        let mut var_status = <crate::api::types::OptimizeStatus>::sse_decode(deserializer);
+        let mut var_detail = <String>::sse_decode(deserializer);
+        let mut var_sizeBefore = <i64>::sse_decode(deserializer);
+        let mut var_sizeAfter = <i64>::sse_decode(deserializer);
+        return crate::api::types::OptimizeItem {
+            path: var_path,
+            target: var_target,
+            status: var_status,
+            detail: var_detail,
+            size_before: var_sizeBefore,
+            size_after: var_sizeAfter,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::OptimizeOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_transcoded = <i32>::sse_decode(deserializer);
+        let mut var_cropped = <i32>::sse_decode(deserializer);
+        let mut var_planned = <i32>::sse_decode(deserializer);
+        let mut var_skipped = <i32>::sse_decode(deserializer);
+        let mut var_failed = <i32>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::types::OptimizeItem>>::sse_decode(deserializer);
+        let mut var_messages = <String>::sse_decode(deserializer);
+        return crate::api::types::OptimizeOutcome {
+            transcoded: var_transcoded,
+            cropped: var_cropped,
+            planned: var_planned,
+            skipped: var_skipped,
+            failed: var_failed,
+            items: var_items,
+            messages: var_messages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::OptimizeRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_scan = <crate::api::types::ScanRequest>::sse_decode(deserializer);
+        let mut var_paths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_transcode = <Option<crate::api::types::TranscodeOptions>>::sse_decode(deserializer);
+        let mut var_crop = <Option<crate::api::types::CropOptions>>::sse_decode(deserializer);
+        let mut var_dryRun = <bool>::sse_decode(deserializer);
+        return crate::api::types::OptimizeRequest {
+            scan: var_scan,
+            paths: var_paths,
+            transcode: var_transcode,
+            crop: var_crop,
+            dry_run: var_dryRun,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::OptimizeStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::OptimizeStatus::Transcoded,
+            1 => crate::api::types::OptimizeStatus::Cropped,
+            2 => crate::api::types::OptimizeStatus::Planned,
+            3 => crate::api::types::OptimizeStatus::Skipped,
+            4 => crate::api::types::OptimizeStatus::Failed,
+            _ => unreachable!("Invalid variant for OptimizeStatus: {}", inner),
+        };
     }
 }
 
@@ -1340,6 +1492,36 @@ impl SseDecode for crate::api::types::ToolSpec {
     }
 }
 
+impl SseDecode for crate::api::types::TranscodeOptions {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_codec = <String>::sse_decode(deserializer);
+        let mut var_hardwareEncoder = <String>::sse_decode(deserializer);
+        let mut var_quality = <i64>::sse_decode(deserializer);
+        let mut var_failIfNotSmaller = <bool>::sse_decode(deserializer);
+        let mut var_overwriteOriginal = <bool>::sse_decode(deserializer);
+        let mut var_limitVideoSize = <bool>::sse_decode(deserializer);
+        let mut var_maxWidth = <i64>::sse_decode(deserializer);
+        let mut var_maxHeight = <i64>::sse_decode(deserializer);
+        let mut var_noiseReduction = <String>::sse_decode(deserializer);
+        let mut var_noiseReductionStrength = <i64>::sse_decode(deserializer);
+        let mut var_customFfmpegCommand = <String>::sse_decode(deserializer);
+        return crate::api::types::TranscodeOptions {
+            codec: var_codec,
+            hardware_encoder: var_hardwareEncoder,
+            quality: var_quality,
+            fail_if_not_smaller: var_failIfNotSmaller,
+            overwrite_original: var_overwriteOriginal,
+            limit_video_size: var_limitVideoSize,
+            max_width: var_maxWidth,
+            max_height: var_maxHeight,
+            noise_reduction: var_noiseReduction,
+            noise_reduction_strength: var_noiseReductionStrength,
+            custom_ffmpeg_command: var_customFfmpegCommand,
+        };
+    }
+}
+
 impl SseDecode for u8 {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1367,9 +1549,10 @@ fn pde_ffi_dispatcher_primary_impl(
         6 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
         8 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
         11 => wire__crate__api__actions__move_files_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__actions__undo_simiu_set_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__actions__optimize_videos_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__actions__undo_simiu_set_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1387,7 +1570,7 @@ fn pde_ffi_dispatcher_sync_impl(
         7 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
         9 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
         10 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1428,6 +1611,23 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::ConflictPolicy {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ConflictPolicy {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ConflictPolicy> for crate::api::types::ConflictPolicy {
     fn into_into_dart(self) -> crate::api::types::ConflictPolicy {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::CropOptions {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.overwrite_original.into_into_dart().into_dart(),
+            self.target_codec.into_into_dart().into_dart(),
+            self.quality.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::CropOptions {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::CropOptions> for crate::api::types::CropOptions {
+    fn into_into_dart(self) -> crate::api::types::CropOptions {
         self
     }
 }
@@ -1745,6 +1945,85 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::MoveStatus {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::MoveStatus {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::MoveStatus> for crate::api::types::MoveStatus {
     fn into_into_dart(self) -> crate::api::types::MoveStatus {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::OptimizeItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.path.into_into_dart().into_dart(),
+            self.target.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+            self.size_before.into_into_dart().into_dart(),
+            self.size_after.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::OptimizeItem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::OptimizeItem> for crate::api::types::OptimizeItem {
+    fn into_into_dart(self) -> crate::api::types::OptimizeItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::OptimizeOutcome {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.transcoded.into_into_dart().into_dart(),
+            self.cropped.into_into_dart().into_dart(),
+            self.planned.into_into_dart().into_dart(),
+            self.skipped.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.messages.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::OptimizeOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::OptimizeOutcome> for crate::api::types::OptimizeOutcome {
+    fn into_into_dart(self) -> crate::api::types::OptimizeOutcome {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::OptimizeRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.scan.into_into_dart().into_dart(),
+            self.paths.into_into_dart().into_dart(),
+            self.transcode.into_into_dart().into_dart(),
+            self.crop.into_into_dart().into_dart(),
+            self.dry_run.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::OptimizeRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::OptimizeRequest> for crate::api::types::OptimizeRequest {
+    fn into_into_dart(self) -> crate::api::types::OptimizeRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::OptimizeStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Transcoded => 0.into_dart(),
+            Self::Cropped => 1.into_dart(),
+            Self::Planned => 2.into_dart(),
+            Self::Skipped => 3.into_dart(),
+            Self::Failed => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::OptimizeStatus {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::OptimizeStatus> for crate::api::types::OptimizeStatus {
+    fn into_into_dart(self) -> crate::api::types::OptimizeStatus {
         self
     }
 }
@@ -2102,6 +2381,31 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ToolSpec> for crate::a
         self
     }
 }
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::TranscodeOptions {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.codec.into_into_dart().into_dart(),
+            self.hardware_encoder.into_into_dart().into_dart(),
+            self.quality.into_into_dart().into_dart(),
+            self.fail_if_not_smaller.into_into_dart().into_dart(),
+            self.overwrite_original.into_into_dart().into_dart(),
+            self.limit_video_size.into_into_dart().into_dart(),
+            self.max_width.into_into_dart().into_dart(),
+            self.max_height.into_into_dart().into_dart(),
+            self.noise_reduction.into_into_dart().into_dart(),
+            self.noise_reduction_strength.into_into_dart().into_dart(),
+            self.custom_ffmpeg_command.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::TranscodeOptions {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::TranscodeOptions> for crate::api::types::TranscodeOptions {
+    fn into_into_dart(self) -> crate::api::types::TranscodeOptions {
+        self
+    }
+}
 
 impl SseEncode for flutter_rust_bridge::for_generated::anyhow::Error {
     // Codec=Sse (Serialization based), see doc to use other codecs
@@ -2157,6 +2461,15 @@ impl SseEncode for crate::api::types::ConflictPolicy {
             },
             serializer,
         );
+    }
+}
+
+impl SseEncode for crate::api::types::CropOptions {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.overwrite_original, serializer);
+        <String>::sse_encode(self.target_codec, serializer);
+        <i64>::sse_encode(self.quality, serializer);
     }
 }
 
@@ -2406,6 +2719,16 @@ impl SseEncode for Vec<crate::api::types::MoveItem> {
     }
 }
 
+impl SseEncode for Vec<crate::api::types::OptimizeItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::types::OptimizeItem>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<i64> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2553,6 +2876,81 @@ impl SseEncode for Option<String> {
         if let Some(value) = self {
             <String>::sse_encode(value, serializer);
         }
+    }
+}
+
+impl SseEncode for Option<crate::api::types::CropOptions> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::types::CropOptions>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<crate::api::types::TranscodeOptions> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <crate::api::types::TranscodeOptions>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for crate::api::types::OptimizeItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <String>::sse_encode(self.target, serializer);
+        <crate::api::types::OptimizeStatus>::sse_encode(self.status, serializer);
+        <String>::sse_encode(self.detail, serializer);
+        <i64>::sse_encode(self.size_before, serializer);
+        <i64>::sse_encode(self.size_after, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::OptimizeOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.transcoded, serializer);
+        <i32>::sse_encode(self.cropped, serializer);
+        <i32>::sse_encode(self.planned, serializer);
+        <i32>::sse_encode(self.skipped, serializer);
+        <i32>::sse_encode(self.failed, serializer);
+        <Vec<crate::api::types::OptimizeItem>>::sse_encode(self.items, serializer);
+        <String>::sse_encode(self.messages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::OptimizeRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::types::ScanRequest>::sse_encode(self.scan, serializer);
+        <Vec<String>>::sse_encode(self.paths, serializer);
+        <Option<crate::api::types::TranscodeOptions>>::sse_encode(self.transcode, serializer);
+        <Option<crate::api::types::CropOptions>>::sse_encode(self.crop, serializer);
+        <bool>::sse_encode(self.dry_run, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::OptimizeStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::OptimizeStatus::Transcoded => 0,
+                crate::api::types::OptimizeStatus::Cropped => 1,
+                crate::api::types::OptimizeStatus::Planned => 2,
+                crate::api::types::OptimizeStatus::Skipped => 3,
+                crate::api::types::OptimizeStatus::Failed => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 
@@ -2799,6 +3197,23 @@ impl SseEncode for crate::api::types::ToolSpec {
         <bool>::sse_encode(self.supports_reference, serializer);
         <Vec<crate::api::types::ColumnDef>>::sse_encode(self.columns, serializer);
         <Vec<String>>::sse_encode(self.field_ids, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::TranscodeOptions {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.codec, serializer);
+        <String>::sse_encode(self.hardware_encoder, serializer);
+        <i64>::sse_encode(self.quality, serializer);
+        <bool>::sse_encode(self.fail_if_not_smaller, serializer);
+        <bool>::sse_encode(self.overwrite_original, serializer);
+        <bool>::sse_encode(self.limit_video_size, serializer);
+        <i64>::sse_encode(self.max_width, serializer);
+        <i64>::sse_encode(self.max_height, serializer);
+        <String>::sse_encode(self.noise_reduction, serializer);
+        <i64>::sse_encode(self.noise_reduction_strength, serializer);
+        <String>::sse_encode(self.custom_ffmpeg_command, serializer);
     }
 }
 

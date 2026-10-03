@@ -6,6 +6,7 @@ pub mod fix;
 pub mod flat;
 pub mod grouped;
 pub mod ops;
+pub mod optimize;
 pub mod options;
 pub mod progress;
 pub mod registry;
