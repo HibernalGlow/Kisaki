@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
-use std::sync::atomic::AtomicBool;
+use std::sync::atomic::{AtomicBool, Ordering};
 
 use czkawka_core::common::traits::Search;
 use czkawka_core::tools::exif_remover::ExifRemover;
@@ -9,7 +9,7 @@ use czkawka_core::tools::exif_remover::core::clean_exif_tags;
 
 use crate::api::types::{ExifItem, ExifOutcome, ExifRequest, ExifStatus, ScanRequest};
 use crate::engine::config::apply_common;
-use crate::engine::{FieldStore, fix, flat, options};
+use crate::engine::{FieldStore, fix, flat, options, runner};
 
 /// Removes EXIF tags from the selected files. The tag list is the engine's own - a fresh scan over
 /// the folders holding the selection, because which tags a file carries (and which the user asked to
@@ -17,13 +17,18 @@ use crate::engine::{FieldStore, fix, flat, options};
 /// `clean_exif_tags`. By default the original survives and a side file is written, since metadata
 /// cannot be recovered once it is gone.
 pub fn strip(request: &ExifRequest) -> Result<ExifOutcome, String> {
+    strip_stopping(request, &runner::operation_stop())
+}
+
+/// The same run against a flag the caller owns, so stopping is testable without shared state.
+pub(crate) fn strip_stopping(request: &ExifRequest, stop: &AtomicBool) -> Result<ExifOutcome, String> {
     if request.paths.is_empty() {
         return Err("No files selected".to_string());
     }
     let store = options::store(&request.scan);
     let found = scan_tags(&request.scan, &store, &request.paths)?;
 
-    let items: Vec<ExifItem> = request.paths.iter().map(|path| strip_one(request, Path::new(path), &found)).collect();
+    let items: Vec<ExifItem> = request.paths.iter().map(|path| strip_one(request, Path::new(path), &found, stop)).collect();
     Ok(summarise(items))
 }
 
@@ -33,7 +38,10 @@ struct Found {
     error: Option<String>,
 }
 
-fn strip_one(request: &ExifRequest, path: &Path, found: &HashMap<PathBuf, Found>) -> ExifItem {
+fn strip_one(request: &ExifRequest, path: &Path, found: &HashMap<PathBuf, Found>, stop: &AtomicBool) -> ExifItem {
+    if stop.load(Ordering::Relaxed) {
+        return item(path, None, 0, ExifStatus::Skipped, "The run was stopped".to_string());
+    }
     let Some(entry) = found.get(&fix::resolved(path)) else {
         return item(path, None, 0, ExifStatus::Skipped, "The scan found no EXIF tags to remove".to_string());
     };
