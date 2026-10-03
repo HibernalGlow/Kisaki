@@ -11,6 +11,7 @@ pub mod progress;
 pub mod registry;
 pub mod relocate;
 pub mod runner;
+pub mod simiu;
 
 use std::path::PathBuf;
 

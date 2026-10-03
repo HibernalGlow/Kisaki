@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 716275820;
+  int get rustContentHash => 1857297523;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,6 +85,10 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<SimiuApplyOutcome> crateApiActionsApplySimiuSet({
+    required SimiuApplyRequest request,
+  });
+
   Future<ExifOutcome> crateApiActionsCleanExif({required ExifRequest request});
 
   List<FieldValue> crateApiSchemaDefaultFields({required String tool});
@@ -114,6 +118,10 @@ abstract class RustLibApi extends BaseApi {
   bool crateApiScanRequestStop();
 
   Stream<ScanEvent> crateApiScanStartScan({required ScanRequest request});
+
+  Future<SimiuUndoOutcome> crateApiActionsUndoSimiuSet({
+    required SimiuUndoRequest request,
+  });
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -125,6 +133,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<SimiuApplyOutcome> crateApiActionsApplySimiuSet({
+    required SimiuApplyRequest request,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_simiu_apply_request(request, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_simiu_apply_outcome,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiActionsApplySimiuSetConstMeta,
+        argValues: [request],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiActionsApplySimiuSetConstMeta =>
+      const TaskConstMeta(debugName: "apply_simiu_set", argNames: ["request"]);
+
+  @override
   Future<ExifOutcome> crateApiActionsCleanExif({required ExifRequest request}) {
     return handler.executeNormal(
       NormalTask(
@@ -134,7 +172,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 1,
+            funcId: 2,
             port: port_,
           );
         },
@@ -159,7 +197,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(tool, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_field_value,
@@ -187,7 +225,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 3,
+            funcId: 4,
             port: port_,
           );
         },
@@ -211,7 +249,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_engine_info,
@@ -239,7 +277,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },
@@ -264,7 +302,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(tool, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_field_def,
@@ -289,7 +327,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 8,
             port: port_,
           );
         },
@@ -313,7 +351,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -335,7 +373,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 10)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_tool_spec,
@@ -361,7 +399,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 11,
             port: port_,
           );
         },
@@ -391,7 +429,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 12,
             port: port_,
           );
         },
@@ -415,7 +453,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -444,7 +482,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 13,
+              funcId: 14,
               port: port_,
             );
           },
@@ -465,6 +503,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     debugName: "start_scan",
     argNames: ["request", "sink"],
   );
+
+  @override
+  Future<SimiuUndoOutcome> crateApiActionsUndoSimiuSet({
+    required SimiuUndoRequest request,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_simiu_undo_request(request, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_simiu_undo_outcome,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiActionsUndoSimiuSetConstMeta,
+        argValues: [request],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiActionsUndoSimiuSetConstMeta =>
+      const TaskConstMeta(debugName: "undo_simiu_set", argNames: ["request"]);
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -536,6 +604,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ScanRequest dco_decode_box_autoadd_scan_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_scan_request(raw);
+  }
+
+  @protected
+  SimiuApplyRequest dco_decode_box_autoadd_simiu_apply_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_simiu_apply_request(raw);
+  }
+
+  @protected
+  SimiuUndoRequest dco_decode_box_autoadd_simiu_undo_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_simiu_undo_request(raw);
   }
 
   @protected
@@ -801,6 +881,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SimiuItem> dco_decode_list_simiu_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_simiu_item).toList();
+  }
+
+  @protected
+  List<SimiuOperation> dco_decode_list_simiu_operation(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_simiu_operation).toList();
+  }
+
+  @protected
   List<ToolSpec> dco_decode_list_tool_spec(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_tool_spec).toList();
@@ -1017,6 +1109,102 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SimiuApplyOutcome dco_decode_simiu_apply_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return SimiuApplyOutcome(
+      done: dco_decode_i_32(arr[0]),
+      planned: dco_decode_i_32(arr[1]),
+      failed: dco_decode_i_32(arr[2]),
+      items: dco_decode_list_simiu_item(arr[3]),
+      journals: dco_decode_list_String(arr[4]),
+      messages: dco_decode_String(arr[5]),
+    );
+  }
+
+  @protected
+  SimiuApplyRequest dco_decode_simiu_apply_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return SimiuApplyRequest(
+      mode: dco_decode_simiu_mode(arr[0]),
+      operations: dco_decode_list_simiu_operation(arr[1]),
+      dryRun: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
+  SimiuItem dco_decode_simiu_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return SimiuItem(
+      from: dco_decode_String(arr[0]),
+      to: dco_decode_String(arr[1]),
+      status: dco_decode_simiu_status(arr[2]),
+      detail: dco_decode_String(arr[3]),
+    );
+  }
+
+  @protected
+  SimiuMode dco_decode_simiu_mode(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SimiuMode.values[raw as int];
+  }
+
+  @protected
+  SimiuOperation dco_decode_simiu_operation(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return SimiuOperation(
+      root: dco_decode_String(arr[0]),
+      source: dco_decode_String(arr[1]),
+      target: dco_decode_String(arr[2]),
+    );
+  }
+
+  @protected
+  SimiuStatus dco_decode_simiu_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return SimiuStatus.values[raw as int];
+  }
+
+  @protected
+  SimiuUndoOutcome dco_decode_simiu_undo_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return SimiuUndoOutcome(
+      done: dco_decode_i_32(arr[0]),
+      planned: dco_decode_i_32(arr[1]),
+      failed: dco_decode_i_32(arr[2]),
+      items: dco_decode_list_simiu_item(arr[3]),
+      messages: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
+  SimiuUndoRequest dco_decode_simiu_undo_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return SimiuUndoRequest(
+      journal: dco_decode_String(arr[0]),
+      cleanEmptyDirectories: dco_decode_bool(arr[1]),
+      dryRun: dco_decode_bool(arr[2]),
+    );
+  }
+
+  @protected
   ToolSpec dco_decode_tool_spec(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -1135,6 +1323,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_scan_request(deserializer));
+  }
+
+  @protected
+  SimiuApplyRequest sse_decode_box_autoadd_simiu_apply_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_simiu_apply_request(deserializer));
+  }
+
+  @protected
+  SimiuUndoRequest sse_decode_box_autoadd_simiu_undo_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_simiu_undo_request(deserializer));
   }
 
   @protected
@@ -1474,6 +1678,32 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<SimiuItem> sse_decode_list_simiu_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SimiuItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_simiu_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<SimiuOperation> sse_decode_list_simiu_operation(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <SimiuOperation>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_simiu_operation(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<ToolSpec> sse_decode_list_tool_spec(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1746,6 +1976,114 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  SimiuApplyOutcome sse_decode_simiu_apply_outcome(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_done = sse_decode_i_32(deserializer);
+    var var_planned = sse_decode_i_32(deserializer);
+    var var_failed = sse_decode_i_32(deserializer);
+    var var_items = sse_decode_list_simiu_item(deserializer);
+    var var_journals = sse_decode_list_String(deserializer);
+    var var_messages = sse_decode_String(deserializer);
+    return SimiuApplyOutcome(
+      done: var_done,
+      planned: var_planned,
+      failed: var_failed,
+      items: var_items,
+      journals: var_journals,
+      messages: var_messages,
+    );
+  }
+
+  @protected
+  SimiuApplyRequest sse_decode_simiu_apply_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_mode = sse_decode_simiu_mode(deserializer);
+    var var_operations = sse_decode_list_simiu_operation(deserializer);
+    var var_dryRun = sse_decode_bool(deserializer);
+    return SimiuApplyRequest(
+      mode: var_mode,
+      operations: var_operations,
+      dryRun: var_dryRun,
+    );
+  }
+
+  @protected
+  SimiuItem sse_decode_simiu_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_from = sse_decode_String(deserializer);
+    var var_to = sse_decode_String(deserializer);
+    var var_status = sse_decode_simiu_status(deserializer);
+    var var_detail = sse_decode_String(deserializer);
+    return SimiuItem(
+      from: var_from,
+      to: var_to,
+      status: var_status,
+      detail: var_detail,
+    );
+  }
+
+  @protected
+  SimiuMode sse_decode_simiu_mode(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SimiuMode.values[inner];
+  }
+
+  @protected
+  SimiuOperation sse_decode_simiu_operation(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_root = sse_decode_String(deserializer);
+    var var_source = sse_decode_String(deserializer);
+    var var_target = sse_decode_String(deserializer);
+    return SimiuOperation(
+      root: var_root,
+      source: var_source,
+      target: var_target,
+    );
+  }
+
+  @protected
+  SimiuStatus sse_decode_simiu_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return SimiuStatus.values[inner];
+  }
+
+  @protected
+  SimiuUndoOutcome sse_decode_simiu_undo_outcome(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_done = sse_decode_i_32(deserializer);
+    var var_planned = sse_decode_i_32(deserializer);
+    var var_failed = sse_decode_i_32(deserializer);
+    var var_items = sse_decode_list_simiu_item(deserializer);
+    var var_messages = sse_decode_String(deserializer);
+    return SimiuUndoOutcome(
+      done: var_done,
+      planned: var_planned,
+      failed: var_failed,
+      items: var_items,
+      messages: var_messages,
+    );
+  }
+
+  @protected
+  SimiuUndoRequest sse_decode_simiu_undo_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_journal = sse_decode_String(deserializer);
+    var var_cleanEmptyDirectories = sse_decode_bool(deserializer);
+    var var_dryRun = sse_decode_bool(deserializer);
+    return SimiuUndoRequest(
+      journal: var_journal,
+      cleanEmptyDirectories: var_cleanEmptyDirectories,
+      dryRun: var_dryRun,
+    );
+  }
+
+  @protected
   ToolSpec sse_decode_tool_spec(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_id = sse_decode_String(deserializer);
@@ -1885,6 +2223,24 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_scan_request(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_simiu_apply_request(
+    SimiuApplyRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_simiu_apply_request(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_simiu_undo_request(
+    SimiuUndoRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_simiu_undo_request(self, serializer);
   }
 
   @protected
@@ -2156,6 +2512,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_simiu_item(
+    List<SimiuItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_simiu_item(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_simiu_operation(
+    List<SimiuOperation> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_simiu_operation(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_tool_spec(
     List<ToolSpec> self,
     SseSerializer serializer,
@@ -2331,6 +2711,87 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.isGroupStart, serializer);
     sse_encode_bool(self.isReference, serializer);
     sse_encode_list_prim_i_64_strict(self.sortKeys, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_apply_outcome(
+    SimiuApplyOutcome self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.done, serializer);
+    sse_encode_i_32(self.planned, serializer);
+    sse_encode_i_32(self.failed, serializer);
+    sse_encode_list_simiu_item(self.items, serializer);
+    sse_encode_list_String(self.journals, serializer);
+    sse_encode_String(self.messages, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_apply_request(
+    SimiuApplyRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_simiu_mode(self.mode, serializer);
+    sse_encode_list_simiu_operation(self.operations, serializer);
+    sse_encode_bool(self.dryRun, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_item(SimiuItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.from, serializer);
+    sse_encode_String(self.to, serializer);
+    sse_encode_simiu_status(self.status, serializer);
+    sse_encode_String(self.detail, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_mode(SimiuMode self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_operation(
+    SimiuOperation self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.root, serializer);
+    sse_encode_String(self.source, serializer);
+    sse_encode_String(self.target, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_status(SimiuStatus self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_undo_outcome(
+    SimiuUndoOutcome self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.done, serializer);
+    sse_encode_i_32(self.planned, serializer);
+    sse_encode_i_32(self.failed, serializer);
+    sse_encode_list_simiu_item(self.items, serializer);
+    sse_encode_String(self.messages, serializer);
+  }
+
+  @protected
+  void sse_encode_simiu_undo_request(
+    SimiuUndoRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.journal, serializer);
+    sse_encode_bool(self.cleanEmptyDirectories, serializer);
+    sse_encode_bool(self.dryRun, serializer);
   }
 
   @protected

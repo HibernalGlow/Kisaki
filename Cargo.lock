@@ -4722,6 +4722,7 @@ dependencies = [
  "czkawka_core",
  "flutter_rust_bridge",
  "futures",
+ "serde_json",
 ]
 
 [[package]]

@@ -33,3 +33,14 @@ Future<MoveOutcome> moveFiles({required MoveRequest request}) =>
 /// left alone by default and the cleaned copy is written beside it; `override_file` replaces it.
 Future<ExifOutcome> cleanExif({required ExifRequest request}) =>
     RustLib.instance.api.crateApiActionsCleanExif(request: request);
+
+/// Sorts files into the set folders the board chose for a similar-images result. Nothing is ever
+/// written over an existing file, and each scanned root gets an undo journal that `undo_simiu_set`
+/// can replay. A dry run reports the plan and writes no journal.
+Future<SimiuApplyOutcome> applySimiuSet({required SimiuApplyRequest request}) =>
+    RustLib.instance.api.crateApiActionsApplySimiuSet(request: request);
+
+/// Reverses one Simiu undo journal, newest operation first. Copy and link results are removed again;
+/// a move goes back to its recorded source unless something else took that name.
+Future<SimiuUndoOutcome> undoSimiuSet({required SimiuUndoRequest request}) =>
+    RustLib.instance.api.crateApiActionsUndoSimiuSet(request: request);
