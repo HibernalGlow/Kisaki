@@ -28,6 +28,7 @@ class ResultsPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         _ResultsHeader(controller: controller),
+        _ScanNotice(controller: controller),
         if (controller.supportsFolderView) ...<Widget>[
           FoldersViewSwitch(controller: controller),
           const Hairline(),
@@ -80,6 +81,82 @@ class ResultsPanel extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+}
+
+/// The reference keeps a stopped or failed scan visible above the rows it did return, with the
+/// rescan one click away. With no rows the empty region already says the same thing.
+class _ScanNotice extends StatelessWidget {
+  const _ScanNotice({required this.controller});
+
+  final BoardController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    final BoardPalette palette = BoardTheme.of(context);
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (BuildContext context, Widget? _) {
+        final ScanPhase phase = controller.phase;
+        if (controller.rows.isEmpty) {
+          return const SizedBox.shrink();
+        }
+        // A scan that ended normally has nothing to warn about; a stopped one kept its rows and the
+        // failed one keeps whatever was already on screen.
+        final bool stopped =
+            phase == ScanPhase.finished &&
+            (controller.outcome?.stopped ?? false);
+        final bool failed = phase == ScanPhase.failed;
+        if (!stopped && !failed) {
+          return const SizedBox.shrink();
+        }
+        if (failed && controller.confirm != null) {
+          // The confirm overlay owns the screen while it is open.
+          return const SizedBox.shrink();
+        }
+        return Container(
+          key: const Key('scan-notice'),
+          decoration: BoxDecoration(
+            color: failed ? palette.dangerSoft : palette.sunken,
+            border: Border(bottom: BorderSide(color: palette.hairline)),
+          ),
+          padding: const EdgeInsets.symmetric(
+            horizontal: BoardTokens.pad,
+            vertical: BoardTokens.gapSmall,
+          ),
+          child: Row(
+            children: <Widget>[
+              Icon(
+                failed
+                    ? Icons.error_outline_rounded
+                    : Icons.stop_circle_outlined,
+                size: 14,
+                color: failed ? palette.danger : palette.fgMuted,
+              ),
+              const SizedBox(width: BoardTokens.gapSmall),
+              Expanded(
+                child: Text(
+                  failed
+                      ? (controller.critical ?? controller.statusText)
+                      : controller.statusText,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: palette.text.bodySmall,
+                ),
+              ),
+              const SizedBox(width: BoardTokens.gapSmall),
+              BoardAction(
+                key: const Key('rescan-scan'),
+                labelKey: 'result-rescan',
+                icon: Icons.refresh_rounded,
+                dense: true,
+                onPressed: controller.scanning ? null : controller.refreshScan,
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }
