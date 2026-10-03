@@ -7,6 +7,49 @@ use super::*;
 use crate::api::types::{FieldPayload, FieldValue, ScanRequest};
 
 #[test]
+fn a_letterboxed_video_is_cropped_into_a_side_file() {
+    let dir = scratch("crop");
+    let video = letterbox_fixture(&dir, "clip.mp4");
+    let original = fs::read(&video).expect("read the fixture");
+
+    let outcome = optimize(&crop_request(vec![video.clone()], crop_options(), false)).expect("crop runs");
+    assert_eq!((outcome.cropped, outcome.failed, outcome.skipped), (1, 0, 0), "unexpected: {:?}", outcome.items);
+
+    let side = Path::new(&outcome.items[0].target);
+    assert!(
+        outcome.items[0].target.ends_with("clip.czkawka_cropped_blackbars.mp4"),
+        "unexpected: {}",
+        outcome.items[0].target
+    );
+    assert!(side.exists(), "the cropped copy was written");
+    let (width, height) = dimensions(side);
+    assert!(width < 160 && height <= 120, "the copy should have lost bars, got {width}x{height}");
+    assert_ne!((width, height), (160, 120), "the copy is still the whole canvas");
+    assert_eq!(
+        fs::read(&video).expect("the original survives"),
+        original,
+        "a crop without overwrite leaves the source alone"
+    );
+
+    fs::remove_dir_all(dir).expect("remove scratch directory");
+}
+
+#[test]
+fn a_crop_dry_run_reports_the_side_file_it_would_write() {
+    let dir = scratch("crop_dry");
+    let video = letterbox_fixture(&dir, "clip.mp4");
+
+    let outcome = optimize(&crop_request(vec![video.clone()], crop_options(), true)).expect("dry run");
+    assert_eq!((outcome.planned, outcome.cropped, outcome.failed), (1, 0, 0), "unexpected: {:?}", outcome.items);
+
+    let side = Path::new(&outcome.items[0].target);
+    assert_eq!(side.file_name().expect("a file name").to_string_lossy(), "clip.czkawka_cropped_blackbars.mp4");
+    assert!(!side.exists(), "a planned crop writes nothing");
+
+    fs::remove_dir_all(dir).expect("remove scratch directory");
+}
+
+#[test]
 fn an_empty_selection_is_refused() {
     let error = optimize(&empty_request()).expect_err("nothing to do");
     assert!(error.contains("No files selected"), "unexpected: {error}");
@@ -177,6 +220,79 @@ fn codec_of(path: &Path) -> String {
         .expect("ffprobe is needed for these tests");
     assert!(output.status.success(), "ffprobe failed on {}", path.display());
     String::from_utf8_lossy(&output.stdout).trim().to_string()
+}
+
+/// A 100x60 picture padded inside a 160x120 black canvas, so the detector has 30 pixel bars on all
+/// four sides to find. Four seconds of every-frame-keyframes matter: the detector samples near the
+/// end, and seeking past the last frame of a short clip yields no image at all.
+fn letterbox_fixture(dir: &Path, name: &str) -> PathBuf {
+    let path = dir.join(name);
+    let status = Command::new("ffmpeg")
+        .args([
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-y",
+            "-f",
+            "lavfi",
+            "-i",
+            "testsrc=size=100x60:rate=10:duration=4",
+            "-vf",
+            "pad=160:120:30:30:color=black",
+            "-c:v",
+            "mpeg4",
+            "-q:v",
+            "8",
+            "-g",
+            "1",
+        ])
+        .arg(&path)
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .expect("ffmpeg is needed for these tests");
+    assert!(status.success(), "ffmpeg could not build the letterbox fixture");
+    assert_eq!(dimensions(&path), (160, 120), "the fixture really has bars");
+    path
+}
+
+/// The video stream size, so a crop can be judged by what actually left ffmpeg rather than by what
+/// the detector was expected to say.
+fn dimensions(path: &Path) -> (u32, u32) {
+    let output = Command::new("ffprobe")
+        .args([
+            "-hide_banner",
+            "-loglevel",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=width,height",
+            "-of",
+            "csv=p=0",
+        ])
+        .arg(path)
+        .output()
+        .expect("ffprobe is needed for these tests");
+    assert!(output.status.success(), "ffprobe failed on {}", path.display());
+    let text = String::from_utf8_lossy(&output.stdout).trim().replace(',', "x");
+    let (width, height) = text.split_once('x').expect("ffprobe reports width and height");
+    (width.parse().expect("width is a number"), height.parse().expect("height is a number"))
+}
+
+fn crop_request(paths: Vec<PathBuf>, options: CropOptions, dry_run: bool) -> OptimizeRequest {
+    let mut request = OptimizeRequest {
+        scan: scan_request(&paths[0]),
+        paths: paths.iter().map(|path| path.to_string_lossy().into_owned()).collect(),
+        transcode: None,
+        crop: Some(options),
+        dry_run,
+    };
+    request.scan.fields = vec![FieldValue {
+        id: "vid_opt_mode".to_string(),
+        value: FieldPayload::Choice("Crop".to_string()),
+    }];
+    request
 }
 
 fn transcode_options(overwrite: bool) -> TranscodeOptions {
