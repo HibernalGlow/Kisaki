@@ -8,6 +8,7 @@ import '../theme/board_theme.dart';
 import 'assistant_panel.dart';
 import 'comparison_view.dart';
 import 'filter_panel.dart';
+import 'row_menu.dart';
 import 'similar_folders_view.dart';
 import 'widgets/primitives.dart';
 
@@ -556,6 +557,12 @@ class _ResultRow extends StatelessWidget {
       key: Key('result-row-${row.path}'),
       behavior: HitTestBehavior.opaque,
       onTap: () => controller.toggleSelected(row),
+      onSecondaryTapDown: (TapDownDetails details) => showRowMenu(
+        context: context,
+        controller: controller,
+        row: row,
+        position: details.globalPosition,
+      ),
       child: Container(
         height: BoardTokens.rowHeight,
         decoration: BoxDecoration(

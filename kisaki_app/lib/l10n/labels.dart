@@ -477,6 +477,10 @@ class Labels {
     'plan_folders_to_trash': 'move folders to trash',
     'plan_header': 'Plan for { \$count } paths ({ \$size }): { \$verb }',
     'plan_more': '... and { \$count } more',
+    'row-menu-clear-group': 'Clear this group',
+    'row-menu-copy-name': 'Copy the file name',
+    'row-menu-copy-path': 'Copy the full path',
+    'row-menu-select-group': 'Select the whole group',
     'rust_init_error_title': 'Kisaki failed to start',
     'rust_no_included_paths':
         'Add at least one included directory before scanning',
