@@ -50,11 +50,11 @@ executable is `kisaki.exe`, and the macOS bundle is `Kisaki.app`.
 `pubspec.yaml` carries the engine's version (`12.0.2+1202`) because build-name becomes
 `CFBundleShortVersionString` on macOS and the file version on Windows. `misc/change_version.py`
 rewrites it along with `rust/Cargo.toml` and the AppStream release entry, so no release number can
-drift on its own. CI compiles the Linux bundle (job `flutter-linux`) because no machine in this
-workspace has a Linux toolchain, and it stops at compiling: a shipped bundle would also have to carry
-`libkisaki_bridge.so` inside `bundle/lib/`, which `lib/util/rust_lib.dart` does not look for yet, so
-uploading one now would publish something that cannot start. The Windows bundle is not built in CI
-either, since that would need a runner this repository does not use.
+drift on its own. `packaging/linux_bundle.sh` builds the Linux bundle and puts
+`libkisaki_bridge.so` next to the `kisaki` executable, which is the first directory
+`lib/util/rust_lib.dart` searches; CI runs that script (job `flutter-linux`) because no machine in
+this workspace has a Linux toolchain. The Windows bundle is not built in CI either, since that would
+need a runner this repository does not use.
 
 ## Gates
 
