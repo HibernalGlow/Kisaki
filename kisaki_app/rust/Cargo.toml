@@ -1,0 +1,19 @@
+[package]
+name = "kisaki_bridge"
+version = "12.0.2"
+edition = "2024"
+rust-version = "1.94.1"
+license = "GPL-3.0-only"
+description = "flutter_rust_bridge surface between the Kisaki Flutter frontend and czkawka_core"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+czkawka_core = { version = "12.0.2", path = "../../czkawka_core" }
+flutter_rust_bridge = "=2.12.0"
+crossbeam-channel = "0.5"
+futures = "0.3"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
