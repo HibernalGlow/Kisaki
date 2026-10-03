@@ -1,0 +1,195 @@
+import 'dart:async';
+
+import 'package:kisaki_app/engine/kisaki_engine.dart';
+import 'package:kisaki_app/engine/models.dart';
+
+const ColumnDef sizeColumn = ColumnDef(
+  key: 'col_size',
+  labelKey: 'col_size',
+  flex: 0.5,
+  minWidth: 84,
+  alignRight: true,
+);
+
+const ColumnDef modifiedColumn = ColumnDef(
+  key: 'col_modified',
+  labelKey: 'col_modified',
+  flex: 1,
+  minWidth: 140,
+  alignRight: false,
+);
+
+const List<ToolSpec> stubTools = <ToolSpec>[
+  ToolSpec(
+    id: 'duplicate_files',
+    glyph: 'D',
+    labelKey: 'tool_duplicate_files',
+    grouped: true,
+    supportsReference: true,
+    columns: <ColumnDef>[sizeColumn, modifiedColumn],
+    fieldIds: <String>['dup_use_prehash', 'dup_hash_type', 'dup_prehash_cache_size'],
+  ),
+  ToolSpec(
+    id: 'big_files',
+    glyph: 'B',
+    labelKey: 'tool_big_files',
+    grouped: false,
+    supportsReference: false,
+    columns: <ColumnDef>[sizeColumn, modifiedColumn],
+    fieldIds: <String>['big_number_of_files'],
+  ),
+];
+
+const List<FieldDef> stubFields = <FieldDef>[
+  FieldDef(
+    id: 'dup_use_prehash',
+    labelKey: 'field_dup_use_prehash',
+    kind: FieldKind.flag,
+    options: <String>[],
+    min: 0,
+    max: 0,
+  ),
+  FieldDef(
+    id: 'dup_hash_type',
+    labelKey: 'field_dup_hash_type',
+    kind: FieldKind.choice,
+    options: <String>['option_check_method_hash', 'option_check_method_name'],
+    min: 0,
+    max: 0,
+  ),
+  FieldDef(
+    id: 'dup_prehash_cache_size',
+    labelKey: 'field_dup_prehash_cache_size',
+    kind: FieldKind.integer,
+    options: <String>[],
+    min: 0,
+    max: 100000,
+  ),
+];
+
+const List<FieldValue> stubValues = <FieldValue>[
+  FieldValue(id: 'dup_use_prehash', value: FieldPayloadFlag(true)),
+  FieldValue(id: 'dup_hash_type', value: FieldPayloadChoice('option_check_method_hash')),
+  FieldValue(id: 'dup_prehash_cache_size', value: FieldPayloadInteger(256)),
+];
+
+/// Scriptable stand-in for the Rust bridge: the tests decide every engine reply.
+class StubEngine implements KisakiEngine {
+  StubEngine({
+    List<ToolSpec>? tools,
+    List<FieldDef>? fields,
+    List<FieldValue>? defaults,
+  })  : tools = tools ?? stubTools,
+        _fields = fields ?? stubFields,
+        _defaults = defaults ?? stubValues;
+
+  final List<ToolSpec> tools;
+  final List<FieldDef> _fields;
+  final List<FieldValue> _defaults;
+
+  final List<ScanRequest> requests = <ScanRequest>[];
+  final List<StreamController<ScanEvent>> streams = <StreamController<ScanEvent>>[];
+  final List<DeleteRequest> deletes = <DeleteRequest>[];
+  final List<ExportRequest> exports = <ExportRequest>[];
+
+  int stopRequests = 0;
+  bool scanningFlag = false;
+  DeleteOutcome deleteOutcome = const DeleteOutcome(
+    affected: 0,
+    errors: 0,
+    reclaimedBytes: 0,
+    messages: '',
+    log: <String>[],
+  );
+  String exportFolder = '/tmp/kisaki';
+  Exception? deleteFailure;
+  Exception? exportFailure;
+
+  StreamController<ScanEvent> get lastStream => streams.last;
+
+  @override
+  List<ToolSpec> listTools() => tools;
+
+  @override
+  List<FieldDef> fieldDefs(String tool) => _fields;
+
+  @override
+  List<FieldValue> defaultFields(String tool) => _defaults;
+
+  @override
+  EngineInfo engineInfo() => const EngineInfo(
+        coreVersion: '12.0.2',
+        apiVersion: 1,
+        os: 'macos',
+        threadLimit: 8,
+      );
+
+  @override
+  Stream<ScanEvent> startScan(ScanRequest request) {
+    requests.add(request);
+    scanningFlag = true;
+    final StreamController<ScanEvent> controller = StreamController<ScanEvent>();
+    streams.add(controller);
+    return controller.stream;
+  }
+
+  @override
+  bool requestStop() {
+    stopRequests++;
+    return true;
+  }
+
+  @override
+  bool isScanning() => scanningFlag;
+
+  @override
+  Future<DeleteOutcome> deleteFiles(DeleteRequest request) async {
+    deletes.add(request);
+    if (deleteFailure != null) {
+      throw deleteFailure!;
+    }
+    return deleteOutcome;
+  }
+
+  @override
+  Future<String> exportResults(ExportRequest request) async {
+    exports.add(request);
+    if (exportFailure != null) {
+      throw exportFailure!;
+    }
+    return exportFolder;
+  }
+
+  void emit(ScanEvent event) => lastStream.add(event);
+
+  void emitTo(StreamController<ScanEvent> controller, ScanEvent event) => controller.add(event);
+
+  Future<void> closeLast() => lastStream.close();
+
+  static ScanRow row(String path, {int size = 1024, int group = -1, bool start = false}) => ScanRow(
+        path: path,
+        name: path.substring(path.lastIndexOf('/') + 1),
+        directory: path.substring(0, path.lastIndexOf('/')),
+        cells: <String>['${size}B', '2026-01-02'],
+        sizeBytes: size,
+        modifiedTs: 1,
+        groupIndex: group,
+        groupSize: group < 0 ? 0 : 2,
+        isGroupStart: start,
+        isReference: false,
+        sortKeys: <int>[size, 1],
+      );
+
+  static ScanOutcome outcome(String tool, List<ScanRow> rows, {bool stopped = false}) => ScanOutcome(
+        tool: tool,
+        rows: rows,
+        stopped: stopped,
+        grouped: rows.any((ScanRow row) => row.groupIndex >= 0),
+        fileCount: rows.length,
+        groupCount: rows.map((ScanRow row) => row.groupIndex).toSet().length,
+        totalBytes: rows.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes),
+        reclaimableBytes: rows.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes),
+        messages: 'warning: skipped 1 unreadable path',
+        critical: null,
+      );
+}
