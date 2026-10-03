@@ -60,14 +60,14 @@ export component Lane inherits Rectangle {
             HorizontalLayout {
                 padding-left: 8px;
                 padding-right: 8px;
-                spacing: 6px;
+                spacing: Theme.gap_small;
                 alignment: start;
 
                 GlyphButton {
                     glyph: "<<";
                     label: root.title;
-                    width: 22px;
-                    height: 22px;
+                    width: Theme.chip_height;
+                    height: Theme.chip_height;
                     clicked => {
                         root.toggled();
                     }
@@ -126,7 +126,7 @@ export component DragHandle inherits Rectangle {
     }
 
     Rectangle {
-        x: 3px;
+        x: Theme.gap_small;
         width: 2px;
         height: parent.height;
         background: parent.dragging ? Palette.primary : Palette.hairline;
@@ -138,8 +138,8 @@ export component ProgressRail inherits Rectangle {
     in property <bool> indeterminate: false;
     in property <bool> danger: false;
 
-    height: 6px;
-    border-radius: 3px;
+    height: Theme.rail_height;
+    border-radius: root.height / 2;
     background: Palette.sunken;
 
     Rectangle {
@@ -149,7 +149,7 @@ export component ProgressRail inherits Rectangle {
             ? parent.width
             : parent.width * Math.max(0, Math.min(100, root.percent)) / 100;
         height: parent.height;
-        border-radius: 3px;
+        border-radius: root.height / 2;
         background: root.danger ? Palette.danger : root.indeterminate ? Palette.border : Palette.primary;
         animate width {
             duration: 160ms;
@@ -164,10 +164,10 @@ export component StatusBar inherits Rectangle {
     in property <bool> danger: false;
     callback show_details;
 
-    height: 22px;
+    height: Theme.chip_height;
 
     HorizontalLayout {
-        spacing: 6px;
+        spacing: Theme.gap_small;
         alignment: center;
 
         ProgressRail {
@@ -189,8 +189,8 @@ export component StatusBar inherits Rectangle {
             glyph: "!";
             danger: true;
             label: Translations.label_errors;
-            width: 22px;
-            height: 22px;
+            width: Theme.chip_height;
+            height: Theme.chip_height;
             clicked => {
                 root.show_details();
             }

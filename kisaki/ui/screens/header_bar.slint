@@ -26,8 +26,8 @@ export component HeaderBar inherits Rectangle {
 
         // Wordmark tile. Deliberately typographic: Kisaki has no icon asset yet.
         Rectangle {
-            width: 26px;
-            height: 26px;
+            width: Theme.chip_height;
+            height: Theme.chip_height;
             border-radius: Theme.radius;
             background: Palette.primary;
 
@@ -51,7 +51,7 @@ export component HeaderBar inherits Rectangle {
 
         // Scanner picker
         picker := Rectangle {
-            width: content.preferred-width + 34px;
+            width: content.preferred-width + Theme.gap * 4 + Theme.gap_small;
             height: 28px;
             border-radius: Theme.radius;
             border-width: 1px;
@@ -66,8 +66,8 @@ export component HeaderBar inherits Rectangle {
             }
 
             content := HorizontalLayout {
-                x: 10px;
-                spacing: 6px;
+                x: Theme.gap + Theme.gap_small;
+                spacing: Theme.gap_small;
                 alignment: start;
 
                 Text {

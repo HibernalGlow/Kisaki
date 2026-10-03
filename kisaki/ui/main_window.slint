@@ -190,7 +190,7 @@ export component MainWindow inherits Window {
             x: Theme.pad;
             y: Theme.header_height + Theme.pad;
             width: 320px;
-            height: AppState.tool_entries.length * 30px + 74px;
+            height: AppState.tool_entries.length * Theme.control_height + 72px;
             border-radius: Theme.radius;
             border-width: 1px;
             border-color: Palette.border;
@@ -222,8 +222,8 @@ export component MainWindow inherits Window {
                     }
 
                     HorizontalLayout {
-                        padding-left: 6px;
-                        padding-right: 6px;
+                        padding-left: Theme.gap_small;
+                        padding-right: Theme.gap_small;
                         spacing: 8px;
                         alignment: start;
 
@@ -275,7 +275,7 @@ export component MainWindow inherits Window {
 
         Rectangle {
             width: 440px;
-            height: 210px;
+            height: 208px;
             x: (parent.width - self.width) / 2;
             y: (parent.height - self.height) / 2;
             border-radius: Theme.radius;
