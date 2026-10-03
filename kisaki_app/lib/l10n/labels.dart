@@ -169,6 +169,8 @@ class Labels {
     'tool_similar_videos': 'Similar videos',
     'tool_temporary_files': 'Temporary files',
     'tool_video_optimizer': 'Video optimizer',
+    'field_bext_include_files_without_extension':
+        'Include files without extension',
     'field_big_biggest_first': 'Show biggest files first',
     'field_big_number_of_files': 'Number of files',
     'field_bro_archive': 'Check archives',
@@ -206,6 +208,13 @@ class Labels {
     'field_mus_min_fragment_duration': 'Minimum fragment duration (s)',
     'field_mus_title': 'Compare title',
     'field_mus_year': 'Compare year',
+    'field_name_allowed_charset': 'Allowed chars',
+    'field_name_emoji_used': 'Emoji in name',
+    'field_name_non_ascii_graphical': 'Non ASCII graphical characters',
+    'field_name_remove_duplicated_non_alphanumeric':
+        'Remove duplicated non alphanumeric characters',
+    'field_name_space_at_start_or_end': 'Space at start or end',
+    'field_name_uppercase_extension': 'Uppercase extension',
     'field_temp_extension_list': 'Temporary extensions',
     'field_vid_audio_length_ratio': 'Audio length ratio',
     'field_vid_audio_max_difference': 'Audio maximum difference',
