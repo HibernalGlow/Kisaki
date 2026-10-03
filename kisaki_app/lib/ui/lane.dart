@@ -119,7 +119,8 @@ class LaneDragHandle extends StatelessWidget {
       child: GestureDetector(
         key: const Key('lane-drag-handle'),
         behavior: HitTestBehavior.opaque,
-        onHorizontalDragUpdate: (DragUpdateDetails details) => apply((read() + details.delta.dx).clamp(minWidth, maxWidth)),
+        onHorizontalDragUpdate: (DragUpdateDetails details) =>
+            apply((read() + details.delta.dx).clamp(minWidth, maxWidth)),
         onDoubleTap: () => apply(resetTo),
         child: Container(
           width: BoardTokens.gap,

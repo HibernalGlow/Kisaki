@@ -27,7 +27,11 @@ const List<ToolSpec> stubTools = <ToolSpec>[
     grouped: true,
     supportsReference: true,
     columns: <ColumnDef>[sizeColumn, modifiedColumn],
-    fieldIds: <String>['dup_use_prehash', 'dup_hash_type', 'dup_prehash_cache_size'],
+    fieldIds: <String>[
+      'dup_use_prehash',
+      'dup_hash_type',
+      'dup_prehash_cache_size',
+    ],
   ),
   ToolSpec(
     id: 'big_files',
@@ -69,7 +73,10 @@ const List<FieldDef> stubFields = <FieldDef>[
 
 const List<FieldValue> stubValues = <FieldValue>[
   FieldValue(id: 'dup_use_prehash', value: FieldPayloadFlag(true)),
-  FieldValue(id: 'dup_hash_type', value: FieldPayloadChoice('option_check_method_hash')),
+  FieldValue(
+    id: 'dup_hash_type',
+    value: FieldPayloadChoice('option_check_method_hash'),
+  ),
   FieldValue(id: 'dup_prehash_cache_size', value: FieldPayloadInteger(256)),
 ];
 
@@ -79,16 +86,17 @@ class StubEngine implements KisakiEngine {
     List<ToolSpec>? tools,
     List<FieldDef>? fields,
     List<FieldValue>? defaults,
-  })  : tools = tools ?? stubTools,
-        _fields = fields ?? stubFields,
-        _defaults = defaults ?? stubValues;
+  }) : tools = tools ?? stubTools,
+       _fields = fields ?? stubFields,
+       _defaults = defaults ?? stubValues;
 
   final List<ToolSpec> tools;
   final List<FieldDef> _fields;
   final List<FieldValue> _defaults;
 
   final List<ScanRequest> requests = <ScanRequest>[];
-  final List<StreamController<ScanEvent>> streams = <StreamController<ScanEvent>>[];
+  final List<StreamController<ScanEvent>> streams =
+      <StreamController<ScanEvent>>[];
   final List<DeleteRequest> deletes = <DeleteRequest>[];
   final List<ExportRequest> exports = <ExportRequest>[];
 
@@ -118,17 +126,18 @@ class StubEngine implements KisakiEngine {
 
   @override
   EngineInfo engineInfo() => const EngineInfo(
-        coreVersion: '12.0.2',
-        apiVersion: 1,
-        os: 'macos',
-        threadLimit: 8,
-      );
+    coreVersion: '12.0.2',
+    apiVersion: 1,
+    os: 'macos',
+    threadLimit: 8,
+  );
 
   @override
   Stream<ScanEvent> startScan(ScanRequest request) {
     requests.add(request);
     scanningFlag = true;
-    final StreamController<ScanEvent> controller = StreamController<ScanEvent>();
+    final StreamController<ScanEvent> controller =
+        StreamController<ScanEvent>();
     streams.add(controller);
     return controller.stream;
   }
@@ -162,34 +171,50 @@ class StubEngine implements KisakiEngine {
 
   void emit(ScanEvent event) => lastStream.add(event);
 
-  void emitTo(StreamController<ScanEvent> controller, ScanEvent event) => controller.add(event);
+  void emitTo(StreamController<ScanEvent> controller, ScanEvent event) =>
+      controller.add(event);
 
   Future<void> closeLast() => lastStream.close();
 
-  static ScanRow row(String path, {int size = 1024, int group = -1, bool start = false}) => ScanRow(
-        path: path,
-        name: path.substring(path.lastIndexOf('/') + 1),
-        directory: path.substring(0, path.lastIndexOf('/')),
-        cells: <String>['${size}B', '2026-01-02'],
-        sizeBytes: size,
-        modifiedTs: 1,
-        groupIndex: group,
-        groupSize: group < 0 ? 0 : 2,
-        isGroupStart: start,
-        isReference: false,
-        sortKeys: <int>[size, 1],
-      );
+  static ScanRow row(
+    String path, {
+    int size = 1024,
+    int group = -1,
+    bool start = false,
+  }) => ScanRow(
+    path: path,
+    name: path.substring(path.lastIndexOf('/') + 1),
+    directory: path.substring(0, path.lastIndexOf('/')),
+    cells: <String>['${size}B', '2026-01-02'],
+    sizeBytes: size,
+    modifiedTs: 1,
+    groupIndex: group,
+    groupSize: group < 0 ? 0 : 2,
+    isGroupStart: start,
+    isReference: false,
+    sortKeys: <int>[size, 1],
+  );
 
-  static ScanOutcome outcome(String tool, List<ScanRow> rows, {bool stopped = false}) => ScanOutcome(
-        tool: tool,
-        rows: rows,
-        stopped: stopped,
-        grouped: rows.any((ScanRow row) => row.groupIndex >= 0),
-        fileCount: rows.length,
-        groupCount: rows.map((ScanRow row) => row.groupIndex).toSet().length,
-        totalBytes: rows.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes),
-        reclaimableBytes: rows.fold<int>(0, (int sum, ScanRow row) => sum + row.sizeBytes),
-        messages: 'warning: skipped 1 unreadable path',
-        critical: null,
-      );
+  static ScanOutcome outcome(
+    String tool,
+    List<ScanRow> rows, {
+    bool stopped = false,
+  }) => ScanOutcome(
+    tool: tool,
+    rows: rows,
+    stopped: stopped,
+    grouped: rows.any((ScanRow row) => row.groupIndex >= 0),
+    fileCount: rows.length,
+    groupCount: rows.map((ScanRow row) => row.groupIndex).toSet().length,
+    totalBytes: rows.fold<int>(
+      0,
+      (int sum, ScanRow row) => sum + row.sizeBytes,
+    ),
+    reclaimableBytes: rows.fold<int>(
+      0,
+      (int sum, ScanRow row) => sum + row.sizeBytes,
+    ),
+    messages: 'warning: skipped 1 unreadable path',
+    critical: null,
+  );
 }

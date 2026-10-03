@@ -15,7 +15,9 @@ String humanBytes(int bytes) {
     value /= 1024;
     unit++;
   }
-  final String text = unit == 0 ? value.toStringAsFixed(0) : value.toStringAsFixed(value >= 100 ? 0 : 1);
+  final String text = unit == 0
+      ? value.toStringAsFixed(0)
+      : value.toStringAsFixed(value >= 100 ? 0 : 1);
   return '$text ${units[unit]}';
 }
 
@@ -26,7 +28,9 @@ String humanDate(int epochSeconds) {
   if (epochSeconds <= 0) {
     return '-';
   }
-  final DateTime date = DateTime.fromMillisecondsSinceEpoch(epochSeconds * 1000);
+  final DateTime date = DateTime.fromMillisecondsSinceEpoch(
+    epochSeconds * 1000,
+  );
   String two(int value) => value.toString().padLeft(2, '0');
   return '${date.year}-${two(date.month)}-${two(date.day)} ${two(date.hour)}:${two(date.minute)}';
 }

@@ -23,11 +23,16 @@ class Labels {
 
   /// Unknown keys keep the scan usable: `field_dup_hash_type` reads as `Dup hash type`.
   static String _fallback(String key) {
-    final List<String> parts = key.split(RegExp(r'[_-]')).where((part) => part.isNotEmpty).toList();
+    final List<String> parts = key
+        .split(RegExp(r'[_-]'))
+        .where((part) => part.isNotEmpty)
+        .toList();
     if (parts.isEmpty) {
       return key;
     }
-    final StringBuffer text = StringBuffer('${parts.first[0].toUpperCase()}${parts.first.substring(1)}');
+    final StringBuffer text = StringBuffer(
+      '${parts.first[0].toUpperCase()}${parts.first.substring(1)}',
+    );
     for (final String part in parts.skip(1)) {
       text.write(' ${part[0].toUpperCase()}${part.substring(1)}');
     }
@@ -64,7 +69,8 @@ class Labels {
     'empty-running': 'Analyzing files...',
     'empty-stopped': 'Scan stopped, no results returned.',
     'header-results': 'Result groups',
-    'hint-dry-run': 'Delete and export only produce a plan while dry run is on.',
+    'hint-dry-run':
+        'Delete and export only produce a plan while dry run is on.',
     'label-allowed-ext': 'Allowed extensions',
     'label-cache': 'Use cache',
     'label-dry-run': 'Dry run',
@@ -115,9 +121,11 @@ class Labels {
     'col_tags': 'Tags',
     'col_title': 'Title',
     'col_year': 'Year',
-    'confirm_delete_body': 'This will remove { \$count } paths ({ \$size }) for real.',
+    'confirm_delete_body':
+        'This will remove { \$count } paths ({ \$size }) for real.',
     'confirm_delete_title': 'Delete the selected files?',
-    'confirm_dry_run_body': 'Dry run: plans { \$count } paths ({ \$size }) and changes nothing.',
+    'confirm_dry_run_body':
+        'Dry run: plans { \$count } paths ({ \$size }) and changes nothing.',
     'plan_files_to_delete': 'delete permanently',
     'plan_files_to_trash': 'move to trash',
     'plan_folders_to_delete': 'delete folders permanently',
@@ -125,20 +133,23 @@ class Labels {
     'plan_header': 'Plan for { \$count } paths ({ \$size }): { \$verb }',
     'plan_more': '... and { \$count } more',
     'rust_init_error_title': 'Kisaki failed to start',
-    'rust_no_included_paths': 'Add at least one included directory before scanning',
+    'rust_no_included_paths':
+        'Add at least one included directory before scanning',
     'status_cancelled': 'Scan stopped',
     'status_deleting': 'Applying file operations...',
     'status_dry_run_only': 'Dry run only - no files were changed',
     'status_export_failed': 'Export failed: { \$error }',
     'status_exported': 'Results written to { \$folder }',
-    'status_found': 'Found { \$files } files in { \$groups } groups ({ \$size })',
+    'status_found':
+        'Found { \$files } files in { \$groups } groups ({ \$size })',
     'status_nothing_found': 'Scan finished, nothing found',
     'status_nothing_selected': 'Select at least one result first',
     'status_nothing_to_export': 'There are no results to export',
     'status_open_failed': 'Cannot open { \$path }: { \$error }',
     'status_paths_updated': 'Path list updated',
     'status_removed_all': 'Removed { \$count } paths',
-    'status_removed_partial': 'Removed { \$removed } paths, { \$failed } failed',
+    'status_removed_partial':
+        'Removed { \$removed } paths, { \$failed } failed',
     'status_scanning': 'Scanning...',
     'status_stopped': 'Scan stopped - results found so far are kept',
     'status_stopping': 'Requesting stop...',
@@ -212,7 +223,8 @@ class Labels {
     'option_check_method_size': 'Size',
     'option_check_method_size_and_name': 'Size and name',
     'option_geometric_invariance_mirror_flip': 'Mirror and flip',
-    'option_geometric_invariance_mirror_flip_rotate90': 'Mirror, flip and rotate 90',
+    'option_geometric_invariance_mirror_flip_rotate90':
+        'Mirror, flip and rotate 90',
     'option_geometric_invariance_off': 'Off',
     'option_music_method_fingerprint': 'Fingerprint',
     'option_music_method_tags': 'Tags',

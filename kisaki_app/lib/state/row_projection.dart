@@ -6,7 +6,9 @@ GroupSelection groupSelectionOf(List<ScanRow> members, Set<String> selected) {
   if (members.isEmpty) {
     return GroupSelection.none;
   }
-  final int hits = members.where((ScanRow row) => selected.contains(row.path)).length;
+  final int hits = members
+      .where((ScanRow row) => selected.contains(row.path))
+      .length;
   if (hits == 0) {
     return GroupSelection.none;
   }
@@ -27,9 +29,15 @@ List<ScanRow> projectRows({
   final List<ScanRow> result = query.isEmpty
       ? List<ScanRow>.of(rows)
       : rows
-          .where((ScanRow row) =>
-              row.path.toLowerCase().contains(query) || row.name.toLowerCase().contains(query) || row.cells.any((String cell) => cell.toLowerCase().contains(query)))
-          .toList();
+            .where(
+              (ScanRow row) =>
+                  row.path.toLowerCase().contains(query) ||
+                  row.name.toLowerCase().contains(query) ||
+                  row.cells.any(
+                    (String cell) => cell.toLowerCase().contains(query),
+                  ),
+            )
+            .toList();
   if (sortColumn < 0) {
     return result;
   }
@@ -56,7 +64,10 @@ List<ScanRow> projectRows({
     }
     final List<int> order = blocks.keys.toList()..sort();
     return order.expand((int group) {
-      final List<ScanRow> block = blocks[group]!..sort((ScanRow a, ScanRow b) => direction * keyOf(a).compareTo(keyOf(b)));
+      final List<ScanRow> block = blocks[group]!
+        ..sort(
+          (ScanRow a, ScanRow b) => direction * keyOf(a).compareTo(keyOf(b)),
+        );
       return block;
     }).toList();
   }
