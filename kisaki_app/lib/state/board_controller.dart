@@ -27,6 +27,7 @@ export 'row_projection.dart' show GroupSelection;
 
 part 'board_activity.dart';
 part 'board_analysis.dart';
+part 'board_cursor.dart';
 part 'board_display.dart';
 part 'board_operations.dart';
 part 'board_source_lists.dart';
@@ -131,6 +132,9 @@ class BoardController extends ChangeNotifier {
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
   String _selectionAnchor = '';
+
+  /// Index into [_visible]: the row the keyboard works on. -1 means the table has no cursor yet.
+  int _cursor = -1;
   bool _reversePath = false;
   bool _wrapText = false;
   final Map<String, double> _columnWidths = <String, double>{};
@@ -469,6 +473,7 @@ class BoardController extends ChangeNotifier {
   void _clearResults({bool keepStatus = false}) {
     _rows = <ScanRow>[];
     _visible = <ScanRow>[];
+    _cursor = -1;
     _selected.clear();
     _history = createSelectionHistory(const <String>[]);
     _clearAssistantMessage();
@@ -553,6 +558,18 @@ class BoardController extends ChangeNotifier {
       sortAscending: _sortAscending,
     );
     _closeComparisonIfGone();
+    clampCursor();
+  }
+
+  /// Keeps the keyboard cursor inside the rows the table shows after a filter, a sort or a scan.
+  void clampCursor() {
+    if (_visible.isEmpty) {
+      _cursor = -1;
+      return;
+    }
+    if (_cursor >= _visible.length) {
+      _cursor = _visible.length - 1;
+    }
   }
 
   /// The comparison dialog reads the group the table shows, so it must not stay open on a row that
