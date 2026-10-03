@@ -100,12 +100,10 @@ impl FieldStore {
         self.payload(id).and_then(FieldPayload::as_integer).unwrap_or(0)
     }
 
-
     /// Raw access, so callers can accept either a token list or one separated string.
     pub fn payload(&self, id: &str) -> Option<&FieldPayload> {
         self.values.iter().find(|value| value.id == id).map(|value| &value.value)
     }
-
 }
 
 impl FieldPayload {
