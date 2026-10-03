@@ -20,10 +20,13 @@ pub struct PathEntrySettings {
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(default)]
 pub struct KisakiSettings {
     pub dark: bool,
     pub language_index: i32,
+    #[serde(deserialize_with = "lenient_u32")]
     pub window_width: u32,
+    #[serde(deserialize_with = "lenient_u32")]
     pub window_height: u32,
     // Slint length properties are f32 on the Rust side.
     pub source_width: f32,
@@ -75,6 +78,16 @@ impl Default for KisakiSettings {
 
 fn settings_path() -> Option<PathBuf> {
     get_config_cache_path().map(|paths| paths.config_folder.join(SETTINGS_FILE))
+}
+
+/// Phase 1 builds wrote Slint lengths as floats into these u32 fields, and rejecting the whole
+/// document discarded every other setting with it, so a number is coerced instead.
+fn lenient_u32<'de, D>(deserializer: D) -> Result<u32, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let raw = f64::deserialize(deserializer)?;
+    Ok(raw.clamp(0.0, u32::MAX as f64).round() as u32)
 }
 
 pub fn load() -> (KisakiSettings, FieldStore) {
@@ -237,18 +250,36 @@ mod tests {
     }
 
     #[test]
-    fn a_float_window_size_is_rejected_instead_of_truncated() {
-        let raw = serde_json::to_string(&KisakiSettings::default()).expect("Default settings should serialize");
-        assert!(serde_json::from_str::<KisakiSettings>(&raw).is_ok(), "positive control: an untouched file must load");
+    fn a_legacy_float_window_size_keeps_the_rest_of_the_settings() {
+        let raw = serde_json::to_string(&KisakiSettings {
+            dry_run: false,
+            excluded_items: "*/target/*".to_string(),
+            ..Default::default()
+        })
+        .expect("Default settings should serialize");
 
-        let mut damaged: serde_json::Value = serde_json::from_str(&raw).expect("Serialized settings should parse");
-        damaged["window_width"] = serde_json::json!(1280.5);
-        let damaged = damaged.to_string();
+        // Phase 1 built settings wrote these as Slint lengths, so a real user file looks like this.
+        let mut legacy: serde_json::Value = serde_json::from_str(&raw).expect("Serialized settings should parse");
+        legacy["window_width"] = serde_json::json!(2880.0);
+        legacy["window_height"] = serde_json::json!(1800.4);
+        let legacy = legacy.to_string();
 
-        assert!(
-            serde_json::from_str::<KisakiSettings>(&damaged).is_err(),
-            "a fractional window width must not silently become a u32"
-        );
+        let restored: KisakiSettings = serde_json::from_str(&legacy).expect("A legacy float size must not discard the whole file");
+
+        assert_eq!(restored.window_width, 2880);
+        assert_eq!(restored.window_height, 1800, "a fractional size rounds to the nearest pixel");
+        assert!(!restored.dry_run, "other settings must survive the coercion");
+        assert_eq!(restored.excluded_items, "*/target/*");
+    }
+
+    #[test]
+    fn a_file_missing_fields_falls_back_to_defaults_instead_of_failing() {
+        let settings: KisakiSettings = serde_json::from_str(r#"{"dark":false}"#).expect("A partial file must still load");
+
+        assert!(!settings.dark);
+        assert_eq!(settings.window_width, 1280);
+        assert_eq!(settings.excluded_items, "*/.git/*,*/cache/*");
+        assert!(settings.dry_run, "the destructive default stays on for new files");
     }
 
     #[test]
