@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 CORE_MANIFEST = "czkawka_core/Cargo.toml"
-CRATES = ["czkawka_core", "czkawka_cli", "czkawka_gui", "krokiet", "cedinia", "kisaki"]
+CRATES = ["czkawka_core", "czkawka_cli", "czkawka_gui", "krokiet", "cedinia", "kisaki", "kisaki_app/rust"]
 METAINFOS = ["data/com.github.qarmin.czkawka.metainfo.xml", "data/io.github.qarmin.krokiet.metainfo.xml", "data/com.github.hibernerglow.kisaki.metainfo.xml"]
 
 
@@ -50,6 +50,9 @@ def build_rules(old: str, new: str, iso_date: str) -> list[Rule]:
         Rule("cedinia/ui/screens/settings_screen.slint", f'"Cedinia {esc}"', f'"Cedinia {new}"'),
         Rule("krokiet/ui/main_window.slint", f'"Krokiet\\\\n{esc}"', f'"Krokiet\\\\n{new}"'),
         Rule("kisaki/ui/main_window.slint", f'version_string: "{esc}"', f'version_string: "{new}"'),
+        # The Flutter app publishes the same release number: build-name is CFBundleShortVersionString on
+        # macOS and the file version on Windows, and its build suffix has to be a plain integer.
+        Rule("kisaki_app/pubspec.yaml", f"^version: {esc}\\+\\d+$", f"version: {new}+{new.replace('.', '')}"),
         Rule("krokiet/ui/screens/about.slint", f'text: "{esc}";', f'text: "{new}";'),
         Rule("czkawka_gui/ui/about_dialog.ui", f'name="version">{esc}<', f'name="version">{new}<'),
         Rule("czkawka_gui/ui/main_window.ui", f"Czkawka {esc}<", f"Czkawka {new}<"),
