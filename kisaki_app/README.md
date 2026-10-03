@@ -62,7 +62,7 @@ cargo test -p kisaki_bridge                                     # 119 tests
 cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 cargo fmt -p kisaki_bridge -- --check                           # stable, as CI runs it
 flutter analyze
-flutter test                                                      # 132 tests
+flutter test                                                      # 172 tests
 ```
 
 `test/bridge_smoke_test.dart` loads the compiled dylib and drives real work through it: scans a temp
@@ -129,10 +129,10 @@ separate, engine-direct implementation.
 No icon art either, and none is invented: `windows/runner/Runner.rc` deliberately carries no ICON
 resource because the `flutter create` icon is the Flutter logo (its `app_icon.ico` hash-matches the
 template), and `data/com.github.hibernerglow.kisaki.desktop` names an Icon id no file provides. The
-macOS side is left half-finished on purpose and should not be trusted as it stands:
-`macos/Runner/Assets.xcassets/AppIcon.appiconset` tracks the seven template pngs, while the
-`Contents.json` that binds them never entered the repository (the root `.gitignore` pattern `*.json`
-swallows it) even though `Runner.xcodeproj` asks for an `AppIcon` in all three configurations.
-Completing that catalog would ship the Flutter logo as Kisaki's mark, so finishing or removing it
-needs Kisaki art or a decision, not a guess.
+macOS project is in the same state on purpose: the `AppIcon.appiconset` with the seven template pngs is
+gone from `Runner/Assets.xcassets`, and so are the three `ASSETCATALOG_COMPILER_APPICON_NAME` settings
+that asked Xcode to compile it, because the catalog was only half-tracked anyway (the `Contents.json`
+binding those pngs is swallowed by the root `.gitignore` rule for json files). `Kisaki.app` therefore
+launches with the system generic icon on all three platforms. Adding Kisaki art later means an appiconset
+plus its descriptor, the setting restored, and an `app_icon.ico`.
 
