@@ -160,6 +160,38 @@ class StubEngine implements KisakiEngine {
     return deleteOutcome;
   }
 
+  final List<RenameRequest> renames = <RenameRequest>[];
+  final List<MoveRequest> moves = <MoveRequest>[];
+  RenameOutcome renameOutcome = const RenameOutcome(
+    renamed: 0,
+    planned: 0,
+    failed: 0,
+    skipped: 0,
+    items: <RenameItem>[],
+    messages: '',
+  );
+  MoveOutcome moveOutcome = const MoveOutcome(
+    moved: 0,
+    copied: 0,
+    planned: 0,
+    skipped: 0,
+    failed: 0,
+    items: <MoveItem>[],
+    messages: '',
+  );
+
+  @override
+  Future<RenameOutcome> renameFiles(RenameRequest request) async {
+    renames.add(request);
+    return renameOutcome;
+  }
+
+  @override
+  Future<MoveOutcome> moveFiles(MoveRequest request) async {
+    moves.add(request);
+    return moveOutcome;
+  }
+
   @override
   Future<String> exportResults(ExportRequest request) async {
     exports.add(request);

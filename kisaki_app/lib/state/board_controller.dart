@@ -939,6 +939,117 @@ class BoardController extends ChangeNotifier {
     }
   }
 
+  /// The engine decides the corrected names, so the request carries the live scan settings and the
+  /// selection; the dry run answers with the same plan the real run would follow.
+  void requestRename() {
+    final List<ScanRow> targets = selectedRows;
+    if (targets.isEmpty) {
+      _setStatus('status_nothing_selected');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _applyRename(targets);
+    _confirm = ConfirmRequest(
+      titleKey: dryRun ? 'label-dry-run' : 'confirm_rename_title',
+      bodyKey: dryRun ? 'confirm_dry_run_body' : 'confirm_rename_body',
+      args: <String, Object>{'count': targets.length},
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _applyRename(List<ScanRow> targets) async {
+    _actionRunning = true;
+    _setStatus('status_renaming');
+    notifyListeners();
+    try {
+      final RenameOutcome outcome = await engine.renameFiles(
+        RenameRequest(
+          tool: _tool?.id ?? '',
+          scan: buildRequest(),
+          paths: targets.map((ScanRow row) => row.path).toList(),
+          dryRun: dryRun,
+        ),
+      );
+      _messages = outcome.messages;
+      _setStatus(
+        dryRun ? 'status_rename_planned' : 'status_renamed',
+        args: <String, Object>{
+          'count': dryRun ? outcome.planned : outcome.renamed,
+        },
+      );
+      if (outcome.failed > 0) {
+        _critical = outcome.messages;
+      }
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
+  }
+
+  void requestMove(String destination, MoveAction action) {
+    final List<ScanRow> targets = selectedRows;
+    final String folder = destination.trim();
+    if (targets.isEmpty || folder.isEmpty) {
+      _setStatus('status_move_needs_destination');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _applyMove(targets, folder, action);
+    _confirm = ConfirmRequest(
+      titleKey: dryRun ? 'label-dry-run' : 'confirm_move_title',
+      bodyKey: dryRun ? 'confirm_dry_run_body' : 'confirm_move_body',
+      args: <String, Object>{'count': targets.length, 'destination': folder},
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _applyMove(
+    List<ScanRow> targets,
+    String destination,
+    MoveAction action,
+  ) async {
+    _actionRunning = true;
+    _setStatus('status_moving');
+    notifyListeners();
+    try {
+      final MoveOutcome outcome = await engine.moveFiles(
+        MoveRequest(
+          paths: targets.map((ScanRow row) => row.path).toList(),
+          destination: destination,
+          action: action,
+          conflict: MoveConflictPolicy.skip,
+          preserveStructure: false,
+          dryRun: dryRun,
+        ),
+      );
+      _messages = outcome.messages;
+      final int done = action == MoveAction.copy
+          ? outcome.copied
+          : outcome.moved;
+      _setStatus(
+        dryRun ? 'status_move_planned' : 'status_moved',
+        args: <String, Object>{
+          'count': dryRun ? outcome.planned : done,
+          'destination': destination,
+        },
+      );
+      if (outcome.failed > 0) {
+        _critical = outcome.messages;
+      }
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
+  }
+
   Future<void> _applyDelete(List<ScanRow> targets) async {
     _actionRunning = true;
     _setStatus('status_deleting');
