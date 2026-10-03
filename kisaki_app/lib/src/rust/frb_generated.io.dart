@@ -47,6 +47,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProgressUpdate dco_decode_box_autoadd_progress_update(dynamic raw);
 
   @protected
+  RenameRequest dco_decode_box_autoadd_rename_request(dynamic raw);
+
+  @protected
   ScanOutcome dco_decode_box_autoadd_scan_outcome(dynamic raw);
 
   @protected
@@ -107,6 +110,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
+  List<RenameItem> dco_decode_list_rename_item(dynamic raw);
+
+  @protected
   List<ScanRow> dco_decode_list_scan_row(dynamic raw);
 
   @protected
@@ -117,6 +123,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProgressUpdate dco_decode_progress_update(dynamic raw);
+
+  @protected
+  RenameItem dco_decode_rename_item(dynamic raw);
+
+  @protected
+  RenameOutcome dco_decode_rename_outcome(dynamic raw);
+
+  @protected
+  RenameRequest dco_decode_rename_request(dynamic raw);
+
+  @protected
+  RenameStatus dco_decode_rename_status(dynamic raw);
 
   @protected
   ScanEvent dco_decode_scan_event(dynamic raw);
@@ -165,6 +183,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProgressUpdate sse_decode_box_autoadd_progress_update(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  RenameRequest sse_decode_box_autoadd_rename_request(
     SseDeserializer deserializer,
   );
 
@@ -229,6 +252,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
+  List<RenameItem> sse_decode_list_rename_item(SseDeserializer deserializer);
+
+  @protected
   List<ScanRow> sse_decode_list_scan_row(SseDeserializer deserializer);
 
   @protected
@@ -239,6 +265,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProgressUpdate sse_decode_progress_update(SseDeserializer deserializer);
+
+  @protected
+  RenameItem sse_decode_rename_item(SseDeserializer deserializer);
+
+  @protected
+  RenameOutcome sse_decode_rename_outcome(SseDeserializer deserializer);
+
+  @protected
+  RenameRequest sse_decode_rename_request(SseDeserializer deserializer);
+
+  @protected
+  RenameStatus sse_decode_rename_status(SseDeserializer deserializer);
 
   @protected
   ScanEvent sse_decode_scan_event(SseDeserializer deserializer);
@@ -294,6 +332,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_box_autoadd_progress_update(
     ProgressUpdate self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_rename_request(
+    RenameRequest self,
     SseSerializer serializer,
   );
 
@@ -376,6 +420,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_rename_item(
+    List<RenameItem> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_scan_row(List<ScanRow> self, SseSerializer serializer);
 
   @protected
@@ -389,6 +439,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     ProgressUpdate self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_rename_item(RenameItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rename_outcome(RenameOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rename_request(RenameRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rename_status(RenameStatus self, SseSerializer serializer);
 
   @protected
   void sse_encode_scan_event(ScanEvent self, SseSerializer serializer);

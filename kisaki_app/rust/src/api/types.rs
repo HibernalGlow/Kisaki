@@ -146,6 +146,48 @@ pub struct ExportRequest {
     pub grouped: bool,
 }
 
+/// A rename run. The engine decides the new name, so the request carries the option block of the
+/// scan that produced the rows plus the selection to act on. Dry run decides without touching disk.
+#[derive(Debug, Clone, PartialEq)]
+pub struct RenameRequest {
+    pub tool: String,
+    pub scan: ScanRequest,
+    pub paths: Vec<String>,
+    pub dry_run: bool,
+}
+
+/// What happened to one selected file.
+#[derive(Debug, Clone, PartialEq)]
+pub enum RenameStatus {
+    /// A rename the run performed.
+    Renamed,
+    /// A rename a dry run would have performed.
+    Planned,
+    /// Blocked: the name was already taken or the filesystem refused.
+    Failed,
+    /// The engine found nothing to change.
+    Skipped,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RenameItem {
+    pub from: String,
+    pub to: String,
+    pub status: RenameStatus,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct RenameOutcome {
+    pub renamed: i32,
+    pub planned: i32,
+    pub failed: i32,
+    pub skipped: i32,
+    /// One entry per selected path, in request order.
+    pub items: Vec<RenameItem>,
+    pub messages: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EngineInfo {
     pub core_version: String,

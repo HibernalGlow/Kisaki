@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'types.freezed.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 class ColumnDef {
   final String key;
@@ -280,6 +280,120 @@ class ProgressUpdate {
           total == other.total &&
           percent == other.percent &&
           detail == other.detail;
+}
+
+class RenameItem {
+  final String from;
+  final String to;
+  final RenameStatus status;
+  final String detail;
+
+  const RenameItem({
+    required this.from,
+    required this.to,
+    required this.status,
+    required this.detail,
+  });
+
+  @override
+  int get hashCode =>
+      from.hashCode ^ to.hashCode ^ status.hashCode ^ detail.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RenameItem &&
+          runtimeType == other.runtimeType &&
+          from == other.from &&
+          to == other.to &&
+          status == other.status &&
+          detail == other.detail;
+}
+
+class RenameOutcome {
+  final int renamed;
+  final int planned;
+  final int failed;
+  final int skipped;
+
+  /// One entry per selected path, in request order.
+  final List<RenameItem> items;
+  final String messages;
+
+  const RenameOutcome({
+    required this.renamed,
+    required this.planned,
+    required this.failed,
+    required this.skipped,
+    required this.items,
+    required this.messages,
+  });
+
+  @override
+  int get hashCode =>
+      renamed.hashCode ^
+      planned.hashCode ^
+      failed.hashCode ^
+      skipped.hashCode ^
+      items.hashCode ^
+      messages.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RenameOutcome &&
+          runtimeType == other.runtimeType &&
+          renamed == other.renamed &&
+          planned == other.planned &&
+          failed == other.failed &&
+          skipped == other.skipped &&
+          items == other.items &&
+          messages == other.messages;
+}
+
+/// A rename run. The engine decides the new name, so the request carries the option block of the
+/// scan that produced the rows plus the selection to act on. Dry run decides without touching disk.
+class RenameRequest {
+  final String tool;
+  final ScanRequest scan;
+  final List<String> paths;
+  final bool dryRun;
+
+  const RenameRequest({
+    required this.tool,
+    required this.scan,
+    required this.paths,
+    required this.dryRun,
+  });
+
+  @override
+  int get hashCode =>
+      tool.hashCode ^ scan.hashCode ^ paths.hashCode ^ dryRun.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RenameRequest &&
+          runtimeType == other.runtimeType &&
+          tool == other.tool &&
+          scan == other.scan &&
+          paths == other.paths &&
+          dryRun == other.dryRun;
+}
+
+/// What happened to one selected file.
+enum RenameStatus {
+  /// A rename the run performed.
+  renamed,
+
+  /// A rename a dry run would have performed.
+  planned,
+
+  /// Blocked: the name was already taken or the filesystem refused.
+  failed,
+
+  /// The engine found nothing to change.
+  skipped,
 }
 
 @freezed
