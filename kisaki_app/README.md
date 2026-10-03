@@ -53,8 +53,9 @@ rewrites it along with `rust/Cargo.toml` and the AppStream release entry, so no 
 drift on its own. `packaging/linux_bundle.sh` builds the Linux bundle and puts
 `libkisaki_bridge.so` next to the `kisaki` executable, which is the first directory
 `lib/util/rust_lib.dart` searches; CI runs that script (job `flutter-linux`) because no machine in
-this workspace has a Linux toolchain. The Windows bundle is not built in CI either, since that would
-need a runner this repository does not use.
+this workspace has a Linux toolchain, and uploads the finished bundle as artifact
+`linux_kisaki_flutter_x86_64` on the default branch. The Windows bundle is not built in CI either,
+since that would need a runner this repository does not use.
 
 ## Gates
 
