@@ -107,8 +107,9 @@ jobs:
           path: target/release/kisaki.exe
 
   # The Flutter frontend reaches czkawka_core only through this crate, so its tests are the
-  # contract check for every scanner the board can ask for. The Dart suite is not run here:
-  # it needs a Flutter toolchain and a dylib path that this workspace does not yet ship to CI.
+  # contract check for every scanner the board can ask for. ffmpeg and ffprobe are part of the
+  # dependency list because the optimizer both probes clips with ffprobe and re-encodes them with
+  # ffmpeg, and its tests build real clips instead of trusting a fixture directory.
   bridge:
     strategy:
       fail-fast: false
@@ -122,7 +123,14 @@ jobs:
         if: matrix.os == 'ubuntu-22.04'
         run: |
           sudo apt-get update
-          sudo apt-get install -y libgtk-4-dev libraw-dev libheif-dev libavif-dev libdav1d-dev libasound2-dev
+          sudo apt-get install -y libgtk-4-dev libraw-dev libheif-dev libavif-dev libdav1d-dev libasound2-dev ffmpeg
+      - name: Install ffmpeg on macOS
+        if: matrix.os == 'macos-latest'
+        run: brew install ffmpeg || true
+      - name: Install ffmpeg on Windows
+        if: matrix.os == 'windows-latest'
+        run: choco install ffmpeg --no-progress -y
+        shell: bash
       - name: Build cdylib
         shell: bash
         run: cargo build -p kisaki_bridge
@@ -159,3 +167,40 @@ jobs:
           python3 misc/find_unused_callbacks.py kisaki
           python3 misc/find_unused_settings_properties.py kisaki
           python3 kisaki/tools/check_grid.py kisaki
+
+  # The board, the rule models and the FFI plumbing are Dart, so they need the Flutter toolchain
+  # rather than a Rust target. Flutter is fetched from its own repository instead of a third-party
+  # action, and the generated bindings are committed, so codegen does not have to run here -
+  # `flutter analyze` is what notices when a hand-written file and a committed generated file drift.
+  # The bridge dylib is built first because `test/bridge_smoke_test.dart` loads it and drives the
+  # real engine through it.
+  dart:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-4-dev libraw-dev libheif-dev libavif-dev libdav1d-dev libasound2-dev ffmpeg
+      - name: Build the bridge
+        run: cargo build -p kisaki_bridge
+      - name: Install Flutter
+        run: |
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Warm up the Dart SDK
+        run: flutter --version
+      - name: Get dependencies
+        working-directory: kisaki_app
+        run: flutter pub get
+      - name: Analyze
+        working-directory: kisaki_app
+        run: flutter analyze
+      # Unit and widget tests run in the headless flutter_tester, so no display server is needed.
+      - name: Test
+        working-directory: kisaki_app
+        run: flutter test
