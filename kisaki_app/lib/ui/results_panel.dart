@@ -12,6 +12,7 @@ import 'assistant_panel.dart';
 import 'comparison_images.dart';
 import 'comparison_view.dart';
 import 'filter_panel.dart';
+import 'preview_panel.dart';
 import 'preview_view.dart';
 import 'row_menu.dart';
 import 'similar_folders_view.dart';
@@ -35,51 +36,65 @@ class ResultsPanel extends StatelessWidget {
           const Hairline(),
         ],
         Expanded(
-          child: controller.folderView
-              ? SimilarFoldersView(controller: controller)
-              : LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) {
-                    final bool grouped = controller.tool?.grouped ?? false;
-                    final List<double> widths = tableWidths(
-                      constraints.maxWidth.isFinite
-                          ? constraints.maxWidth
-                          : 900,
-                      controller.tool,
-                      grouped,
-                      overrides: controller.columnWidths,
-                    );
-                    final double total = widths.fold<double>(
-                      0,
-                      (double sum, double value) => sum + value,
-                    );
-                    // The roll-up above owns the full lane width, so only the table gets the
-                    // horizontal scroller - folder rows must not inherit column widths.
-                    return SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: SizedBox(
-                        width: total,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: <Widget>[
-                            if (controller.visibleRows.isNotEmpty) ...<Widget>[
-                              ColumnHeader(
-                                controller: controller,
-                                widths: widths,
-                              ),
-                              const Hairline(),
-                            ],
-                            Expanded(
-                              child: _Rows(
-                                controller: controller,
-                                widths: widths,
-                              ),
-                            ),
-                          ],
-                        ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              Expanded(
+                child: controller.folderView
+                    ? SimilarFoldersView(controller: controller)
+                    : LayoutBuilder(
+                        builder:
+                            (BuildContext context, BoxConstraints constraints) {
+                              final bool grouped =
+                                  controller.tool?.grouped ?? false;
+                              final List<double> widths = tableWidths(
+                                constraints.maxWidth.isFinite
+                                    ? constraints.maxWidth
+                                    : 900,
+                                controller.tool,
+                                grouped,
+                                overrides: controller.columnWidths,
+                              );
+                              final double total = widths.fold<double>(
+                                0,
+                                (double sum, double value) => sum + value,
+                              );
+                              // The roll-up above owns the full lane width, so only the table gets
+                              // the horizontal scroller - folder rows must not inherit column widths.
+                              return SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                  width: total,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: <Widget>[
+                                      if (controller
+                                          .visibleRows
+                                          .isNotEmpty) ...<Widget>[
+                                        ColumnHeader(
+                                          controller: controller,
+                                          widths: widths,
+                                        ),
+                                        const Hairline(),
+                                      ],
+                                      Expanded(
+                                        child: _Rows(
+                                          controller: controller,
+                                          widths: widths,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
                       ),
-                    );
-                  },
-                ),
+              ),
+              if (controller.previewPanelOpen)
+                PreviewPanel(controller: controller),
+            ],
+          ),
         ),
       ],
     );
@@ -238,6 +253,15 @@ class _ResultsHeader extends StatelessWidget {
                     dense: true,
                     onPressed: controller.resetColumnWidths,
                   ),
+                BoardAction(
+                  key: const Key('pin-preview'),
+                  labelKey: 'preview-panel-pin',
+                  dense: true,
+                  tone: controller.pinnedPreview ? palette.primary : null,
+                  onPressed: controller.previewPaths.isEmpty
+                      ? null
+                      : controller.togglePinnedPreview,
+                ),
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[

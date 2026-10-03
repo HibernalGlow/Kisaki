@@ -118,6 +118,7 @@ class BoardController extends ChangeNotifier {
   bool _assistantMessageIsError = false;
   ComparisonState _comparison = const ComparisonState();
   String? _previewPath;
+  bool _pinnedPreview = false;
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
   String _selectionAnchor = '';
@@ -816,6 +817,20 @@ class BoardController extends ChangeNotifier {
       return;
     }
     _previewPath = null;
+    notifyListeners();
+  }
+
+  /// The panel the reference keeps docked beside the table: same active picture, no dialog.
+  bool get pinnedPreview => _pinnedPreview;
+
+  bool get previewPanelOpen =>
+      _pinnedPreview && previewPaths.contains(_previewPath);
+
+  void togglePinnedPreview() {
+    _pinnedPreview = !_pinnedPreview;
+    if (_pinnedPreview && previewPaths.isNotEmpty) {
+      _previewPath ??= previewPaths.first;
+    }
     notifyListeners();
   }
 

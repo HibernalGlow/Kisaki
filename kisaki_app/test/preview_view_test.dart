@@ -124,6 +124,68 @@ void main() {
     expect(find.byKey(const Key('preview-index')), findsNothing);
   });
 
+  testWidgets(
+    'the pinned panel docks beside the table and steps the same way',
+    (WidgetTester tester) async {
+      await pumpPictures(tester);
+      expect(find.byKey(const Key('preview-panel')), findsNothing);
+
+      await tester.tap(find.byKey(const Key('pin-preview')));
+      await tester.pumpAndSettle();
+
+      expect(controller.previewPanelOpen, isTrue);
+      expect(find.byKey(const Key('preview-panel')), findsOneWidget);
+      expect(
+        find.byKey(const Key('preview-panel-image-/data/a.jpg')),
+        findsOneWidget,
+      );
+      expect(find.text('1 / 2'), findsOneWidget);
+      expect(
+        find.byKey(const Key('results-list')),
+        findsOneWidget,
+        reason: 'the panel takes a slice of the lane, it does not replace the table',
+      );
+
+      await tester.tap(find.byKey(const Key('preview-panel-next')));
+      await tester.pumpAndSettle();
+      expect(controller.previewPath, '/data/b.png');
+      expect(find.text('2 / 2'), findsOneWidget);
+      expect(
+        tester
+            .widget<BoardAction>(find.byKey(const Key('preview-panel-next')))
+            .onPressed,
+        isNull,
+      );
+
+      await tester.tap(find.byKey(const Key('preview-panel-close')));
+      await tester.pumpAndSettle();
+      expect(controller.previewPanelOpen, isFalse);
+      expect(find.byKey(const Key('preview-panel')), findsNothing);
+    },
+  );
+
+  testWidgets('every label the pinned panel paints is authored', (
+    WidgetTester tester,
+  ) async {
+    await pumpPictures(tester);
+    await tester.tap(find.byKey(const Key('pin-preview')));
+    await tester.pumpAndSettle();
+    Labels.fallbackKeys.clear();
+    await tester.ensureVisible(find.byKey(const Key('preview-panel')));
+    await tester.pumpAndSettle();
+
+    expect(Labels.fallbackKeys, isEmpty);
+    expect(
+      find.text(
+        Labels.of(
+          'preview-panel-title',
+          args: const <String, Object>{'name': 'a.jpg'},
+        ),
+      ),
+      findsOneWidget,
+    );
+  });
+
   testWidgets('every label the preview paints is authored', (
     WidgetTester tester,
   ) async {
