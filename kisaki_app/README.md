@@ -96,3 +96,14 @@ flutter pub run build_runner build                   # never with --build-filter
 No scanning algorithm, no duplicate or similarity logic, no cache format in Dart - those are the
 engine's. The app is a Flutter frontend of this fork; the Slint frontend in `../kisaki` is the
 separate, engine-direct implementation.
+
+No icon art either, and none is invented: `windows/runner/Runner.rc` deliberately carries no ICON
+resource because the `flutter create` icon is the Flutter logo (its `app_icon.ico` hash-matches the
+template), and `data/com.github.hibernerglow.kisaki.desktop` names an Icon id no file provides. The
+macOS side is left half-finished on purpose and should not be trusted as it stands:
+`macos/Runner/Assets.xcassets/AppIcon.appiconset` tracks the seven template pngs, while the
+`Contents.json` that binds them never entered the repository (the root `.gitignore` pattern `*.json`
+swallows it) even though `Runner.xcodeproj` asks for an `AppIcon` in all three configurations.
+Completing that catalog would ship the Flutter logo as Kisaki's mark, so finishing or removing it
+needs Kisaki art or a decision, not a guess.
+
