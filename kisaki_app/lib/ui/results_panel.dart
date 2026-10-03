@@ -267,9 +267,16 @@ class _ResultsHeader extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      Labels.of('label-thumbnails'),
-                      style: palette.text.labelSmall,
+                    Flexible(
+                      child: Tooltip(
+                        message: Labels.of('label-thumbnails'),
+                        child: Text(
+                          Labels.of('label-thumbnails'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: palette.text.labelSmall,
+                        ),
+                      ),
                     ),
                     Switch(
                       key: const Key('toggle-thumbnails'),
@@ -281,9 +288,16 @@ class _ResultsHeader extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      Labels.of('label-reverse-path'),
-                      style: palette.text.labelSmall,
+                    Flexible(
+                      child: Tooltip(
+                        message: Labels.of('label-reverse-path'),
+                        child: Text(
+                          Labels.of('label-reverse-path'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: palette.text.labelSmall,
+                        ),
+                      ),
                     ),
                     Switch(
                       key: const Key('toggle-reverse-path'),
@@ -295,9 +309,16 @@ class _ResultsHeader extends StatelessWidget {
                 Row(
                   mainAxisSize: MainAxisSize.min,
                   children: <Widget>[
-                    Text(
-                      Labels.of('label-wrap-text'),
-                      style: palette.text.labelSmall,
+                    Flexible(
+                      child: Tooltip(
+                        message: Labels.of('label-wrap-text'),
+                        child: Text(
+                          Labels.of('label-wrap-text'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: palette.text.labelSmall,
+                        ),
+                      ),
                     ),
                     Switch(
                       key: const Key('toggle-wrap-text'),
