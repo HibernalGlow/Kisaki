@@ -6,6 +6,7 @@ import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../state/row_projection.dart';
+import '../state/row_selection.dart';
 import '../theme/board_theme.dart';
 import 'assistant_panel.dart';
 import 'comparison_images.dart';
@@ -248,6 +249,34 @@ class _ResultsHeader extends StatelessWidget {
                       key: const Key('toggle-thumbnails'),
                       value: controller.showThumbnails,
                       onChanged: controller.setShowThumbnails,
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      Labels.of('label-reverse-path'),
+                      style: palette.text.labelSmall,
+                    ),
+                    Switch(
+                      key: const Key('toggle-reverse-path'),
+                      value: controller.reversePath,
+                      onChanged: controller.setReversePath,
+                    ),
+                  ],
+                ),
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      Labels.of('label-wrap-text'),
+                      style: palette.text.labelSmall,
+                    ),
+                    Switch(
+                      key: const Key('toggle-wrap-text'),
+                      value: controller.wrapText,
+                      onChanged: controller.setWrapText,
                     ),
                   ],
                 ),
@@ -739,10 +768,13 @@ class _RowsState extends State<_Rows> {
     }
 
     (context as Element).visitChildren(collect);
-    final bool held =
-        HardwareKeyboard.instance.isControlPressed ||
-        HardwareKeyboard.instance.isMetaPressed;
-    widget.controller.applyBoxSelection(paths, additive: held);
+    final HardwareKeyboard keys = HardwareKeyboard.instance;
+    final BoxMode mode = keys.isAltPressed
+        ? BoxMode.remove
+        : keys.isControlPressed || keys.isMetaPressed
+        ? BoxMode.add
+        : BoxMode.replace;
+    widget.controller.applyBoxSelection(paths, mode);
   }
 
   void _clear() {
@@ -832,6 +864,7 @@ class _ResultRow extends StatelessWidget {
     final ToolSpec? tool = controller.tool;
     final List<ColumnDef> columns = tool?.columns ?? const <ColumnDef>[];
     final bool selected = controller.isSelected(row);
+    final bool wrap = controller.wrapText;
     int offset = 0;
 
     final List<Widget> cells = <Widget>[
@@ -840,7 +873,8 @@ class _ResultRow extends StatelessWidget {
         child: Checkbox(
           key: Key('row-select-${row.path}'),
           value: selected,
-          onChanged: (_) => controller.toggleSelected(row),
+          // A reference row is the copy a fix must keep, so it cannot be picked, like the reference.
+          onChanged: row.isReference ? null : (_) => _click(),
           visualDensity: VisualDensity.compact,
           materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
         ),
@@ -877,41 +911,60 @@ class _ResultRow extends StatelessWidget {
                 const SizedBox(width: BoardTokens.gapSmall),
               ],
               Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Flexible(
-                          child: Text(
-                            row.name,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: TextStyle(
-                              fontSize: BoardTokens.fsBody,
-                              fontWeight: FontWeight.w600,
-                              color: selected ? palette.primary : palette.fg,
-                            ),
+                child: controller.reversePath
+                    ? Tooltip(
+                        message: row.path,
+                        child: Text(
+                          controller.shownPath(row),
+                          maxLines: wrap ? 2 : 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: BoardTokens.fsBody,
+                            fontWeight: FontWeight.w600,
+                            color: selected ? palette.primary : palette.fg,
                           ),
                         ),
-                        if (row.isReference) ...<Widget>[
-                          const SizedBox(width: BoardTokens.gapSmall),
-                          _RefBadge(),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Row(
+                            children: <Widget>[
+                              Flexible(
+                                child: Tooltip(
+                                  message: row.path,
+                                  child: Text(
+                                    row.name,
+                                    maxLines: wrap ? 2 : 1,
+                                    overflow: TextOverflow.ellipsis,
+                                    style: TextStyle(
+                                      fontSize: BoardTokens.fsBody,
+                                      fontWeight: FontWeight.w600,
+                                      color: selected
+                                          ? palette.primary
+                                          : palette.fg,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              if (row.isReference) ...<Widget>[
+                                const SizedBox(width: BoardTokens.gapSmall),
+                                _RefBadge(),
+                              ],
+                            ],
+                          ),
+                          Text(
+                            row.directory,
+                            maxLines: wrap ? 2 : 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: BoardTokens.fsCaption,
+                              color: palette.fgFaint,
+                            ),
+                          ),
                         ],
-                      ],
-                    ),
-                    Text(
-                      row.directory,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        fontSize: BoardTokens.fsCaption,
-                        color: palette.fgFaint,
                       ),
-                    ),
-                  ],
-                ),
               ),
             ],
           ),
@@ -953,7 +1006,7 @@ class _ResultRow extends StatelessWidget {
     return GestureDetector(
       key: Key('result-row-${row.path}'),
       behavior: HitTestBehavior.opaque,
-      onTap: () => controller.toggleSelected(row),
+      onTap: _click,
       onSecondaryTapDown: (TapDownDetails details) => showRowMenu(
         context: context,
         controller: controller,
@@ -961,7 +1014,8 @@ class _ResultRow extends StatelessWidget {
         position: details.globalPosition,
       ),
       child: Container(
-        height: BoardTokens.rowHeight,
+        // Wrapping is a two-line row, so the row grows by a fixed step instead of jittering.
+        height: wrap ? BoardTokens.rowHeight + 16 : BoardTokens.rowHeight,
         decoration: BoxDecoration(
           color: selected ? palette.selection : Colors.transparent,
           border: Border(bottom: BorderSide(color: palette.hairline)),
@@ -971,6 +1025,20 @@ class _ResultRow extends StatelessWidget {
           children: cells,
         ),
       ),
+    );
+  }
+
+  /// Plain click picks one row, Ctrl or Command adds, Shift extends from the last plain click. A
+  /// reference row is not a target, so neither the checkbox nor the row reacts to it.
+  void _click() {
+    if (row.isReference) {
+      return;
+    }
+    final HardwareKeyboard keys = HardwareKeyboard.instance;
+    controller.clickSelect(
+      row,
+      additive: keys.isControlPressed || keys.isMetaPressed,
+      ranged: keys.isShiftPressed,
     );
   }
 }
