@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 1857297523;
+  int get rustContentHash => -1826201653;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -110,6 +110,10 @@ abstract class RustLibApi extends BaseApi {
   List<ToolSpec> crateApiSchemaListTools();
 
   Future<MoveOutcome> crateApiActionsMoveFiles({required MoveRequest request});
+
+  Future<OptimizeOutcome> crateApiActionsOptimizeVideos({
+    required OptimizeRequest request,
+  });
 
   Future<RenameOutcome> crateApiActionsRenameFiles({
     required RenameRequest request,
@@ -418,6 +422,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "move_files", argNames: ["request"]);
 
   @override
+  Future<OptimizeOutcome> crateApiActionsOptimizeVideos({
+    required OptimizeRequest request,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_optimize_request(request, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 12,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_optimize_outcome,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiActionsOptimizeVideosConstMeta,
+        argValues: [request],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiActionsOptimizeVideosConstMeta =>
+      const TaskConstMeta(debugName: "optimize_videos", argNames: ["request"]);
+
+  @override
   Future<RenameOutcome> crateApiActionsRenameFiles({
     required RenameRequest request,
   }) {
@@ -429,7 +463,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 13,
             port: port_,
           );
         },
@@ -453,7 +487,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 13)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 14)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -482,7 +516,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 14,
+              funcId: 15,
               port: port_,
             );
           },
@@ -516,7 +550,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 16,
             port: port_,
           );
         },
@@ -559,6 +593,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CropOptions dco_decode_box_autoadd_crop_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_crop_options(raw);
+  }
+
+  @protected
   DeleteRequest dco_decode_box_autoadd_delete_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_delete_request(raw);
@@ -580,6 +620,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   MoveRequest dco_decode_box_autoadd_move_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_move_request(raw);
+  }
+
+  @protected
+  OptimizeRequest dco_decode_box_autoadd_optimize_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_optimize_request(raw);
   }
 
   @protected
@@ -619,6 +665,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TranscodeOptions dco_decode_box_autoadd_transcode_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_transcode_options(raw);
+  }
+
+  @protected
   ColumnDef dco_decode_column_def(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -637,6 +689,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ConflictPolicy dco_decode_conflict_policy(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return ConflictPolicy.values[raw as int];
+  }
+
+  @protected
+  CropOptions dco_decode_crop_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return CropOptions(
+      overwriteOriginal: dco_decode_bool(arr[0]),
+      targetCodec: dco_decode_String(arr[1]),
+      quality: dco_decode_i_64(arr[2]),
+    );
   }
 
   @protected
@@ -857,6 +922,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<OptimizeItem> dco_decode_list_optimize_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_optimize_item).toList();
+  }
+
+  @protected
   Int64List dco_decode_list_prim_i_64_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dcoDecodeInt64List(raw);
@@ -961,6 +1032,72 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   String? dco_decode_opt_String(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw == null ? null : dco_decode_String(raw);
+  }
+
+  @protected
+  CropOptions? dco_decode_opt_box_autoadd_crop_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_crop_options(raw);
+  }
+
+  @protected
+  TranscodeOptions? dco_decode_opt_box_autoadd_transcode_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw == null ? null : dco_decode_box_autoadd_transcode_options(raw);
+  }
+
+  @protected
+  OptimizeItem dco_decode_optimize_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 6)
+      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    return OptimizeItem(
+      path: dco_decode_String(arr[0]),
+      target: dco_decode_String(arr[1]),
+      status: dco_decode_optimize_status(arr[2]),
+      detail: dco_decode_String(arr[3]),
+      sizeBefore: dco_decode_i_64(arr[4]),
+      sizeAfter: dco_decode_i_64(arr[5]),
+    );
+  }
+
+  @protected
+  OptimizeOutcome dco_decode_optimize_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return OptimizeOutcome(
+      transcoded: dco_decode_i_32(arr[0]),
+      cropped: dco_decode_i_32(arr[1]),
+      planned: dco_decode_i_32(arr[2]),
+      skipped: dco_decode_i_32(arr[3]),
+      failed: dco_decode_i_32(arr[4]),
+      items: dco_decode_list_optimize_item(arr[5]),
+      messages: dco_decode_String(arr[6]),
+    );
+  }
+
+  @protected
+  OptimizeRequest dco_decode_optimize_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return OptimizeRequest(
+      scan: dco_decode_scan_request(arr[0]),
+      paths: dco_decode_list_String(arr[1]),
+      transcode: dco_decode_opt_box_autoadd_transcode_options(arr[2]),
+      crop: dco_decode_opt_box_autoadd_crop_options(arr[3]),
+      dryRun: dco_decode_bool(arr[4]),
+    );
+  }
+
+  @protected
+  OptimizeStatus dco_decode_optimize_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return OptimizeStatus.values[raw as int];
   }
 
   @protected
@@ -1222,6 +1359,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TranscodeOptions dco_decode_transcode_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 11)
+      throw Exception('unexpected arr length: expect 11 but see ${arr.length}');
+    return TranscodeOptions(
+      codec: dco_decode_String(arr[0]),
+      hardwareEncoder: dco_decode_String(arr[1]),
+      quality: dco_decode_i_64(arr[2]),
+      failIfNotSmaller: dco_decode_bool(arr[3]),
+      overwriteOriginal: dco_decode_bool(arr[4]),
+      limitVideoSize: dco_decode_bool(arr[5]),
+      maxWidth: dco_decode_i_64(arr[6]),
+      maxHeight: dco_decode_i_64(arr[7]),
+      noiseReduction: dco_decode_String(arr[8]),
+      noiseReductionStrength: dco_decode_i_64(arr[9]),
+      customFfmpegCommand: dco_decode_String(arr[10]),
+    );
+  }
+
+  @protected
   int dco_decode_u_8(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as int;
@@ -1262,6 +1420,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  CropOptions sse_decode_box_autoadd_crop_options(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_crop_options(deserializer));
+  }
+
+  @protected
   DeleteRequest sse_decode_box_autoadd_delete_request(
     SseDeserializer deserializer,
   ) {
@@ -1291,6 +1457,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_move_request(deserializer));
+  }
+
+  @protected
+  OptimizeRequest sse_decode_box_autoadd_optimize_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_optimize_request(deserializer));
   }
 
   @protected
@@ -1342,6 +1516,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TranscodeOptions sse_decode_box_autoadd_transcode_options(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_transcode_options(deserializer));
+  }
+
+  @protected
   ColumnDef sse_decode_column_def(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_key = sse_decode_String(deserializer);
@@ -1363,6 +1545,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var inner = sse_decode_i_32(deserializer);
     return ConflictPolicy.values[inner];
+  }
+
+  @protected
+  CropOptions sse_decode_crop_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_overwriteOriginal = sse_decode_bool(deserializer);
+    var var_targetCodec = sse_decode_String(deserializer);
+    var var_quality = sse_decode_i_64(deserializer);
+    return CropOptions(
+      overwriteOriginal: var_overwriteOriginal,
+      targetCodec: var_targetCodec,
+      quality: var_quality,
+    );
   }
 
   @protected
@@ -1640,6 +1835,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<OptimizeItem> sse_decode_list_optimize_item(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <OptimizeItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_optimize_item(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Int64List sse_decode_list_prim_i_64_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -1793,6 +2002,98 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     } else {
       return null;
     }
+  }
+
+  @protected
+  CropOptions? sse_decode_opt_box_autoadd_crop_options(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_crop_options(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  TranscodeOptions? sse_decode_opt_box_autoadd_transcode_options(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    if (sse_decode_bool(deserializer)) {
+      return (sse_decode_box_autoadd_transcode_options(deserializer));
+    } else {
+      return null;
+    }
+  }
+
+  @protected
+  OptimizeItem sse_decode_optimize_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_path = sse_decode_String(deserializer);
+    var var_target = sse_decode_String(deserializer);
+    var var_status = sse_decode_optimize_status(deserializer);
+    var var_detail = sse_decode_String(deserializer);
+    var var_sizeBefore = sse_decode_i_64(deserializer);
+    var var_sizeAfter = sse_decode_i_64(deserializer);
+    return OptimizeItem(
+      path: var_path,
+      target: var_target,
+      status: var_status,
+      detail: var_detail,
+      sizeBefore: var_sizeBefore,
+      sizeAfter: var_sizeAfter,
+    );
+  }
+
+  @protected
+  OptimizeOutcome sse_decode_optimize_outcome(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_transcoded = sse_decode_i_32(deserializer);
+    var var_cropped = sse_decode_i_32(deserializer);
+    var var_planned = sse_decode_i_32(deserializer);
+    var var_skipped = sse_decode_i_32(deserializer);
+    var var_failed = sse_decode_i_32(deserializer);
+    var var_items = sse_decode_list_optimize_item(deserializer);
+    var var_messages = sse_decode_String(deserializer);
+    return OptimizeOutcome(
+      transcoded: var_transcoded,
+      cropped: var_cropped,
+      planned: var_planned,
+      skipped: var_skipped,
+      failed: var_failed,
+      items: var_items,
+      messages: var_messages,
+    );
+  }
+
+  @protected
+  OptimizeRequest sse_decode_optimize_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_scan = sse_decode_scan_request(deserializer);
+    var var_paths = sse_decode_list_String(deserializer);
+    var var_transcode = sse_decode_opt_box_autoadd_transcode_options(
+      deserializer,
+    );
+    var var_crop = sse_decode_opt_box_autoadd_crop_options(deserializer);
+    var var_dryRun = sse_decode_bool(deserializer);
+    return OptimizeRequest(
+      scan: var_scan,
+      paths: var_paths,
+      transcode: var_transcode,
+      crop: var_crop,
+      dryRun: var_dryRun,
+    );
+  }
+
+  @protected
+  OptimizeStatus sse_decode_optimize_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return OptimizeStatus.values[inner];
   }
 
   @protected
@@ -2105,6 +2406,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  TranscodeOptions sse_decode_transcode_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_codec = sse_decode_String(deserializer);
+    var var_hardwareEncoder = sse_decode_String(deserializer);
+    var var_quality = sse_decode_i_64(deserializer);
+    var var_failIfNotSmaller = sse_decode_bool(deserializer);
+    var var_overwriteOriginal = sse_decode_bool(deserializer);
+    var var_limitVideoSize = sse_decode_bool(deserializer);
+    var var_maxWidth = sse_decode_i_64(deserializer);
+    var var_maxHeight = sse_decode_i_64(deserializer);
+    var var_noiseReduction = sse_decode_String(deserializer);
+    var var_noiseReductionStrength = sse_decode_i_64(deserializer);
+    var var_customFfmpegCommand = sse_decode_String(deserializer);
+    return TranscodeOptions(
+      codec: var_codec,
+      hardwareEncoder: var_hardwareEncoder,
+      quality: var_quality,
+      failIfNotSmaller: var_failIfNotSmaller,
+      overwriteOriginal: var_overwriteOriginal,
+      limitVideoSize: var_limitVideoSize,
+      maxWidth: var_maxWidth,
+      maxHeight: var_maxHeight,
+      noiseReduction: var_noiseReduction,
+      noiseReductionStrength: var_noiseReductionStrength,
+      customFfmpegCommand: var_customFfmpegCommand,
+    );
+  }
+
+  @protected
   int sse_decode_u_8(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return deserializer.buffer.getUint8();
@@ -2154,6 +2484,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_crop_options(
+    CropOptions self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_crop_options(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_delete_request(
     DeleteRequest self,
     SseSerializer serializer,
@@ -2187,6 +2526,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_move_request(self, serializer);
+  }
+
+  @protected
+  void sse_encode_box_autoadd_optimize_request(
+    OptimizeRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_optimize_request(self, serializer);
   }
 
   @protected
@@ -2244,6 +2592,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_transcode_options(
+    TranscodeOptions self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_transcode_options(self, serializer);
+  }
+
+  @protected
   void sse_encode_column_def(ColumnDef self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.key, serializer);
@@ -2260,6 +2617,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_crop_options(CropOptions self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_bool(self.overwriteOriginal, serializer);
+    sse_encode_String(self.targetCodec, serializer);
+    sse_encode_i_64(self.quality, serializer);
   }
 
   @protected
@@ -2471,6 +2836,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_optimize_item(
+    List<OptimizeItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_optimize_item(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_i_64_strict(
     Int64List self,
     SseSerializer serializer,
@@ -2599,6 +2976,80 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     if (self != null) {
       sse_encode_String(self, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_crop_options(
+    CropOptions? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_crop_options(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_opt_box_autoadd_transcode_options(
+    TranscodeOptions? self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    sse_encode_bool(self != null, serializer);
+    if (self != null) {
+      sse_encode_box_autoadd_transcode_options(self, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_optimize_item(OptimizeItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_String(self.target, serializer);
+    sse_encode_optimize_status(self.status, serializer);
+    sse_encode_String(self.detail, serializer);
+    sse_encode_i_64(self.sizeBefore, serializer);
+    sse_encode_i_64(self.sizeAfter, serializer);
+  }
+
+  @protected
+  void sse_encode_optimize_outcome(
+    OptimizeOutcome self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.transcoded, serializer);
+    sse_encode_i_32(self.cropped, serializer);
+    sse_encode_i_32(self.planned, serializer);
+    sse_encode_i_32(self.skipped, serializer);
+    sse_encode_i_32(self.failed, serializer);
+    sse_encode_list_optimize_item(self.items, serializer);
+    sse_encode_String(self.messages, serializer);
+  }
+
+  @protected
+  void sse_encode_optimize_request(
+    OptimizeRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_scan_request(self.scan, serializer);
+    sse_encode_list_String(self.paths, serializer);
+    sse_encode_opt_box_autoadd_transcode_options(self.transcode, serializer);
+    sse_encode_opt_box_autoadd_crop_options(self.crop, serializer);
+    sse_encode_bool(self.dryRun, serializer);
+  }
+
+  @protected
+  void sse_encode_optimize_status(
+    OptimizeStatus self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected
@@ -2804,6 +3255,25 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_bool(self.supportsReference, serializer);
     sse_encode_list_column_def(self.columns, serializer);
     sse_encode_list_String(self.fieldIds, serializer);
+  }
+
+  @protected
+  void sse_encode_transcode_options(
+    TranscodeOptions self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.codec, serializer);
+    sse_encode_String(self.hardwareEncoder, serializer);
+    sse_encode_i_64(self.quality, serializer);
+    sse_encode_bool(self.failIfNotSmaller, serializer);
+    sse_encode_bool(self.overwriteOriginal, serializer);
+    sse_encode_bool(self.limitVideoSize, serializer);
+    sse_encode_i_64(self.maxWidth, serializer);
+    sse_encode_i_64(self.maxHeight, serializer);
+    sse_encode_String(self.noiseReduction, serializer);
+    sse_encode_i_64(self.noiseReductionStrength, serializer);
+    sse_encode_String(self.customFfmpegCommand, serializer);
   }
 
   @protected

@@ -44,3 +44,9 @@ Future<SimiuApplyOutcome> applySimiuSet({required SimiuApplyRequest request}) =>
 /// a move goes back to its recorded source unless something else took that name.
 Future<SimiuUndoOutcome> undoSimiuSet({required SimiuUndoRequest request}) =>
     RustLib.instance.api.crateApiActionsUndoSimiuSet(request: request);
+
+/// Re-encodes or crops the selected videos with the engine's own ffmpeg commands. Which files are
+/// worth the work is decided by a fresh engine scan, so a video the engine no longer flags is skipped
+/// rather than rewritten, and a dry run plans the targets without starting ffmpeg.
+Future<OptimizeOutcome> optimizeVideos({required OptimizeRequest request}) =>
+    RustLib.instance.api.crateApiActionsOptimizeVideos(request: request);

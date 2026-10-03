@@ -152,43 +152,57 @@ impl Scan<'_> {
     }
 
     fn video_optimizer(&self) -> Result<EngineOutcome, String> {
-        let mode = parse_optimizer_mode(self.store.choice("vid_opt_mode").as_str()).map_err(|error| format!("video_optimizer: {error}"))?;
-
-        // Thumbnail generation is a desktop preview feature, so both modes ask the engine to skip it.
-        let params = match mode {
-            VideoOptimizerMode::VideoCrop => {
-                let mechanism = crop_mechanism(&self.store.choice("vid_opt_crop_mechanism")).map_err(|error| format!("video_optimizer: {error}"))?;
-                VideoOptimizerParameters::VideoCrop(VideoCropParams::with_custom_params(
-                    mechanism,
-                    u8::try_from(bounded(self.store, "vid_opt_black_pixel_threshold", 64, 0, 128)).unwrap_or(64),
-                    u8::try_from(bounded(self.store, "vid_opt_black_bar_min_percentage", 80, 50, 100)).unwrap_or(80),
-                    usize::try_from(bounded(self.store, "vid_opt_max_samples", 60, 5, 1000)).unwrap_or(60),
-                    u32::try_from(bounded(self.store, "vid_opt_min_crop_size", 20, 1, 1000)).unwrap_or(20),
-                    false,
-                    10,
-                    false,
-                    2,
-                ))
-            }
-            VideoOptimizerMode::VideoTranscode => VideoOptimizerParameters::VideoTranscode(VideoTranscodeParams::new(
-                string_list(self.store, "vid_opt_excluded_codecs", "hevc,h265,av1,vp9"),
-                false,
-                10,
-                false,
-                2,
-            )),
-        };
+        let params = video_params(self.store)?;
+        let crop_mode = matches!(params, VideoOptimizerParameters::VideoCrop(_));
 
         let mut tool = VideoOptimizer::new(params);
         apply_common(&mut tool, self.request);
         tool.search(&self.stop, Some(&self.sender));
 
-        let rows: Vec<EngineRow> = match mode {
-            VideoOptimizerMode::VideoCrop => tool.get_video_crop_entries().iter().map(crop_row).collect(),
-            VideoOptimizerMode::VideoTranscode => tool.get_video_transcode_entries().iter().map(transcode_row).collect(),
+        let rows: Vec<EngineRow> = if crop_mode {
+            tool.get_video_crop_entries().iter().map(crop_row).collect()
+        } else {
+            tool.get_video_transcode_entries().iter().map(transcode_row).collect()
         };
         Ok(finish(&tool, rows))
     }
+}
+
+/// Which detection produced the rectangles the user is looking at. A crop fix has to name the same
+/// mechanism, and the engine's own crop parameters are private, so the choice is read back here.
+pub(crate) fn crop_mechanism_of(store: &FieldStore) -> Result<VideoCroppingMechanism, String> {
+    crop_mechanism(&store.choice("vid_opt_crop_mechanism")).map_err(|error| format!("video_optimizer: {error}"))
+}
+
+/// Optimizer settings for both modes. The fix verbs re-scan through this same builder, so the set of
+/// files an optimization touches is always the set the user just scanned.
+pub(crate) fn video_params(store: &FieldStore) -> Result<VideoOptimizerParameters, String> {
+    let mode = parse_optimizer_mode(store.choice("vid_opt_mode").as_str()).map_err(|error| format!("video_optimizer: {error}"))?;
+
+    // Thumbnail generation is a desktop preview feature, so both modes ask the engine to skip it.
+    Ok(match mode {
+        VideoOptimizerMode::VideoCrop => {
+            let mechanism = crop_mechanism(&store.choice("vid_opt_crop_mechanism")).map_err(|error| format!("video_optimizer: {error}"))?;
+            VideoOptimizerParameters::VideoCrop(VideoCropParams::with_custom_params(
+                mechanism,
+                u8::try_from(bounded(store, "vid_opt_black_pixel_threshold", 64, 0, 128)).unwrap_or(64),
+                u8::try_from(bounded(store, "vid_opt_black_bar_min_percentage", 80, 50, 100)).unwrap_or(80),
+                usize::try_from(bounded(store, "vid_opt_max_samples", 60, 5, 1000)).unwrap_or(60),
+                u32::try_from(bounded(store, "vid_opt_min_crop_size", 20, 1, 1000)).unwrap_or(20),
+                false,
+                10,
+                false,
+                2,
+            ))
+        }
+        VideoOptimizerMode::VideoTranscode => VideoOptimizerParameters::VideoTranscode(VideoTranscodeParams::new(
+            string_list(store, "vid_opt_excluded_codecs", "hevc,h265,av1,vp9"),
+            false,
+            10,
+            false,
+            2,
+        )),
+    })
 }
 
 /// Sorts like the reference frontend and reports what the engine wants the user to see.

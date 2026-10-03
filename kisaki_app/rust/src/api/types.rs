@@ -370,6 +370,82 @@ pub struct SimiuUndoOutcome {
     pub messages: String,
 }
 
+/// Transcoding settings, named the way the engine's codec table expects.
+#[derive(Debug, Clone, PartialEq)]
+pub struct TranscodeOptions {
+    /// `h264`, `h265`, `av1` or `vp9`.
+    pub codec: String,
+    /// `none`, `nvenc`, `vaapi`, `qsv`, `videotoolbox` or `amf`.
+    pub hardware_encoder: String,
+    pub quality: i64,
+    /// Refuses a result that is not smaller, leaving the original alone.
+    pub fail_if_not_smaller: bool,
+    pub overwrite_original: bool,
+    pub limit_video_size: bool,
+    pub max_width: i64,
+    pub max_height: i64,
+    /// `none` or `hqdn3d`.
+    pub noise_reduction: String,
+    pub noise_reduction_strength: i64,
+    /// Empty lets the engine build the command line for the chosen codec.
+    pub custom_ffmpeg_command: String,
+}
+
+/// Black-bar removal settings. The rectangle itself comes from the engine's own detection, and so
+/// does the mechanism, because a fix must use the one the scan was run with.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CropOptions {
+    pub overwrite_original: bool,
+    /// Empty keeps the source codec; with a codec the quality must be non-negative.
+    pub target_codec: String,
+    /// Negative leaves the quality at the engine default.
+    pub quality: i64,
+}
+
+/// Exactly one of the two option blocks must be present, because the modes share a tool but not a
+/// fix. The scan block re-derives the candidate list, so a fix only ever touches scanned files.
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptimizeRequest {
+    pub scan: ScanRequest,
+    pub paths: Vec<String>,
+    pub transcode: Option<TranscodeOptions>,
+    pub crop: Option<CropOptions>,
+    pub dry_run: bool,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum OptimizeStatus {
+    Transcoded,
+    Cropped,
+    Planned,
+    /// The engine no longer considers this file worth optimizing.
+    Skipped,
+    Failed,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptimizeItem {
+    pub path: String,
+    /// Where the optimized file ends up: the original when it is overwritten, otherwise the engine's
+    /// side file.
+    pub target: String,
+    pub status: OptimizeStatus,
+    pub detail: String,
+    pub size_before: i64,
+    pub size_after: i64,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct OptimizeOutcome {
+    pub transcoded: i32,
+    pub cropped: i32,
+    pub planned: i32,
+    pub skipped: i32,
+    pub failed: i32,
+    pub items: Vec<OptimizeItem>,
+    pub messages: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EngineInfo {
     pub core_version: String,
