@@ -200,6 +200,10 @@ class Labels {
     'confirm_delete_title': 'Delete the selected files?',
     'confirm_dry_run_body':
         'Dry run: plans { \$count } paths ({ \$size }) and changes nothing.',
+    'confirm_exif_body':
+        '{ \$count } files are cleaned; the source is only rewritten because the option is on.',
+    'confirm_exif_plan_title': 'Plan the EXIF cleanup?',
+    'confirm_exif_title': 'Clean EXIF metadata?',
     'confirm_move_body': '{count} paths will be written under {destination}. Existing files are never overwritten.',
     'confirm_move_title': 'Move the selection',
     'confirm_rename_body':
@@ -218,6 +222,21 @@ class Labels {
     'empty-paths': 'No directories added yet.',
     'empty-running': 'Analyzing files...',
     'empty-stopped': 'Scan stopped, no results returned.',
+    'exif-action-clean': 'Clean EXIF',
+    'exif-card-hint':
+        'The engine reads each selected file and reports how many tags it removed.',
+    'exif-card-title': 'EXIF cleanup',
+    'exif-override-hint':
+        'Left off, the source stays untouched and the cleaned copy is written beside it.',
+    'exif-override-label': 'Write over the original file',
+    'exif-result-candidate': 'Side file',
+    'exif-result-count': '{ \$count } tags removed',
+    'exif-result-failed': 'Failed',
+    'exif-result-planned': 'Planned',
+    'exif-result-skipped': 'No tags to remove',
+    'exif-result-stripped': 'Rewritten',
+    'exif-summary':
+        '{ \$stripped } rewritten, { \$candidates } side files, { \$planned } planned, { \$skipped } without tags',
     'field_bext_include_files_without_extension':
         'Include files without extension',
     'field_big_biggest_first': 'Show biggest files first',
@@ -478,6 +497,10 @@ class Labels {
     'status_copied': 'Copied {path} to the clipboard.',
     'status_deleting': 'Applying file operations...',
     'status_dry_run_only': 'Dry run only - no files were changed',
+    'status_exif_cleaning': 'Cleaning EXIF metadata...',
+    'status_exif_done':
+        'Cleaned { \$count } files, { \$skipped } had nothing to remove.',
+    'status_exif_planned': 'Dry run planned the cleanup of { \$count } files.',
     'status_export_failed': 'Export failed: { \$error }',
     'status_exported': 'Results written to { \$folder }',
     'status_found':

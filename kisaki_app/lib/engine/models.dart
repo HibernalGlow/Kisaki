@@ -562,3 +562,62 @@ class SimiuUndoOutcome {
   final List<SimiuItem> items;
   final String messages;
 }
+
+/// Strips EXIF tags from the selection. `overrideFile` writes back over the original; the default
+/// leaves it untouched and writes a side file, because discarding metadata is not reversible.
+class ExifRequest {
+  const ExifRequest({
+    required this.scan,
+    required this.paths,
+    required this.overrideFile,
+    required this.dryRun,
+  });
+
+  /// The scan block that produced the rows, so the engine sees the same options and folders.
+  final ScanRequest scan;
+  final List<String> paths;
+  final bool overrideFile;
+  final bool dryRun;
+}
+
+enum ExifStatus { stripped, candidate, planned, skipped, failed }
+
+class ExifItem {
+  const ExifItem({
+    required this.path,
+    required this.target,
+    required this.tagsRemoved,
+    required this.status,
+    required this.detail,
+  });
+
+  final String path;
+
+  /// Where the result was written; empty while a file is skipped.
+  final String target;
+  final int tagsRemoved;
+  final ExifStatus status;
+  final String detail;
+}
+
+class ExifOutcome {
+  const ExifOutcome({
+    required this.stripped,
+    required this.candidates,
+    required this.planned,
+    required this.skipped,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  final int stripped;
+  final int candidates;
+  final int planned;
+  final int skipped;
+  final int failed;
+
+  /// One entry per selected path, in request order.
+  final List<ExifItem> items;
+  final String messages;
+}
