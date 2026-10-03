@@ -707,10 +707,24 @@ class BoardController extends ChangeNotifier {
     );
   }
 
+  /// The rows a drag rectangle covered become the selection, or join it when a modifier is held.
+  void applyBoxSelection(Iterable<String> paths, {required bool additive}) {
+    if (additive) {
+      _selected.addAll(paths);
+    } else {
+      _selected
+        ..clear()
+        ..addAll(paths);
+    }
+    _commitSelection();
+    notifyListeners();
+  }
+
   void selectAllVisible() {
     for (final ScanRow row in _visible) {
       _selected.add(row.path);
     }
+    _commitSelection();
     notifyListeners();
   }
 
