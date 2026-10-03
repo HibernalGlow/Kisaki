@@ -2,9 +2,8 @@ use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
 use crate::api::types::ScanRequest;
-use crate::engine::EngineOutcome;
 use crate::engine::runner::ProgressSender;
-use crate::engine::{flat, grouped, registry};
+use crate::engine::{EngineOutcome, flat, grouped, registry};
 
 /// Runs one scan to completion on the calling thread, pushing engine progress into `sender` and
 /// honouring `stop`. Grouped and flat scanners share this entry point so the request shape stays
@@ -17,5 +16,9 @@ pub fn run(request: &ScanRequest, sender: ProgressSender, stop: Arc<AtomicBool>)
         return Err("No included or reference paths".to_string());
     }
 
-    if spec.grouped { grouped::run(&spec, request, &store, sender, stop) } else { flat::run(&spec, request, &store, sender, stop) }
+    if spec.grouped {
+        grouped::run(&spec, request, &store, sender, stop)
+    } else {
+        flat::run(&spec, request, &store, sender, stop)
+    }
 }

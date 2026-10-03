@@ -50,9 +50,7 @@ fn stage_key(stage: &ToolStage) -> String {
 #[cfg(test)]
 mod tests {
     use czkawka_core::common::model::CheckingMethod;
-    use czkawka_core::common::progress_data::{
-        DuplicateStage, SameMusicMode, SameMusicStage, SimilarVideosMode, SimilarVideosStage, VideoOptimizerStage,
-    };
+    use czkawka_core::common::progress_data::{DuplicateStage, SameMusicMode, SameMusicStage, SimilarVideosMode, SimilarVideosStage, VideoOptimizerStage};
 
     use super::*;
 
