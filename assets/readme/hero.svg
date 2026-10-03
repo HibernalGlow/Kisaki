@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="400" viewBox="0 0 1200 400" role="img" aria-labelledby="t d">
+  <title id="t">Kisaki - a three-lane Slint desktop frontend for the Czkawka cleaning engine</title>
+  <desc id="d">Left: the wordmark KISAKI over a one-line description. Right: a simplified drawing of the window - a header bar carrying the scanner name, a SCAN capsule and a progress rail, above three swimlanes: a Source lane with path rows and algorithm options, a wide Results lane listing grouped similar-image hits with one selected row, and an Analysis lane collapsed to a 48 pixel strip carrying the letter A.</desc>
+
+  <rect width="1200" height="400" rx="26" fill="#0e1013"/>
+
+  <g id="title-block" transform="translate(64 62)" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <text x="0" y="0" fill="#6a7382" font-size="19" font-weight="600" letter-spacing="3.4">SLINT DESKTOP FRONTEND</text>
+    <text x="0" y="94" fill="#e6e9ef" font-size="94" font-weight="700" letter-spacing="7">KISAKI</text>
+    <line x1="0" y1="126" x2="500" y2="126" stroke="#20252d" stroke-width="1"/>
+    <text x="0" y="168" fill="#99a3b2" font-size="27">Fourteen scanners, one window:</text>
+    <text x="0" y="204" fill="#99a3b2" font-size="27">conditions, results and analysis</text>
+    <text x="0" y="240" fill="#99a3b2" font-size="27">on a drag-resizable lane board.</text>
+    <text x="0" y="292" fill="#6a7382" font-size="19" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">Rust &#183; Slint 1.17 &#183; Linux macOS Windows</text>
+  </g>
+
+  <g id="proof" transform="translate(628 44)" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif">
+    <rect x="-20" y="-14" width="500" height="368" rx="10" fill="none" stroke="#262b34" stroke-width="1"/>
+
+    <g id="header-bar">
+      <rect x="0" y="0" width="460" height="38" rx="6" fill="#171a20"/>
+      <text x="14" y="24" fill="#4f8cff" font-size="16" font-weight="600" letter-spacing="1.6">SIMILAR IMAGES</text>
+      <rect x="352" y="8" width="94" height="22" rx="4" fill="#4f8cff"/>
+      <text x="399" y="24" fill="#ffffff" font-size="14" font-weight="600" letter-spacing="1.2" text-anchor="middle">SCAN</text>
+      <rect x="0" y="40" width="460" height="2" fill="#20252d"/>
+      <rect x="0" y="40" width="300" height="2" fill="#4f8cff"/>
+    </g>
+
+    <g id="lane-source" transform="translate(0 56)">
+      <rect x="0" y="0" width="140" height="284" rx="6" fill="#171a20" stroke="#262b34" stroke-width="1"/>
+      <rect x="0" y="0" width="140" height="24" rx="6" fill="#12151a"/>
+      <text x="12" y="17" fill="#6a7382" font-size="13" font-weight="600" letter-spacing="1.8">SOURCE</text>
+      <text x="12" y="50" fill="#e6e9ef" font-size="15">Paths</text>
+      <text x="62" y="50" fill="#6a7382" font-size="15">Algorithm</text>
+      <line x1="12" y1="60" x2="128" y2="60" stroke="#20252d" stroke-width="1"/>
+      <text x="12" y="86" fill="#99a3b2" font-size="15">~/Pictures</text>
+      <text x="12" y="112" fill="#99a3b2" font-size="15">~/Downloads</text>
+      <text x="12" y="138" fill="#6a7382" font-size="15">/Volumes/BOX</text>
+      <rect x="12" y="152" width="64" height="24" rx="4" fill="none" stroke="#262b34" stroke-width="1"/>
+      <text x="44" y="169" fill="#99a3b2" font-size="13" text-anchor="middle">+ ADD</text>
+      <line x1="12" y1="186" x2="128" y2="186" stroke="#20252d" stroke-width="1"/>
+      <text x="12" y="206" fill="#6a7382" font-size="12" letter-spacing="1.4">MAX SIMILARITY</text>
+      <text x="12" y="228" fill="#e6e9ef" font-size="15">High</text>
+      <text x="12" y="252" fill="#6a7382" font-size="12" letter-spacing="1.4">HASH ALGORITHM</text>
+      <text x="12" y="274" fill="#e6e9ef" font-size="15">Blurhash</text>
+    </g>
+
+    <rect x="146" y="140" width="2" height="100" fill="#262b34"/>
+
+    <g id="lane-results" transform="translate(158 56)">
+      <rect x="0" y="0" width="232" height="284" rx="6" fill="#171a20" stroke="#4f8cff" stroke-width="1"/>
+      <rect x="0" y="0" width="232" height="24" rx="6" fill="#12151a"/>
+      <text x="12" y="17" fill="#6a7382" font-size="13" font-weight="600" letter-spacing="1.8">RESULTS</text>
+      <text x="220" y="17" fill="#99a3b2" font-size="13" text-anchor="end">18 / 6</text>
+      <text x="44" y="44" fill="#6a7382" font-size="12" letter-spacing="1.2">NAME</text>
+      <text x="220" y="44" fill="#6a7382" font-size="12" letter-spacing="1.2" text-anchor="end">SIZE</text>
+      <line x1="0" y1="52" x2="232" y2="52" stroke="#20252d" stroke-width="1"/>
+
+      <rect x="0" y="60" width="3" height="82" fill="#4f8cff"/>
+      <text x="14" y="80" fill="#6a7382" font-size="14" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">01</text>
+      <text x="44" y="80" fill="#e6e9ef" font-size="15">IMG_4471.jpg</text>
+      <text x="220" y="80" fill="#99a3b2" font-size="15" text-anchor="end">2.4 MiB</text>
+      <text x="14" y="110" fill="#6a7382" font-size="14" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">01</text>
+      <text x="44" y="110" fill="#e6e9ef" font-size="15">IMG_4471 (1).jpg</text>
+      <text x="220" y="110" fill="#99a3b2" font-size="15" text-anchor="end">2.4 MiB</text>
+      <text x="14" y="140" fill="#6a7382" font-size="14" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">01</text>
+      <text x="44" y="140" fill="#99a3b2" font-size="15">scan_0003.png</text>
+      <text x="220" y="140" fill="#99a3b2" font-size="15" text-anchor="end">1.9 MiB</text>
+
+      <rect x="0" y="154" width="3" height="56" fill="#3fb950"/>
+      <rect x="3" y="154" width="229" height="28" fill="#1d2f4d"/>
+      <text x="14" y="174" fill="#6a7382" font-size="14" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">02</text>
+      <text x="44" y="174" fill="#e6e9ef" font-size="15">photo_final.jpg</text>
+      <text x="220" y="174" fill="#99a3b2" font-size="15" text-anchor="end">3.1 MiB</text>
+      <text x="14" y="204" fill="#6a7382" font-size="14" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">02</text>
+      <text x="44" y="204" fill="#99a3b2" font-size="15">photo_copy.jpg</text>
+      <text x="220" y="204" fill="#99a3b2" font-size="15" text-anchor="end">3.1 MiB</text>
+
+      <rect x="0" y="218" width="3" height="28" fill="#f0a92e"/>
+      <text x="14" y="238" fill="#6a7382" font-size="14" font-family="ui-monospace, SFMono-Regular, Menlo, monospace">03</text>
+      <text x="44" y="238" fill="#99a3b2" font-size="15">DSC_0219.nef</text>
+      <text x="220" y="238" fill="#99a3b2" font-size="15" text-anchor="end">24.7 MiB</text>
+
+      <line x1="0" y1="250" x2="232" y2="250" stroke="#20252d" stroke-width="1"/>
+      <text x="12" y="274" fill="#6a7382" font-size="14">9 selected</text>
+      <text x="220" y="274" fill="#4f8cff" font-size="14" text-anchor="end">DELETE</text>
+    </g>
+
+    <rect x="396" y="140" width="2" height="100" fill="#262b34"/>
+
+    <g id="lane-collapsed" transform="translate(408 56)">
+      <rect x="0" y="0" width="48" height="284" rx="6" fill="#171a20" stroke="#262b34" stroke-width="1"/>
+      <rect x="0" y="0" width="48" height="24" rx="6" fill="#12151a"/>
+      <text x="24" y="58" fill="#99a3b2" font-size="22" font-weight="700" text-anchor="middle">A</text>
+      <text x="24" y="274" fill="#6a7382" font-size="14" text-anchor="middle">&gt;&gt;</text>
+    </g>
+  </g>
+</svg>

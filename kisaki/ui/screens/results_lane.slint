@@ -1,0 +1,323 @@
+import { LineEdit, ListView } from "std-widgets.slint";
+import { Palette, Theme } from "../globals/theme.slint";
+import { AppState } from "../globals/app_state.slint";
+import { Phase, ResultRow } from "../globals/common.slint";
+import { Callabler } from "../globals/callabler.slint";
+import { Translations } from "../globals/translations.slint";
+import { Badge, CheckMark, EmptyState, GlyphButton, MicroHeading } from "../components/atoms.slint";
+
+component ColumnHeaderCell inherits Rectangle {
+    in property <string> title: "";
+    in property <bool> right_aligned: false;
+    in property <bool> sorted: false;
+    callback picked;
+
+    horizontal-stretch: 1;
+    min-width: 72px;
+    height: 26px;
+
+    area := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        clicked => {
+            root.picked();
+        }
+    }
+
+    HorizontalLayout {
+        spacing: 3px;
+        alignment: root.right_aligned ? LayoutAlignment.end : LayoutAlignment.start;
+
+        Text {
+            visible: root.sorted && !root.right_aligned;
+            text: AppState.sort_ascending ? "^" : "v";
+            color: Palette.primary;
+            font-size: Theme.fs_caption;
+            vertical-alignment: center;
+        }
+        MicroHeading {
+            label: root.title;
+            ink: root.sorted ? Palette.primary : Palette.fg_faint;
+        }
+        Text {
+            visible: root.sorted && root.right_aligned;
+            text: AppState.sort_ascending ? "^" : "v";
+            color: Palette.primary;
+            font-size: Theme.fs_caption;
+            vertical-alignment: center;
+        }
+    }
+    Rectangle {
+        y: parent.height - 1px;
+        height: 1px;
+        width: parent.width;
+        background: Palette.hairline;
+    }
+}
+
+component CellText inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> right_aligned: false;
+    in property <float> stretch: 1;
+    in property <length> min_w: 72px;
+    in property <color> ink: Palette.fg;
+
+    horizontal-stretch: root.stretch;
+    min-width: root.min_w;
+
+    Text {
+        text: root.text;
+        color: root.ink;
+        font-size: Theme.fs_label;
+        horizontal-alignment: root.right_aligned ? TextHorizontalAlignment.right : TextHorizontalAlignment.left;
+        vertical-alignment: center;
+        overflow: elide;
+        width: parent.width;
+    }
+}
+
+component NameCell inherits Rectangle {
+    in property <string> name: "";
+    in property <string> path: "";
+    in property <string> glyph: "";
+    in property <bool> muted: false;
+
+    horizontal-stretch: 0;
+    width: Theme.col_name;
+
+    VerticalLayout {
+        spacing: 0px;
+        alignment: center;
+
+        Text {
+            text: root.glyph == "" ? root.name : "\{root.glyph}  \{root.name}";
+            color: root.muted ? Palette.fg_faint : Palette.fg;
+            font-size: Theme.fs_label;
+            overflow: elide;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+        }
+        Text {
+            text: root.path;
+            color: Palette.fg_faint;
+            font-size: Theme.fs_caption;
+            overflow: elide;
+            horizontal-alignment: left;
+            vertical-alignment: center;
+        }
+    }
+}
+
+component ResultRowDelegate inherits Rectangle {
+    // `row` is a built-in layout property, so the delegate names its data `entry`.
+    in property <ResultRow> entry;
+    // entered/exited were removed from TouchArea: hover state is read directly.
+    property <bool> hovered: area.has-hover;
+
+    height: Theme.row_height;
+    background: root.entry.checked
+        ? Palette.selection
+        : root.hovered
+            ? Palette.hover
+            : root.entry.is_group_start ? Palette.sunken : transparent;
+
+    // Left stripe carries group identity, so colour is never the only signal:
+    // the group number is printed next to it.
+    Rectangle {
+        visible: !root.entry.is_group_start && root.entry.group_index >= 0;
+        x: 0px;
+        y: 0px;
+        width: 2px;
+        height: parent.height;
+        background: Palette.chart_by_index(root.entry.group_index);
+    }
+
+    area := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        double-clicked => {
+            Callabler.row_opened(root.entry.store_index);
+        }
+    }
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 6px;
+        alignment: center;
+
+        CheckMark {
+            checked: root.entry.checked;
+            enabled: !root.entry.is_reference;
+            box_size: 16px;
+            clicked => {
+                Callabler.row_toggled(root.entry.store_index);
+            }
+        }
+
+        group := Rectangle {
+            width: Theme.col_group;
+
+            HorizontalLayout {
+                spacing: 4px;
+                alignment: start;
+
+                Rectangle {
+                    visible: root.entry.group_index >= 0;
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 4px;
+                    background: Palette.chart_by_index(root.entry.group_index);
+                    y: (parent.height - self.height) / 2;
+                }
+                Text {
+                    visible: root.entry.group_index >= 0;
+                    text: root.entry.group_index < 9 ? "0\{root.entry.group_index + 1}" : "\{root.entry.group_index + 1}";
+                    color: Palette.fg_muted;
+                    font-size: Theme.fs_label;
+                    vertical-alignment: center;
+                }
+                Badge {
+                    visible: root.entry.group_size > 1;
+                    text: "\{root.entry.group_size}";
+                    muted: true;
+                }
+            }
+            group_area := TouchArea {
+                enabled: root.entry.group_index >= 0;
+                mouse-cursor: root.entry.group_index >= 0 ? MouseCursor.pointer : MouseCursor.default;
+                clicked => {
+                    Callabler.group_toggled(root.entry.store_index);
+                }
+            }
+        }
+
+        NameCell {
+            name: root.entry.name;
+            path: root.entry.path;
+            glyph: root.entry.glyph;
+            muted: root.entry.is_reference;
+        }
+
+        for col[i] in AppState.columns: CellText {
+            text: root.entry.cells[i];
+            right_aligned: col.align_right;
+            stretch: col.stretch;
+            min_w: col.min_width;
+            ink: i == 0 ? Palette.fg : Palette.fg_muted;
+        }
+    }
+}
+
+export component ResultsBody inherits Rectangle {
+    VerticalLayout {
+        spacing: 0px;
+
+        HorizontalLayout {
+            height: 30px;
+            padding-left: 8px;
+            padding-right: 8px;
+            spacing: 6px;
+            alignment: center;
+
+            MicroHeading {
+                label: Translations.header_results;
+            }
+            Badge {
+                text: "\{AppState.results.length}";
+                muted: true;
+            }
+            Rectangle {
+                horizontal-stretch: 1;
+            }
+            LineEdit {
+                width: 190px;
+                text <=> AppState.filter_text;
+                placeholder-text: Translations.placeholder_filter;
+                font-size: Theme.fs_label;
+                accepted => {
+                    Callabler.filter_changed(self.text);
+                }
+            }
+            GlyphButton {
+                glyph: "F";
+                label: Translations.placeholder_filter;
+                clicked => {
+                    Callabler.filter_changed(AppState.filter_text);
+                }
+            }
+        }
+
+        Rectangle {
+            height: 26px;
+            background: Palette.sunken;
+
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 6px;
+
+                Rectangle {
+                    width: Theme.col_select;
+
+                    CheckMark {
+                        checked: AppState.select_state == 2;
+                        state: AppState.select_state;
+                        x: 0px;
+                        y: 5px;
+                        clicked => {
+                            Callabler.toggle_all_rows();
+                        }
+                    }
+                }
+                ColumnHeaderCell {
+                    title: Translations.col_group;
+                    width: Theme.col_group;
+                    horizontal-stretch: 0;
+                }
+                ColumnHeaderCell {
+                    title: Translations.col_name;
+                    width: Theme.col_name;
+                    horizontal-stretch: 0;
+                    sorted: AppState.sort_column == -2;
+                    picked => {
+                        Callabler.column_sorted(-2);
+                    }
+                }
+                for col[i] in AppState.columns: ColumnHeaderCell {
+                    title: col.title;
+                    right_aligned: col.align_right;
+                    sorted: AppState.sort_column == i;
+                    picked => {
+                        Callabler.column_sorted(i);
+                    }
+                }
+            }
+        }
+
+        Rectangle {
+            vertical-stretch: 1;
+
+            ListView {
+                for row in AppState.results: ResultRowDelegate {
+                    entry: row;
+                }
+            }
+
+            EmptyState {
+                visible: AppState.results.length == 0;
+                x: 0px;
+                y: 48px;
+                width: parent.width;
+                height: 176px;
+                text: AppState.running
+                    ? Translations.empty_running
+                    : AppState.filter_text != ""
+                        ? Translations.empty_filtered
+                        : AppState.phase == Phase.Error
+                            ? Translations.empty_error
+                            : AppState.phase == Phase.Stopped
+                                ? Translations.empty_stopped
+                                : AppState.phase == Phase.Completed ? Translations.empty_done : Translations.empty_idle;
+            }
+        }
+    }
+}

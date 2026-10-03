@@ -1,0 +1,135 @@
+import { Palette, Theme } from "../globals/theme.slint";
+import { AppState } from "../globals/app_state.slint";
+import { Phase } from "../globals/common.slint";
+import { Callabler } from "../globals/callabler.slint";
+import { Translations } from "../globals/translations.slint";
+import { ButtonVariant, Capsule, GlyphButton } from "../components/atoms.slint";
+import { StatusBar } from "../components/lane.slint";
+
+// Top bar: brand, scanner picker, lifecycle controls and the live status rail.
+export component HeaderBar inherits Rectangle {
+    height: Theme.header_height;
+    background: Palette.bg;
+
+    Rectangle {
+        y: parent.height - 1px;
+        width: parent.width;
+        height: 1px;
+        background: Palette.hairline;
+    }
+
+    HorizontalLayout {
+        padding-left: Theme.pad;
+        padding-right: Theme.pad;
+        spacing: Theme.gap;
+        alignment: center;
+
+        // Wordmark tile. Deliberately typographic: Kisaki has no icon asset yet.
+        Rectangle {
+            width: 26px;
+            height: 26px;
+            border-radius: Theme.radius;
+            background: Palette.primary;
+
+            Text {
+                text: "K";
+                color: Palette.fg_inverted;
+                font-size: Theme.fs_title;
+                font-weight: 700;
+                horizontal-alignment: center;
+                vertical-alignment: center;
+            }
+        }
+
+        Text {
+            text: Translations.app_title;
+            color: Palette.fg;
+            font-size: Theme.fs_title;
+            font-weight: 600;
+            vertical-alignment: center;
+        }
+
+        // Scanner picker
+        picker := Rectangle {
+            width: content.preferred-width + 34px;
+            height: 28px;
+            border-radius: Theme.radius;
+            border-width: 1px;
+            border-color: AppState.tool_menu_open ? Palette.primary : Palette.border;
+            background: area.pressed ? Palette.pressed : area.has-hover ? Palette.hover : Palette.raised;
+
+            area := TouchArea {
+                mouse-cursor: MouseCursor.pointer;
+                clicked => {
+                    AppState.tool_menu_open = !AppState.tool_menu_open;
+                }
+            }
+
+            content := HorizontalLayout {
+                x: 10px;
+                spacing: 6px;
+                alignment: start;
+
+                Text {
+                    text: AppState.active_glyph;
+                    color: Palette.primary;
+                    font-size: Theme.fs_body;
+                    font-weight: 700;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: AppState.active_label;
+                    color: Palette.fg;
+                    font-size: Theme.fs_body;
+                    vertical-alignment: center;
+                }
+                Text {
+                    text: AppState.tool_menu_open ? "^" : "v";
+                    color: Palette.fg_faint;
+                    font-size: Theme.fs_caption;
+                    vertical-alignment: center;
+                }
+            }
+        }
+
+        Capsule {
+            text: AppState.running ? Translations.action_stop : Translations.action_scan;
+            enabled: AppState.running ? AppState.can_stop : AppState.can_scan;
+            variant: AppState.running ? ButtonVariant.Danger : ButtonVariant.Primary;
+            clicked => {
+                if (AppState.running) {
+                    Callabler.stop_requested();
+                } else {
+                    Callabler.scan_requested();
+                }
+            }
+        }
+
+        StatusBar {
+            horizontal-stretch: 1;
+            min-width: 140px;
+            text: AppState.status_text;
+            percent: AppState.progress_all;
+            indeterminate: AppState.progress_all < 0;
+            danger: AppState.phase == Phase.Error;
+            show_details => {
+                Callabler.show_errors();
+            }
+        }
+
+        GlyphButton {
+            glyph: Theme.dark ? "d" : "l";
+            label: Translations.action_theme;
+            clicked => {
+                Callabler.toggle_theme();
+            }
+        }
+        GlyphButton {
+            glyph: "[]";
+            label: Translations.action_reset_layout;
+            clicked => {
+                Callabler.reset_layout();
+            }
+        }
+    }
+}
