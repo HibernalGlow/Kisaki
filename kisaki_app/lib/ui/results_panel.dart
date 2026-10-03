@@ -8,6 +8,7 @@ import '../theme/board_theme.dart';
 import 'assistant_panel.dart';
 import 'comparison_view.dart';
 import 'filter_panel.dart';
+import 'similar_folders_view.dart';
 import 'widgets/primitives.dart';
 
 /// Middle lane: header strip, sticky column header, row list, and the empty states.
@@ -22,39 +23,55 @@ class ResultsPanel extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         _ResultsHeader(controller: controller),
+        if (controller.supportsFolderView) ...<Widget>[
+          FoldersViewSwitch(controller: controller),
+          const Hairline(),
+        ],
         Expanded(
-          child: LayoutBuilder(
-            builder: (BuildContext context, BoxConstraints constraints) {
-              final bool grouped = controller.tool?.grouped ?? false;
-              final List<double> widths = tableWidths(
-                constraints.maxWidth.isFinite ? constraints.maxWidth : 900,
-                controller.tool,
-                grouped,
-              );
-              final double total = widths.fold<double>(
-                0,
-                (double sum, double value) => sum + value,
-              );
-              return SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: SizedBox(
-                  width: total,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: <Widget>[
-                      if (controller.visibleRows.isNotEmpty) ...<Widget>[
-                        ColumnHeader(controller: controller, widths: widths),
-                        const Hairline(),
-                      ],
-                      Expanded(
-                        child: _Rows(controller: controller, widths: widths),
+          child: controller.folderView
+              ? SimilarFoldersView(controller: controller)
+              : LayoutBuilder(
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final bool grouped = controller.tool?.grouped ?? false;
+                    final List<double> widths = tableWidths(
+                      constraints.maxWidth.isFinite
+                          ? constraints.maxWidth
+                          : 900,
+                      controller.tool,
+                      grouped,
+                    );
+                    final double total = widths.fold<double>(
+                      0,
+                      (double sum, double value) => sum + value,
+                    );
+                    // The roll-up above owns the full lane width, so only the table gets the
+                    // horizontal scroller - folder rows must not inherit column widths.
+                    return SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: SizedBox(
+                        width: total,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: <Widget>[
+                            if (controller.visibleRows.isNotEmpty) ...<Widget>[
+                              ColumnHeader(
+                                controller: controller,
+                                widths: widths,
+                              ),
+                              const Hairline(),
+                            ],
+                            Expanded(
+                              child: _Rows(
+                                controller: controller,
+                                widths: widths,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
       ],
     );

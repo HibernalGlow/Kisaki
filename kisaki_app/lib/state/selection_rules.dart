@@ -306,7 +306,7 @@ List<ScanRow> _sortRows(
         return compared;
       }
     }
-    return _naturalCompare(left.path, right.path);
+    return naturalCompare(left.path, right.path);
   });
   return rows;
 }
@@ -353,7 +353,7 @@ int _compareValues(
   }
   final int compared = left is num && right is num
       ? left.compareTo(right)
-      : _naturalCompare('$left', '$right');
+      : naturalCompare('$left', '$right');
   return criterion.direction == SortDirection.desc ? -compared : compared;
 }
 
@@ -462,8 +462,8 @@ String _extensionOf(String name) {
 }
 
 /// The reference compares paths with `localeCompare(..., {numeric: true})`, so `file2` sorts before
-/// `file10`; a plain code-unit compare would put it after.
-int _naturalCompare(String left, String right) {
+/// `file10`; a plain code-unit compare would put it after. Shared with the folder ranking.
+int naturalCompare(String left, String right) {
   int i = 0;
   int j = 0;
   while (i < left.length && j < right.length) {
