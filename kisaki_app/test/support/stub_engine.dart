@@ -239,6 +239,23 @@ class StubEngine implements KisakiEngine {
     return exifOutcome;
   }
 
+  final List<OptimizeRequest> optimizeCalls = <OptimizeRequest>[];
+  OptimizeOutcome optimizeOutcome = const OptimizeOutcome(
+    transcoded: 0,
+    cropped: 0,
+    planned: 0,
+    skipped: 0,
+    failed: 0,
+    items: <OptimizeItem>[],
+    messages: '',
+  );
+
+  @override
+  Future<OptimizeOutcome> optimizeVideos(OptimizeRequest request) async {
+    optimizeCalls.add(request);
+    return optimizeOutcome;
+  }
+
   @override
   Future<String> exportResults(ExportRequest request) async {
     exports.add(request);
