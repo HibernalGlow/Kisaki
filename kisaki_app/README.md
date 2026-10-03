@@ -105,9 +105,17 @@ Bindings are committed, so CI does not run codegen. After editing `rust/src/api`
 
 ```bash
 ~/.cargo/bin/flutter_rust_bridge_codegen generate    # from kisaki_app
+"$(rustup which --toolchain nightly rustfmt)" --edition 2024 --config-path .rustfmt.toml \
+  rust/src/frb_generated.rs                          # from kisaki_app, sorts the generated imports
+cargo fmt -p kisaki_bridge                           # the stable check CI runs
 cargo build -p kisaki_bridge
 flutter pub run build_runner build                   # never with --build-filter
 ```
+
+Codegen writes `frb_generated.rs` with its own import order, which the repository's rustfmt config
+sorts back. Skipping that pass leaves a formatting-only diff in a generated file - measured on
+2026-10-04, where the round trip is clean only after formatting. `rustup run nightly cargo fmt` is
+not a substitute: on this machine it still executes the stable binary.
 
 `build_runner` deletes outputs it was not asked to regenerate, so a filtered run removes committed
 `.g.dart` and `.freezed.dart` files.
