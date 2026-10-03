@@ -453,3 +453,112 @@ class EngineInfo {
   final String os;
   final int threadLimit;
 }
+
+/// How a file reaches its set folder: relocated, duplicated, or a second name for the same bytes.
+enum SimiuMode { move, copy, link }
+
+/// One "put this file in that set folder" decision, as the bridge performs it.
+class SimiuOperation {
+  const SimiuOperation({
+    required this.root,
+    required this.source,
+    required this.target,
+  });
+
+  /// The scanned root the set folder lives under; the bridge writes one undo journal per root.
+  final String root;
+  final String source;
+  final String target;
+
+  @override
+  bool operator ==(Object other) =>
+      other is SimiuOperation &&
+      other.root == root &&
+      other.source == source &&
+      other.target == target;
+
+  @override
+  int get hashCode => Object.hash(root, source, target);
+
+  @override
+  String toString() => 'SimiuOperation($source -> $target in $root)';
+}
+
+class SimiuApplyRequest {
+  const SimiuApplyRequest({
+    required this.mode,
+    required this.operations,
+    required this.dryRun,
+  });
+
+  final SimiuMode mode;
+  final List<SimiuOperation> operations;
+  final bool dryRun;
+}
+
+/// What happened to one file, for both the apply and the undo direction.
+enum SimiuStatus { planned, moved, copied, linked, restored, removed, failed }
+
+class SimiuItem {
+  const SimiuItem({
+    required this.from,
+    required this.to,
+    required this.status,
+    required this.detail,
+  });
+
+  final String from;
+  final String to;
+  final SimiuStatus status;
+  final String detail;
+}
+
+class SimiuApplyOutcome {
+  const SimiuApplyOutcome({
+    required this.done,
+    required this.planned,
+    required this.failed,
+    required this.items,
+    required this.journals,
+    required this.messages,
+  });
+
+  final int done;
+  final int planned;
+  final int failed;
+  final List<SimiuItem> items;
+
+  /// The undo journals written, newest last. Empty for a dry run.
+  final List<String> journals;
+  final String messages;
+}
+
+class SimiuUndoRequest {
+  const SimiuUndoRequest({
+    required this.journal,
+    required this.cleanEmptyDirectories,
+    required this.dryRun,
+  });
+
+  final String journal;
+
+  /// Removes the set folders an apply created, as long as they are empty by then.
+  final bool cleanEmptyDirectories;
+  final bool dryRun;
+}
+
+class SimiuUndoOutcome {
+  const SimiuUndoOutcome({
+    required this.done,
+    required this.planned,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  final int done;
+  final int planned;
+  final int failed;
+  final List<SimiuItem> items;
+  final String messages;
+}
