@@ -119,6 +119,87 @@ void main() {
       }
     },
   );
+
+  test('an out-of-range video scan clamps instead of tripping the engine asserts', () async {
+    final root = await Directory.systemTemp.createTemp('kisaki_videos_');
+    addTearDown(() => root.delete(recursive: true));
+    for (final name in <String>['a.mp4', 'b.mp4']) {
+      // The engine samples from skip_forward for hash_duration seconds and needs audio when the
+      // audio branch is on, so the clips carry 30 seconds of picture and tone.
+      final encode = await Process.run('ffmpeg', <String>[
+        '-y',
+        '-loglevel',
+        'error',
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc=size=320x240:rate=15:duration=30',
+        '-f',
+        'lavfi',
+        '-i',
+        'sine=frequency=440:duration=30',
+        '-c:v',
+        'libx264',
+        '-pix_fmt',
+        'yuv420p',
+        '-c:a',
+        'aac',
+        '-shortest',
+        '${root.path}/$name',
+      ]);
+      expect(encode.stderr, isEmpty, reason: 'ffmpeg: ${encode.stderr}');
+    }
+
+    // Values past the ranges SimilarVideosParameters::new asserts on, plus the thumbnail and
+    // audio branches that the defaults never reached.
+    const overrides = <String, FieldPayload>{
+      'vid_window_count': FieldPayloadInteger(999),
+      'vid_min_matching_windows': FieldPayloadText('5'),
+      'vid_skip_forward': FieldPayloadInteger(-5),
+      'vid_generate_thumbnails': FieldPayloadFlag(true),
+      'vid_check_audio_content': FieldPayloadFlag(true),
+    };
+    final fields = <FieldValue>[
+      for (final field in engine.defaultFields('similar_videos'))
+        FieldValue(id: field.id, value: overrides[field.id] ?? field.value),
+    ];
+
+    final events = await engine
+        .startScan(
+          ScanRequest(
+            tool: 'similar_videos',
+            included: [root.path],
+            reference: const [],
+            excludedPaths: const [],
+            excludedItems: const [],
+            allowedExtensions: const [],
+            excludedExtensions: const [],
+            recursive: true,
+            useCache: false,
+            minSizeKib: '',
+            maxSizeKib: '',
+            fields: fields,
+          ),
+        )
+        .toList();
+
+    // A panic on the scan thread shows up as a Failed event or as no terminal event at all.
+    expect(
+      events.whereType<ScanEventFailed>().map((e) => e.error).toList(),
+      isEmpty,
+      reason: '$events',
+    );
+    final outcome = events.whereType<ScanEventCompleted>().single.outcome;
+    expect(outcome.critical, isNull, reason: outcome.messages);
+    // Positive control: the clips must really have been hashed, otherwise the clamp assertion
+    // above would pass on an empty scan.
+    expect(
+      outcome.fileCount,
+      greaterThanOrEqualTo(2),
+      reason: 'two clips were written, messages: ${outcome.messages}',
+    );
+    expect(engine.isScanning(), isFalse);
+  }, timeout: const Timeout(Duration(minutes: 4)));
 }
 
 Future<File> _write(Directory root, String relative, String content) async {
