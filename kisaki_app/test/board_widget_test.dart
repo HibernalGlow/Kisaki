@@ -4,6 +4,7 @@ import 'package:kisaki_app/engine/models.dart';
 import 'package:kisaki_app/state/board_controller.dart';
 import 'package:kisaki_app/ui/board.dart';
 import 'package:kisaki_app/ui/source_panel.dart';
+import 'package:kisaki_app/util/format.dart';
 
 import 'support/stub_engine.dart';
 
@@ -264,5 +265,21 @@ void main() {
     await tester.pumpAndSettle();
     expect(controller.visibleRows.single.path, '/data/large.bin');
     expect(find.text('small.bin'), findsNothing);
+  });
+
+  testWidgets('the modified column paints local time from the epoch', (
+    WidgetTester tester,
+  ) async {
+    await pumpBoard(tester);
+    await seedGroupedResults(tester);
+
+    // Proof the rows are on screen at all, so the negative assertion below cannot be vacuous.
+    expect(find.text('1024B'), findsNWidgets(2));
+    expect(
+      find.text('2026-01-02'),
+      findsNothing,
+      reason: 'the engine formats this column in UTC, so the board must not paint its text',
+    );
+    expect(find.text(humanDate(1700000000)), findsNWidgets(2));
   });
 }

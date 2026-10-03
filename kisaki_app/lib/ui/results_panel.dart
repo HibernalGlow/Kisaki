@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/row_projection.dart';
 import '../theme/board_theme.dart';
 import 'assistant_panel.dart';
 import 'filter_panel.dart';
@@ -488,7 +489,8 @@ class _ResultRow extends StatelessWidget {
       ),
     );
     for (int column = 0; column < columns.length; column++) {
-      final String text = column < row.cells.length ? row.cells[column] : '';
+      final ColumnDef definition = columns[column];
+      final String text = displayCell(definition, row, column);
       cells.add(
         SizedBox(
           width: widths[offset++],
@@ -497,7 +499,7 @@ class _ResultRow extends StatelessWidget {
               horizontal: BoardTokens.gapSmall,
             ),
             child: Align(
-              alignment: columns[column].alignRight
+              alignment: definition.alignRight
                   ? Alignment.centerRight
                   : Alignment.centerLeft,
               child: Text(
@@ -505,7 +507,7 @@ class _ResultRow extends StatelessWidget {
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 // Right-aligned columns are the numeric ones, and they are set in tabular figures.
-                style: columns[column].alignRight
+                style: definition.alignRight
                     ? palette.tableFigure()
                     : TextStyle(
                         fontSize: BoardTokens.fsLabel,

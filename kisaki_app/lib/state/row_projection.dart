@@ -1,6 +1,16 @@
 import '../engine/models.dart';
+import '../util/format.dart';
 
 enum GroupSelection { none, partial, all }
+
+/// The text the table shows for one cell. The engine formats its date column in UTC, so a date
+/// column is rebuilt from the row's epoch and shown in the reader's own zone instead.
+String displayCell(ColumnDef column, ScanRow row, int index) {
+  if (column.key == 'modified' && row.modifiedTs > 0) {
+    return humanDate(row.modifiedTs);
+  }
+  return index < row.cells.length ? row.cells[index] : '';
+}
 
 GroupSelection groupSelectionOf(List<ScanRow> members, Set<String> selected) {
   if (members.isEmpty) {
@@ -47,10 +57,10 @@ List<ScanRow> projectRows({
     final List<ColumnDef>? columns = tool?.columns;
     if (columns != null && sortColumn < columns.length) {
       final String key = columns[sortColumn].key;
-      if (key == 'col_size') {
+      if (key == 'size') {
         return row.sizeBytes;
       }
-      if (key == 'col_modified') {
+      if (key == 'modified') {
         return row.modifiedTs;
       }
     }
