@@ -204,3 +204,36 @@ jobs:
       - name: Test
         working-directory: kisaki_app
         run: flutter test
+
+  # Nothing else in this repository compiles the Flutter frontend's Linux CMake files, and no
+  # machine here has a Linux toolchain, so this job is the only place that can prove they build. It
+  # is deliberately a compile check rather than a packaging step: a released bundle would also have
+  # to carry libkisaki_bridge.so where lib/util/rust_lib.dart looks for it, and the candidate list
+  # has no entry for the bundle's lib/ directory yet, so an uploaded bundle would not start.
+  flutter-linux:
+    runs-on: ubuntu-22.04
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install the Linux build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang cmake git ninja-build pkg-config libgtk-3-dev liblzma-dev libstdc++-12-dev
+      - name: Install Flutter
+        run: |
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Warm up the Dart SDK
+        run: flutter --version
+      - name: Get dependencies
+        working-directory: kisaki_app
+        run: flutter pub get
+      - name: Compile for Linux
+        working-directory: kisaki_app
+        run: flutter build linux --release
+      # The product name, not the template name: linux/CMakeLists.txt sets BINARY_NAME to kisaki.
+      - name: Check the binary name
+        working-directory: kisaki_app
+        run: test -x build/linux/x64/release/bundle/kisaki
