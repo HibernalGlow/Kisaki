@@ -217,6 +217,7 @@ jobs:
         shell: bash
     steps:
       - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
       - name: Install the Linux build dependencies
         run: |
           sudo apt-get update
@@ -230,10 +231,13 @@ jobs:
       - name: Get dependencies
         working-directory: kisaki_app
         run: flutter pub get
-      - name: Compile for Linux
+      # The same script a maintainer would run: it builds the bridge, builds the app, and copies the
+      # library next to the executable that opens it by path.
+      - name: Bundle the app with the bridge
+        run: bash kisaki_app/packaging/linux_bundle.sh release
+      # The loader keeps the newest of its candidates and starts at the executable's own directory.
+      - name: Check the bundle layout
         working-directory: kisaki_app
-        run: flutter build linux --release
-      # The product name, not the template name: linux/CMakeLists.txt sets BINARY_NAME to kisaki.
-      - name: Check the binary name
-        working-directory: kisaki_app
-        run: test -x build/linux/x64/release/bundle/kisaki
+        run: |
+          test -x build/linux/x64/release/bundle/kisaki
+          test -f build/linux/x64/release/bundle/libkisaki_bridge.so
