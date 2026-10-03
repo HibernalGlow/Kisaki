@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../engine/models.dart';
 import '../l10n/labels.dart';
@@ -31,10 +32,39 @@ class _FilterPanelState extends State<FilterPanel> {
   String _presetName = '';
   String _transferText = '';
   String _presetError = '';
+  final FocusNode _keys = FocusNode(debugLabel: 'kisaki-filter-keys');
 
   ToolSpec? get _tool => widget.controller.tool;
 
   void _apply(FilterState next) => widget.controller.setFilters(next);
+
+  /// The dialog owns the route's focus, so its shortcuts cannot be handled by the board behind it.
+  KeyEventResult _onKey(FocusNode node, KeyEvent event) {
+    if (event is! KeyDownEvent && event is! KeyRepeatEvent) {
+      return KeyEventResult.ignored;
+    }
+    final bool modifier =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    if (modifier &&
+        event.logicalKey == LogicalKeyboardKey.keyF &&
+        HardwareKeyboard.instance.isShiftPressed) {
+      Navigator.of(context).pop();
+      return KeyEventResult.handled;
+    }
+    if (event.logicalKey == LogicalKeyboardKey.escape &&
+        widget.controller.filters.activeCount > 0) {
+      widget.controller.resetFilters();
+      return KeyEventResult.handled;
+    }
+    return KeyEventResult.ignored;
+  }
+
+  @override
+  void dispose() {
+    _keys.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -44,397 +74,403 @@ class _FilterPanelState extends State<FilterPanel> {
       builder: (BuildContext context, Widget? _) {
         final FilterState state = widget.controller.filters;
         final FilterStats stats = widget.controller.filterStats;
-        return AlertDialog(
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(Labels.of('filter-title')),
-              const SizedBox(height: BoardTokens.gapSmall),
-              Text(
-                Labels.of(
-                  'filter-stats',
-                  args: <String, Object>{
-                    'filtered': stats.filteredItems,
-                    'total': stats.totalItems,
-                    'filteredGroups': stats.filteredGroups,
-                    'totalGroups': stats.totalGroups,
-                  },
+        return Focus(
+          focusNode: _keys,
+          autofocus: true,
+          onKeyEvent: _onKey,
+          child: AlertDialog(
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Text(Labels.of('filter-title')),
+                const SizedBox(height: BoardTokens.gapSmall),
+                Text(
+                  Labels.of(
+                    'filter-stats',
+                    args: <String, Object>{
+                      'filtered': stats.filteredItems,
+                      'total': stats.totalItems,
+                      'filteredGroups': stats.filteredGroups,
+                      'totalGroups': stats.totalGroups,
+                    },
+                  ),
+                  style: palette.text.bodySmall,
                 ),
-                style: palette.text.bodySmall,
+              ],
+            ),
+            actions: <Widget>[
+              BoardAction(
+                labelKey: 'filter-reset',
+                onPressed: widget.controller.resetFilters,
+              ),
+              BoardAction(
+                labelKey: 'action-close',
+                onPressed: () => Navigator.of(context).pop(),
               ),
             ],
-          ),
-          actions: <Widget>[
-            BoardAction(
-              labelKey: 'filter-reset',
-              onPressed: widget.controller.resetFilters,
-            ),
-            BoardAction(
-              labelKey: 'action-close',
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ],
-          content: SizedBox(
-            width: 520,
-            height: 620,
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(BoardTokens.gap),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  _Presets(
-                    controller: widget.controller,
-                    name: _presetName,
-                    onName: (String value) =>
-                        setState(() => _presetName = value),
-                    onError: (String value) =>
-                        setState(() => _presetError = value),
-                    error: _presetError,
-                    transfer: _transferText,
-                    onTransfer: (String value) =>
-                        setState(() => _transferText = value),
-                  ),
-                  _Section(
-                    labelKey: 'filter-text-title',
-                    children: <Widget>[
-                      _SwitchRow(
-                        labelKey: 'filter-text-enabled',
-                        value: state.textEnabled,
-                        onChanged: (bool value) =>
-                            _apply(state.copy()..textEnabled = value),
-                      ),
-                      _Field(
-                        keyName: 'filter-text-pattern',
-                        labelKey: 'filter-text-placeholder',
-                        value: state.textPattern,
-                        onChanged: (String value) => _apply(
-                          state.copy()
-                            ..textPattern = value
-                            ..textEnabled = value.trim().isNotEmpty,
-                        ),
-                      ),
-                      Wrap(
-                        spacing: BoardTokens.gapSmall,
-                        children: <Widget>[
-                          for (final TextFilterField field
-                              in TextFilterField.values)
-                            _Chip(
-                              label: Labels.of(
-                                'filter-text-field-${field.wire}',
-                              ),
-                              selected: state.textFields.contains(field),
-                              onTap: () => _apply(
-                                state.copy()
-                                  ..textFields =
-                                      state.textFields.contains(field)
-                                      ? state.textFields
-                                            .where(
-                                              (TextFilterField item) =>
-                                                  item != field,
-                                            )
-                                            .toList()
-                                      : <TextFilterField>[
-                                          ...state.textFields,
-                                          field,
-                                        ],
-                              ),
-                            ),
-                        ],
-                      ),
-                      Row(
-                        children: <Widget>[
-                          Expanded(
-                            child: _SwitchRow(
-                              labelKey: 'filter-regex',
-                              value: state.textRegex,
-                              onChanged: (bool value) =>
-                                  _apply(state.copy()..textRegex = value),
-                            ),
-                          ),
-                          Expanded(
-                            child: _SwitchRow(
-                              labelKey: 'filter-case-sensitive',
-                              value: state.textCaseSensitive,
-                              onChanged: (bool value) => _apply(
-                                state.copy()..textCaseSensitive = value,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (widget.controller.filterPatternError.isNotEmpty)
-                        _ErrorLine(widget.controller.filterPatternError),
-                    ],
-                  ),
-                  _Section(
-                    labelKey: 'filter-mark-title',
-                    children: <Widget>[
-                      _Dropdown<MarkFilter>(
-                        keyName: 'filter-mark',
-                        values: MarkFilter.values,
-                        current: state.mark,
-                        label: (MarkFilter mark) =>
-                            Labels.of('filter-mark-${mark.wire}'),
-                        onChanged: (MarkFilter mark) =>
-                            _apply(state.copy()..mark = mark),
-                      ),
-                    ],
-                  ),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Expanded(
-                        child: _RangeSection(
-                          labelKey: 'filter-group-count',
-                          range: state.groupCount,
-                          onChanged: (RangeFilter value) =>
-                              _apply(state.copy()..groupCount = value),
-                        ),
-                      ),
-                      const SizedBox(width: BoardTokens.gap),
-                      Expanded(
-                        child: _RangeSection(
-                          labelKey: 'filter-group-size',
-                          range: state.groupSize,
-                          withUnit: true,
-                          onChanged: (RangeFilter value) =>
-                              _apply(state.copy()..groupSize = value),
-                        ),
-                      ),
-                    ],
-                  ),
-                  _RangeSection(
-                    labelKey: 'filter-file-size',
-                    range: state.fileSize,
-                    withUnit: true,
-                    onChanged: (RangeFilter value) =>
-                        _apply(state.copy()..fileSize = value),
-                  ),
-                  _Section(
-                    labelKey: 'filter-extension-title',
-                    children: <Widget>[
-                      _SwitchRow(
-                        labelKey: 'filter-extension-enabled',
-                        value: state.extensionEnabled,
-                        onChanged: (bool value) =>
-                            _apply(state.copy()..extensionEnabled = value),
-                      ),
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 132,
-                            child: _Dropdown<bool>(
-                              keyName: 'filter-extension-mode',
-                              values: const <bool>[true, false],
-                              current: state.extensionMode,
-                              label: (bool include) => Labels.of(
-                                include
-                                    ? 'filter-extension-include'
-                                    : 'filter-extension-exclude',
-                              ),
-                              onChanged: (bool value) =>
-                                  _apply(state.copy()..extensionMode = value),
-                            ),
-                          ),
-                          const SizedBox(width: BoardTokens.gapSmall),
-                          Expanded(
-                            child: _Field(
-                              keyName: 'filter-extension-list',
-                              labelKey: 'filter-extension-placeholder',
-                              value: state.extensions.join(', '),
-                              onChanged: (String value) => _apply(
-                                state.copy()
-                                  ..extensions = _tokens(value)
-                                  ..extensionEnabled = true,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Wrap(
-                        spacing: BoardTokens.gapSmall,
-                        runSpacing: BoardTokens.gapSmall,
-                        children: <Widget>[
-                          for (final CategoryStat category in stats.categories)
-                            _Chip(
-                              label:
-                                  '${Labels.of('filter-category-${category.category.wire}')} '
-                                  '${category.filteredCount}/${category.totalCount}',
-                              selected: !state.excludedCategories.contains(
-                                category.category,
-                              ),
-                              onTap: () => _apply(
-                                state.copy()
-                                  ..extensionEnabled = true
-                                  ..excludedCategories = _toggled(
-                                    state.excludedCategories,
-                                    category.category,
-                                  ),
-                              ),
-                            ),
-                        ],
-                      ),
-                      Wrap(
-                        spacing: BoardTokens.gapSmall,
-                        runSpacing: BoardTokens.gapSmall,
-                        children: <Widget>[
-                          for (final ExtensionStat extension
-                              in stats.extensions.take(10))
-                            _Chip(
-                              label:
-                                  '${extension.extension == kNoExtension ? Labels.of('filter-extension-none') : extension.extension} '
-                                  '${extension.filteredCount}/${extension.totalCount}',
-                              selected: state.extensions.contains(
-                                extension.extension,
-                              ),
-                              onTap: () => _apply(
-                                state.copy()
-                                  ..extensionEnabled = true
-                                  ..extensions = _toggled(
-                                    state.extensions,
-                                    extension.extension,
-                                  ),
-                              ),
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    labelKey: 'filter-date-title',
-                    children: <Widget>[
-                      _SwitchRow(
-                        labelKey: 'filter-date-enabled',
-                        value: state.dateEnabled,
-                        onChanged: (bool value) =>
-                            _apply(state.copy()..dateEnabled = value),
-                      ),
-                      _Dropdown<DatePreset>(
-                        keyName: 'filter-date-preset',
-                        values: DatePreset.values,
-                        current: state.datePreset,
-                        label: (DatePreset preset) =>
-                            Labels.of('filter-date-${preset.wire}'),
-                        onChanged: (DatePreset value) =>
-                            _apply(state.copy()..datePreset = value),
-                      ),
-                    ],
-                  ),
-                  _Section(
-                    labelKey: 'filter-path-title',
-                    children: <Widget>[
-                      _SwitchRow(
-                        labelKey: 'filter-path-enabled',
-                        value: state.pathEnabled,
-                        onChanged: (bool value) =>
-                            _apply(state.copy()..pathEnabled = value),
-                      ),
-                      Row(
-                        children: <Widget>[
-                          SizedBox(
-                            width: 132,
-                            child: _Dropdown<PathMatchMode>(
-                              keyName: 'filter-path-mode',
-                              values: PathMatchMode.values,
-                              current: state.pathMode,
-                              label: (PathMatchMode mode) =>
-                                  Labels.of('filter-path-${mode.wire}'),
-                              onChanged: (PathMatchMode value) =>
-                                  _apply(state.copy()..pathMode = value),
-                            ),
-                          ),
-                          const SizedBox(width: BoardTokens.gapSmall),
-                          Expanded(
-                            child: _Field(
-                              keyName: 'filter-path-pattern',
-                              labelKey: 'filter-path-placeholder',
-                              value: state.pathPattern,
-                              onChanged: (String value) =>
-                                  _apply(state.copy()..pathPattern = value),
-                            ),
-                          ),
-                        ],
-                      ),
-                      _SwitchRow(
-                        labelKey: 'filter-case-sensitive',
-                        value: state.pathCaseSensitive,
-                        onChanged: (bool value) =>
-                            _apply(state.copy()..pathCaseSensitive = value),
-                      ),
-                    ],
-                  ),
-                  if (supportsSimilarityFilter(_tool))
-                    _RangeSection(
-                      labelKey: 'filter-similarity',
-                      range: state.similarity,
-                      onChanged: (RangeFilter value) =>
-                          _apply(state.copy()..similarity = value),
+            content: SizedBox(
+              width: 520,
+              height: 620,
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(BoardTokens.gap),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: <Widget>[
+                    _Presets(
+                      controller: widget.controller,
+                      name: _presetName,
+                      onName: (String value) =>
+                          setState(() => _presetName = value),
+                      onError: (String value) =>
+                          setState(() => _presetError = value),
+                      error: _presetError,
+                      transfer: _transferText,
+                      onTransfer: (String value) =>
+                          setState(() => _transferText = value),
                     ),
-                  if (supportsResolutionFilter(_tool))
                     _Section(
-                      labelKey: 'filter-resolution-title',
+                      labelKey: 'filter-text-title',
                       children: <Widget>[
                         _SwitchRow(
-                          labelKey: 'filter-resolution-enabled',
-                          value: state.resolutionEnabled,
+                          labelKey: 'filter-text-enabled',
+                          value: state.textEnabled,
                           onChanged: (bool value) =>
-                              _apply(state.copy()..resolutionEnabled = value),
+                              _apply(state.copy()..textEnabled = value),
+                        ),
+                        _Field(
+                          keyName: 'filter-text-pattern',
+                          labelKey: 'filter-text-placeholder',
+                          value: state.textPattern,
+                          onChanged: (String value) => _apply(
+                            state.copy()
+                              ..textPattern = value
+                              ..textEnabled = value.trim().isNotEmpty,
+                          ),
                         ),
                         Wrap(
-                          spacing: BoardTokens.gap,
-                          runSpacing: BoardTokens.gapSmall,
+                          spacing: BoardTokens.gapSmall,
                           children: <Widget>[
-                            _NumberField(
-                              labelKey: 'filter-resolution-min-width',
-                              value: state.minWidth,
-                              onChanged: (int? value) =>
-                                  _apply(state.copy()..minWidth = value),
+                            for (final TextFilterField field
+                                in TextFilterField.values)
+                              _Chip(
+                                label: Labels.of(
+                                  'filter-text-field-${field.wire}',
+                                ),
+                                selected: state.textFields.contains(field),
+                                onTap: () => _apply(
+                                  state.copy()
+                                    ..textFields =
+                                        state.textFields.contains(field)
+                                        ? state.textFields
+                                              .where(
+                                                (TextFilterField item) =>
+                                                    item != field,
+                                              )
+                                              .toList()
+                                        : <TextFilterField>[
+                                            ...state.textFields,
+                                            field,
+                                          ],
+                                ),
+                              ),
+                          ],
+                        ),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: _SwitchRow(
+                                labelKey: 'filter-regex',
+                                value: state.textRegex,
+                                onChanged: (bool value) =>
+                                    _apply(state.copy()..textRegex = value),
+                              ),
                             ),
-                            _NumberField(
-                              labelKey: 'filter-resolution-min-height',
-                              value: state.minHeight,
-                              onChanged: (int? value) =>
-                                  _apply(state.copy()..minHeight = value),
-                            ),
-                            _NumberField(
-                              labelKey: 'filter-resolution-max-width',
-                              value: state.maxWidth,
-                              onChanged: (int? value) =>
-                                  _apply(state.copy()..maxWidth = value),
-                            ),
-                            _NumberField(
-                              labelKey: 'filter-resolution-max-height',
-                              value: state.maxHeight,
-                              onChanged: (int? value) =>
-                                  _apply(state.copy()..maxHeight = value),
+                            Expanded(
+                              child: _SwitchRow(
+                                labelKey: 'filter-case-sensitive',
+                                value: state.textCaseSensitive,
+                                onChanged: (bool value) => _apply(
+                                  state.copy()..textCaseSensitive = value,
+                                ),
+                              ),
                             ),
                           ],
                         ),
-                        _Dropdown<FilterAspectRatio>(
-                          keyName: 'filter-resolution-aspect',
-                          values: FilterAspectRatio.values,
-                          current: state.aspectRatio,
-                          label: (FilterAspectRatio ratio) =>
-                              ratio == FilterAspectRatio.any
-                              ? Labels.of('filter-resolution-any')
-                              : ratio.wire,
-                          onChanged: (FilterAspectRatio value) =>
-                              _apply(state.copy()..aspectRatio = value),
+                        if (widget.controller.filterPatternError.isNotEmpty)
+                          _ErrorLine(widget.controller.filterPatternError),
+                      ],
+                    ),
+                    _Section(
+                      labelKey: 'filter-mark-title',
+                      children: <Widget>[
+                        _Dropdown<MarkFilter>(
+                          keyName: 'filter-mark',
+                          values: MarkFilter.values,
+                          current: state.mark,
+                          label: (MarkFilter mark) =>
+                              Labels.of('filter-mark-${mark.wire}'),
+                          onChanged: (MarkFilter mark) =>
+                              _apply(state.copy()..mark = mark),
                         ),
                       ],
                     ),
-                  _SwitchRow(
-                    labelKey: 'filter-show-whole-group',
-                    value: state.showAllInFilteredGroups,
-                    onChanged: (bool value) =>
-                        _apply(state.copy()..showAllInFilteredGroups = value),
-                  ),
-                  const SizedBox(height: BoardTokens.gap),
-                  Text(
-                    Labels.of('filter-shortcuts'),
-                    style: palette.text.bodySmall,
-                  ),
-                ],
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Expanded(
+                          child: _RangeSection(
+                            labelKey: 'filter-group-count',
+                            range: state.groupCount,
+                            onChanged: (RangeFilter value) =>
+                                _apply(state.copy()..groupCount = value),
+                          ),
+                        ),
+                        const SizedBox(width: BoardTokens.gap),
+                        Expanded(
+                          child: _RangeSection(
+                            labelKey: 'filter-group-size',
+                            range: state.groupSize,
+                            withUnit: true,
+                            onChanged: (RangeFilter value) =>
+                                _apply(state.copy()..groupSize = value),
+                          ),
+                        ),
+                      ],
+                    ),
+                    _RangeSection(
+                      labelKey: 'filter-file-size',
+                      range: state.fileSize,
+                      withUnit: true,
+                      onChanged: (RangeFilter value) =>
+                          _apply(state.copy()..fileSize = value),
+                    ),
+                    _Section(
+                      labelKey: 'filter-extension-title',
+                      children: <Widget>[
+                        _SwitchRow(
+                          labelKey: 'filter-extension-enabled',
+                          value: state.extensionEnabled,
+                          onChanged: (bool value) =>
+                              _apply(state.copy()..extensionEnabled = value),
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 132,
+                              child: _Dropdown<bool>(
+                                keyName: 'filter-extension-mode',
+                                values: const <bool>[true, false],
+                                current: state.extensionMode,
+                                label: (bool include) => Labels.of(
+                                  include
+                                      ? 'filter-extension-include'
+                                      : 'filter-extension-exclude',
+                                ),
+                                onChanged: (bool value) =>
+                                    _apply(state.copy()..extensionMode = value),
+                              ),
+                            ),
+                            const SizedBox(width: BoardTokens.gapSmall),
+                            Expanded(
+                              child: _Field(
+                                keyName: 'filter-extension-list',
+                                labelKey: 'filter-extension-placeholder',
+                                value: state.extensions.join(', '),
+                                onChanged: (String value) => _apply(
+                                  state.copy()
+                                    ..extensions = _tokens(value)
+                                    ..extensionEnabled = true,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        Wrap(
+                          spacing: BoardTokens.gapSmall,
+                          runSpacing: BoardTokens.gapSmall,
+                          children: <Widget>[
+                            for (final CategoryStat category
+                                in stats.categories)
+                              _Chip(
+                                label:
+                                    '${Labels.of('filter-category-${category.category.wire}')} '
+                                    '${category.filteredCount}/${category.totalCount}',
+                                selected: !state.excludedCategories.contains(
+                                  category.category,
+                                ),
+                                onTap: () => _apply(
+                                  state.copy()
+                                    ..extensionEnabled = true
+                                    ..excludedCategories = _toggled(
+                                      state.excludedCategories,
+                                      category.category,
+                                    ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        Wrap(
+                          spacing: BoardTokens.gapSmall,
+                          runSpacing: BoardTokens.gapSmall,
+                          children: <Widget>[
+                            for (final ExtensionStat extension
+                                in stats.extensions.take(10))
+                              _Chip(
+                                label:
+                                    '${extension.extension == kNoExtension ? Labels.of('filter-extension-none') : extension.extension} '
+                                    '${extension.filteredCount}/${extension.totalCount}',
+                                selected: state.extensions.contains(
+                                  extension.extension,
+                                ),
+                                onTap: () => _apply(
+                                  state.copy()
+                                    ..extensionEnabled = true
+                                    ..extensions = _toggled(
+                                      state.extensions,
+                                      extension.extension,
+                                    ),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ],
+                    ),
+                    _Section(
+                      labelKey: 'filter-date-title',
+                      children: <Widget>[
+                        _SwitchRow(
+                          labelKey: 'filter-date-enabled',
+                          value: state.dateEnabled,
+                          onChanged: (bool value) =>
+                              _apply(state.copy()..dateEnabled = value),
+                        ),
+                        _Dropdown<DatePreset>(
+                          keyName: 'filter-date-preset',
+                          values: DatePreset.values,
+                          current: state.datePreset,
+                          label: (DatePreset preset) =>
+                              Labels.of('filter-date-${preset.wire}'),
+                          onChanged: (DatePreset value) =>
+                              _apply(state.copy()..datePreset = value),
+                        ),
+                      ],
+                    ),
+                    _Section(
+                      labelKey: 'filter-path-title',
+                      children: <Widget>[
+                        _SwitchRow(
+                          labelKey: 'filter-path-enabled',
+                          value: state.pathEnabled,
+                          onChanged: (bool value) =>
+                              _apply(state.copy()..pathEnabled = value),
+                        ),
+                        Row(
+                          children: <Widget>[
+                            SizedBox(
+                              width: 132,
+                              child: _Dropdown<PathMatchMode>(
+                                keyName: 'filter-path-mode',
+                                values: PathMatchMode.values,
+                                current: state.pathMode,
+                                label: (PathMatchMode mode) =>
+                                    Labels.of('filter-path-${mode.wire}'),
+                                onChanged: (PathMatchMode value) =>
+                                    _apply(state.copy()..pathMode = value),
+                              ),
+                            ),
+                            const SizedBox(width: BoardTokens.gapSmall),
+                            Expanded(
+                              child: _Field(
+                                keyName: 'filter-path-pattern',
+                                labelKey: 'filter-path-placeholder',
+                                value: state.pathPattern,
+                                onChanged: (String value) =>
+                                    _apply(state.copy()..pathPattern = value),
+                              ),
+                            ),
+                          ],
+                        ),
+                        _SwitchRow(
+                          labelKey: 'filter-case-sensitive',
+                          value: state.pathCaseSensitive,
+                          onChanged: (bool value) =>
+                              _apply(state.copy()..pathCaseSensitive = value),
+                        ),
+                      ],
+                    ),
+                    if (supportsSimilarityFilter(_tool))
+                      _RangeSection(
+                        labelKey: 'filter-similarity',
+                        range: state.similarity,
+                        onChanged: (RangeFilter value) =>
+                            _apply(state.copy()..similarity = value),
+                      ),
+                    if (supportsResolutionFilter(_tool))
+                      _Section(
+                        labelKey: 'filter-resolution-title',
+                        children: <Widget>[
+                          _SwitchRow(
+                            labelKey: 'filter-resolution-enabled',
+                            value: state.resolutionEnabled,
+                            onChanged: (bool value) =>
+                                _apply(state.copy()..resolutionEnabled = value),
+                          ),
+                          Wrap(
+                            spacing: BoardTokens.gap,
+                            runSpacing: BoardTokens.gapSmall,
+                            children: <Widget>[
+                              _NumberField(
+                                labelKey: 'filter-resolution-min-width',
+                                value: state.minWidth,
+                                onChanged: (int? value) =>
+                                    _apply(state.copy()..minWidth = value),
+                              ),
+                              _NumberField(
+                                labelKey: 'filter-resolution-min-height',
+                                value: state.minHeight,
+                                onChanged: (int? value) =>
+                                    _apply(state.copy()..minHeight = value),
+                              ),
+                              _NumberField(
+                                labelKey: 'filter-resolution-max-width',
+                                value: state.maxWidth,
+                                onChanged: (int? value) =>
+                                    _apply(state.copy()..maxWidth = value),
+                              ),
+                              _NumberField(
+                                labelKey: 'filter-resolution-max-height',
+                                value: state.maxHeight,
+                                onChanged: (int? value) =>
+                                    _apply(state.copy()..maxHeight = value),
+                              ),
+                            ],
+                          ),
+                          _Dropdown<FilterAspectRatio>(
+                            keyName: 'filter-resolution-aspect',
+                            values: FilterAspectRatio.values,
+                            current: state.aspectRatio,
+                            label: (FilterAspectRatio ratio) =>
+                                ratio == FilterAspectRatio.any
+                                ? Labels.of('filter-resolution-any')
+                                : ratio.wire,
+                            onChanged: (FilterAspectRatio value) =>
+                                _apply(state.copy()..aspectRatio = value),
+                          ),
+                        ],
+                      ),
+                    _SwitchRow(
+                      labelKey: 'filter-show-whole-group',
+                      value: state.showAllInFilteredGroups,
+                      onChanged: (bool value) =>
+                          _apply(state.copy()..showAllInFilteredGroups = value),
+                    ),
+                    const SizedBox(height: BoardTokens.gap),
+                    Text(
+                      Labels.of('filter-shortcuts'),
+                      style: palette.text.bodySmall,
+                    ),
+                  ],
+                ),
               ),
             ),
           ),

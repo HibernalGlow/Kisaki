@@ -238,7 +238,9 @@ class Labels {
     'filter-resolution-min-height': 'Minimum height',
     'filter-resolution-min-width': 'Minimum width',
     'filter-resolution-title': 'Resolution and aspect ratio',
-    'filter-shortcuts': 'Ctrl or Cmd+F opens the filters, Esc clears them.',
+    'filter-shortcuts':
+        'Ctrl or Cmd+F opens the filters, Ctrl or Cmd+Shift+F closes them, Ctrl '
+        'or Cmd+R refreshes the scan, Esc clears the filters.',
     'filter-show-whole-group': 'Show the whole group when one entry matches',
     'filter-similarity': 'Similarity',
     'filter-similarity-max': 'Maximum',

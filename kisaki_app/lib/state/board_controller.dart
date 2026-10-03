@@ -509,6 +509,27 @@ class BoardController extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Re-runs the scan but keeps the filtering and rule work the board is showing, which is what a
+  /// refresh means; a plain [startScan] would discard it with the results.
+  bool refreshScan() {
+    final FilterState filters = _filters.copy();
+    final SelectionConfig assistant = _assistant;
+    final String query = _filter;
+    final int column = _sortColumn;
+    final bool ascending = _sortAscending;
+    if (!startScan()) {
+      return false;
+    }
+    _filters = filters;
+    _assistant = assistant;
+    _filter = query;
+    _sortColumn = column;
+    _sortAscending = ascending;
+    _recomputeVisible();
+    notifyListeners();
+    return true;
+  }
+
   void _recomputeVisible() {
     // The header search box is the reference's quick-text dimension, so it feeds the same state the
     // filter dialog edits instead of being a second, narrower filtering path.
