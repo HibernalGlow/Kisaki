@@ -200,23 +200,23 @@ class Labels {
     'confirm_delete_title': 'Delete the selected files?',
     'confirm_dry_run_body':
         'Dry run: plans { \$count } paths ({ \$size }) and changes nothing.',
-    'confirm_exif_body':
-        '{ \$count } files are cleaned; the source is only rewritten because the option is on.',
+    'confirm_exif_body': '{ \$count } files are cleaned; the source is only rewritten because the option is on.',
     'confirm_exif_plan_title': 'Plan the EXIF cleanup?',
     'confirm_exif_title': 'Clean EXIF metadata?',
     'confirm_move_body': '{count} paths will be written under {destination}. Existing files are never overwritten.',
     'confirm_move_title': 'Move the selection',
+    'confirm_organize_body': '{ \$count } files from { \$groups } groups go into { \$folders } folders next to their own sources.',
+    'confirm_organize_plan_title': 'Plan the group organize?',
+    'confirm_organize_title': 'Organize the similar groups?',
     'confirm_rename_body':
         'The engine decides the new names for {count} paths.',
     'confirm_rename_title': 'Fix the names',
     'confirm_simiu_apply_title': 'Apply the Simiu set operations?',
-    'confirm_simiu_body':
-        '{ \$count } moves: a set folder is created in each source directory, and every file keeps an entry in an undo journal.',
+    'confirm_simiu_body': '{ \$count } moves: a set folder is created in each source directory, and every file keeps an entry in an undo journal.',
     'confirm_simiu_plan_title': 'Plan the Simiu set operations?',
     'confirm_simiu_undo_body': 'Journal: { \$journal }',
     'confirm_simiu_undo_title': 'Undo the last Simiu operation?',
-    'confirm_video_body':
-        '{ \$count } videos go through the encoder; the engine leaves out any it no longer considers worth the work.',
+    'confirm_video_body': '{ \$count } videos go through the encoder; the engine leaves out any it no longer considers worth the work.',
     'confirm_video_plan_title': 'Plan the video optimization?',
     'confirm_video_title': 'Optimize the videos?',
     'empty-done': 'Scan finished, nothing found.',
@@ -227,11 +227,9 @@ class Labels {
     'empty-running': 'Analyzing files...',
     'empty-stopped': 'Scan stopped, no results returned.',
     'exif-action-clean': 'Clean EXIF',
-    'exif-card-hint':
-        'The engine reads each selected file and reports how many tags it removed.',
+    'exif-card-hint': 'The engine reads each selected file and reports how many tags it removed.',
     'exif-card-title': 'EXIF cleanup',
-    'exif-override-hint':
-        'Left off, the source stays untouched and the cleaned copy is written beside it.',
+    'exif-override-hint': 'Left off, the source stays untouched and the cleaned copy is written beside it.',
     'exif-override-label': 'Write over the original file',
     'exif-result-candidate': 'Side file',
     'exif-result-count': '{ \$count } tags removed',
@@ -239,8 +237,7 @@ class Labels {
     'exif-result-planned': 'Planned',
     'exif-result-skipped': 'No tags to remove',
     'exif-result-stripped': 'Rewritten',
-    'exif-summary':
-        '{ \$stripped } rewritten, { \$candidates } side files, { \$planned } planned, { \$skipped } without tags',
+    'exif-summary': '{ \$stripped } rewritten, { \$candidates } side files, { \$planned } planned, { \$skipped } without tags',
     'field_bext_include_files_without_extension':
         'Include files without extension',
     'field_big_biggest_first': 'Show biggest files first',
@@ -465,6 +462,13 @@ class Labels {
 
     // Keys the Flutter board needs that `kisaki/i18n/en/kisaki.ftl` does not carry yet.
     // The Flutter i18n file will own these once the app gets its own Fluent catalog.
+    'organize-action': 'Organize the groups',
+    'organize-card-hint': 'Every variant of a touched group moves into a folder beside its own source.',
+    'organize-card-title': 'Organize similar groups',
+    'organize-plan':
+        '{ \$count } files from { \$groups } groups into { \$folders } folders',
+    'organize-skip-single-label': 'Skip a source folder holding one file',
+    'organize-template-label': 'Subfolder name template',
     'placeholder-filter': 'Filter results',
     'placeholder-manual': 'Paste paths, one per line',
     'plan_files_to_delete': 'delete permanently',
@@ -478,8 +482,7 @@ class Labels {
         'Add at least one included directory before scanning',
     'simiu-action-apply': 'Organize the sets',
     'simiu-action-undo': 'Undo the last set operation',
-    'simiu-card-hint':
-        'Similar images are grouped per source folder; planning only previews, applying writes an undo journal.',
+    'simiu-card-hint': 'Similar images are grouped per source folder; planning only previews, applying writes an undo journal.',
     'simiu-card-title': 'Simiu sets',
     'simiu-clean-empty-label': 'Remove empty set folders on undo',
     'simiu-min-group-label': 'Minimum set size',
@@ -518,6 +521,11 @@ class Labels {
     'status_nothing_to_export': 'There are no results to export',
     'status_open_failed': 'Cannot open { \$path }: { \$error }',
     'status_operation_failed': 'The operation failed, see the messages.',
+    'status_organize_done':
+        'Moved { \$count } files, { \$skipped } were left where they were.',
+    'status_organize_nothing': 'Select a file from a group that has variants.',
+    'status_organize_planned': 'Dry run planned { \$count } moves.',
+    'status_organizing': 'Sorting the groups into folders...',
     'status_paths_updated': 'Path list updated',
     'status_removed_all': 'Removed { \$count } paths',
     'status_removed_partial':
@@ -540,18 +548,20 @@ class Labels {
     'status_stopping': 'Requesting stop...',
     'status_video_done':
         'Optimized { \$count } videos, { \$skipped } were left alone.',
-    'status_video_planned': 'Dry run planned the optimization of { \$count } videos.',
+    'status_video_planned':
+        'Dry run planned the optimization of { \$count } videos.',
     'status_video_running': 'Running the encoder...',
     'video-action-optimize': 'Optimize the videos',
-    'video-card-hint':
-        'The engine decides which selected videos are worth the work and says why the rest were left alone.',
+    'video-card-hint': 'The engine decides which selected videos are worth the work and says why the rest were left alone.',
     'video-card-title': 'Video optimizer',
     'video-codec-label': 'Target codec',
-    'video-command-label': 'Custom encoder command (empty uses the engine default)',
+    'video-command-label':
+        'Custom encoder command (empty uses the engine default)',
     'video-crop-codec-label': 'Codec to re-encode with',
     'video-crop-quality-label': 'Re-encode quality',
     'video-crop-transcode-label': 'Re-encode when cropping',
-    'video-fail-smaller-label': 'Keep the source when the result is not smaller',
+    'video-fail-smaller-label':
+        'Keep the source when the result is not smaller',
     'video-hardware-amf': 'AMF',
     'video-hardware-label': 'Encoder back-end',
     'video-hardware-none': 'CPU only',
