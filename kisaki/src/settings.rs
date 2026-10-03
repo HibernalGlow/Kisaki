@@ -214,3 +214,56 @@ pub fn reset_layout(app: &MainWindow) {
     state.set_source_collapsed(false);
     state.set_analysis_collapsed(false);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::fields::{FieldId, FieldValue};
+
+    #[test]
+    fn layout_numbers_survive_the_json_round_trip() {
+        let settings = KisakiSettings {
+            window_width: 1440,
+            window_height: 900,
+            source_width: 264.0,
+            analysis_width: 312.5,
+            ..Default::default()
+        };
+
+        let raw = serde_json::to_string(&settings).expect("Default settings should serialize");
+        let restored: KisakiSettings = serde_json::from_str(&raw).expect("Serialized settings should deserialize");
+
+        assert_eq!(settings, restored);
+    }
+
+    #[test]
+    fn a_float_window_size_is_rejected_instead_of_truncated() {
+        let raw = serde_json::to_string(&KisakiSettings::default()).expect("Default settings should serialize");
+        assert!(serde_json::from_str::<KisakiSettings>(&raw).is_ok(), "positive control: an untouched file must load");
+
+        let mut damaged: serde_json::Value = serde_json::from_str(&raw).expect("Serialized settings should parse");
+        damaged["window_width"] = serde_json::json!(1280.5);
+        let damaged = damaged.to_string();
+
+        assert!(
+            serde_json::from_str::<KisakiSettings>(&damaged).is_err(),
+            "a fractional window width must not silently become a u32"
+        );
+    }
+
+    #[test]
+    fn stored_field_values_only_replace_known_ids() {
+        let choice = i32::from(FieldId::DupCheckMethod);
+        assert_eq!(FieldId::DupCheckMethod.default_value(), FieldValue::Choice(0), "test input must differ from the default");
+
+        let mut stored = HashMap::new();
+        stored.insert(choice, FieldValue::Choice(3));
+        stored.insert(9999, FieldValue::Text("removed field".to_string()));
+
+        let fields = merge_fields(stored);
+
+        assert_eq!(fields.get(&choice), Some(&FieldValue::Choice(3)));
+        assert!(!fields.contains_key(&9999));
+        assert_eq!(fields.len(), default_fields().len());
+    }
+}
