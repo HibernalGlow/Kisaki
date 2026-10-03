@@ -34,13 +34,40 @@ extension BoardFileOperations on BoardController {
 
   Future<void> acceptConfirm() async {
     final Future<void> Function()? action = _confirmAction;
+    final ConfirmRequest? request = _confirm;
     _confirm = null;
     _confirmAction = null;
-    if (action != null) {
-      await action();
-    } else {
+    if (action == null) {
       publish();
+      return;
     }
+    // Every file verb runs through this hook, so the log records both what was asked and what the
+    // engine came back with, without each verb having to remember to report itself.
+    final Object? asked = request?.args['count'];
+    logActivity(
+      ActivityKind.operation,
+      ActivityLevel.info,
+      Labels.of(
+        'log-operation-started',
+        args: <String, Object>{
+          'action': request == null ? '' : Labels.of(request.titleKey),
+          'count': asked ?? 0,
+        },
+      ),
+    );
+    _operationAffected = null;
+    _operationErrors = null;
+    final String? before = _critical;
+    await action();
+    logActivity(
+      ActivityKind.operation,
+      _critical == null || _critical == before
+          ? ActivityLevel.success
+          : ActivityLevel.error,
+      statusText,
+      affectedCount: _operationAffected,
+      errorCount: _operationErrors,
+    );
   }
 
   /// The engine decides the corrected names, so the request carries the live scan settings and the
@@ -167,6 +194,8 @@ extension BoardFileOperations on BoardController {
           dryRun: dryRun,
         ),
       );
+      _operationAffected = outcome.affected;
+      _operationErrors = outcome.errors;
       _messages = outcome.log.isEmpty
           ? outcome.messages
           : <String>[
