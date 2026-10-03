@@ -293,3 +293,128 @@ class ToggleRow extends StatelessWidget {
     );
   }
 }
+
+/// Text input that owns its controller, so a rebuild during typing cannot reset the caret.
+class BoardField extends StatefulWidget {
+  const BoardField({
+    required this.labelKey,
+    required this.value,
+    required this.onChanged,
+    this.multiline = false,
+    this.enabled = true,
+    super.key,
+  });
+
+  final String labelKey;
+  final String value;
+  final ValueChanged<String> onChanged;
+  final bool multiline;
+  final bool enabled;
+
+  @override
+  State<BoardField> createState() => _BoardFieldState();
+}
+
+class _BoardFieldState extends State<BoardField> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.value,
+  );
+
+  @override
+  void didUpdateWidget(BoardField oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.value != _controller.text) {
+      _controller.value = TextEditingValue(
+        text: widget.value,
+        selection: TextSelection.collapsed(offset: widget.value.length),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return TextField(
+      controller: _controller,
+      enabled: widget.enabled,
+      maxLines: widget.multiline ? 4 : 1,
+      style: BoardTheme.of(context).text.bodyMedium,
+      decoration: InputDecoration(hintText: Labels.of(widget.labelKey)),
+      onChanged: widget.onChanged,
+    );
+  }
+}
+
+/// Square, hairline select. `labelKey` names the field for assistive tech because the section
+/// heading, not a per-field label, is what a sighted reader sees.
+class BoardDropdown<T> extends StatelessWidget {
+  const BoardDropdown({
+    required this.labelKey,
+    required this.values,
+    required this.current,
+    required this.label,
+    required this.onChanged,
+    super.key,
+  });
+
+  final String labelKey;
+  final List<T> values;
+  final T current;
+  final String Function(T value) label;
+  final ValueChanged<T> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      container: true,
+      label: Labels.of(labelKey),
+      child: DropdownButtonFormField<T>(
+        initialValue: current,
+        // Without this the menu keeps its intrinsic width and overflows narrow slots.
+        isExpanded: true,
+        items: <DropdownMenuItem<T>>[
+          for (final T value in values)
+            DropdownMenuItem(value: value, child: Text(label(value))),
+        ],
+        onChanged: (T? value) {
+          if (value != null) {
+            onChanged(value);
+          }
+        },
+      ),
+    );
+  }
+}
+
+/// Outlined section with a micro-heading: the Swiss card, hairline and no elevation.
+class SectionCard extends StatelessWidget {
+  const SectionCard({required this.title, required this.children, super.key});
+
+  final String title;
+  final List<Widget> children;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: BoardTokens.gap),
+      child: FlatCard(
+        child: Padding(
+          padding: const EdgeInsets.all(BoardTokens.gap),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              MicroHeading(title),
+              const SizedBox(height: BoardTokens.gapSmall),
+              ...children,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
