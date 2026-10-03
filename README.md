@@ -10,12 +10,12 @@ other frontend in it are upstream's, and `kisaki/` is what this fork adds.
 
 ## What the fork adds
 
-One crate, and 37 lines outside it.
+One crate, and sixteen lines outside it.
 
 | | |
 |:--|:--|
-| `kisaki/` | 3 744 lines of Rust in 16 files, 2 247 lines of Slint in 12 files |
-| Outside `kisaki/` | `Cargo.toml` (workspace member), `justfile`, `misc/run_checks.sh`, `misc/change_version.py`, `Cargo.lock`, `.github/workflows/kisaki.yml`, plus `data/com.github.hibernerglow.kisaki.desktop` and `.metainfo.xml` |
+| `kisaki/` | 3 975 lines of Rust in 16 files, 2 247 lines of Slint in 12 files |
+| Outside `kisaki/` | `+16 -4` in `Cargo.toml` (workspace member), `justfile`, `misc/run_checks.sh`, `misc/change_version.py`, plus new files `Cargo.lock` entries, `.github/workflows/kisaki.yml`, `data/com.github.hibernerglow.kisaki.desktop` and `.metainfo.xml` |
 | Boundary | `czkawka_core` is never modified to make a UI feature easier, and upstream crates are never restyled - both would destroy future rebases |
 
 Kisaki does not reuse Krokiet's UI. Its Rust side mirrors Krokiet's *mechanisms* (a worker thread per

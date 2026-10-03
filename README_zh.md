@@ -11,12 +11,12 @@
 
 ## 这个 fork 加了什么
 
-一个 crate，以及它之外的 37 行。
+一个 crate，以及它之外的 16 行。
 
 | | |
 |:--|:--|
-| `kisaki/` | 16 个文件 3 744 行 Rust，12 个文件 2 247 行 Slint |
-| `kisaki/` 之外 | `Cargo.toml`（workspace 成员）、`justfile`、`misc/run_checks.sh`、`misc/change_version.py`、`Cargo.lock`、`.github/workflows/kisaki.yml`，以及 `data/com.github.hibernerglow.kisaki.desktop` 与同名 `.metainfo.xml` |
+| `kisaki/` | 16 个文件 3 975 行 Rust，12 个文件 2 247 行 Slint |
+| `kisaki/` 之外 | `+16 -4` 分布在 `Cargo.toml`（workspace 成员）、`justfile`、`misc/run_checks.sh`、`misc/change_version.py`，另有新增的 `Cargo.lock` 条目、`.github/workflows/kisaki.yml`、`data/com.github.hibernerglow.kisaki.desktop` 与同名 `.metainfo.xml` |
 | 边界 | 绝不为了让 UI 功能省事而改 `czkawka_core`，也绝不动手重排上游代码风格，因为两者都会毁掉以后的 rebase |
 
 Kisaki 不复用 Krokiet 的 UI。它的 Rust 侧照搬 Krokiet 的*机制*（每次扫描一个工作线程、`crossbeam`
