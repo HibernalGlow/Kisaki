@@ -609,6 +609,78 @@ void main() {
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );
+
+  test(
+    'the bridge transcodes a video the engine flagged',
+    () async {
+      final root = await Directory.systemTemp.createTemp('kisaki_optimize_');
+      final canonicalRoot = await root.resolveSymbolicLinks();
+      addTearDown(() => root.delete(recursive: true));
+      final clip = File('$canonicalRoot/clip.mp4');
+      final built = await Process.run(_ffmpegBinary, [
+        '-hide_banner',
+        '-loglevel',
+        'error',
+        '-y',
+        '-f',
+        'lavfi',
+        '-i',
+        'testsrc=duration=1:size=160x120:rate=5',
+        '-c:v',
+        'mpeg4',
+        '-q:v',
+        '8',
+        clip.path,
+      ]);
+      expect(built.exitCode, 0, reason: '${built.stdout}${built.stderr}');
+      expect(
+        await _codec(clip.path),
+        'mpeg4',
+        reason: 'the fixture needs a transcode',
+      );
+
+      final dry = await g_actions.optimizeVideos(
+        request: _optimize(clip.path, canonicalRoot, dryRun: true),
+      );
+      expect(
+        (dry.planned, dry.transcoded, dry.failed),
+        (1, 0, 0),
+        reason: '${dry.items}',
+      );
+      expect(
+        dry.items.single.target,
+        '$canonicalRoot/clip.czkawka_optimized.mp4',
+      );
+      expect(
+        File(dry.items.single.target).existsSync(),
+        isFalse,
+        reason: 'a plan writes nothing',
+      );
+      expect(await _codec(clip.path), 'mpeg4');
+
+      final done = await g_actions.optimizeVideos(
+        request: _optimize(
+          clip.path,
+          canonicalRoot,
+          dryRun: false,
+          overwrite: true,
+        ),
+      );
+      expect(
+        (done.transcoded, done.failed, done.skipped),
+        (1, 0, 0),
+        reason: '${done.items}',
+      );
+      expect(done.items.single.sizeAfter, greaterThan(0));
+      expect(
+        await _codec(clip.path),
+        'h264',
+        reason: 'the engine re-encoded the file in place',
+      );
+    },
+    skip: _ffmpeg ? false : 'ffmpeg and ffprobe are needed for this test',
+    timeout: const Timeout(Duration(minutes: 5)),
+  );
 }
 
 Future<List<String>> _badNamePaths(KisakiEngine engine, String rootPath) async {
@@ -716,6 +788,77 @@ g.SimiuApplyRequest _simiu(
   return g.SimiuApplyRequest(
     mode: g.SimiuMode.move,
     operations: operations,
+    dryRun: dryRun,
+  );
+}
+
+/// The optimizer drives the same ffmpeg the engine uses, so the fixture and the codec check go
+/// through the real tools and the test is skipped, not faked, when they are absent.
+const _ffmpegBinary = 'ffmpeg';
+
+final bool _ffmpeg =
+    Process.runSync(_ffmpegBinary, const ['-version']).exitCode == 0 &&
+    Process.runSync('ffprobe', const ['-version']).exitCode == 0;
+
+Future<String> _codec(String path) async {
+  final probe = await Process.run('ffprobe', [
+    '-hide_banner',
+    '-loglevel',
+    'error',
+    '-select_streams',
+    'v:0',
+    '-show_entries',
+    'stream=codec_name',
+    '-of',
+    'csv=p=0',
+    path,
+  ]);
+  expect(probe.exitCode, 0, reason: '${probe.stdout}${probe.stderr}');
+  return probe.stdout.toString().trim();
+}
+
+/// An optimization request for one clip. The scan block only names the mode, so every other option
+/// keeps its engine default.
+g.OptimizeRequest _optimize(
+  String clip,
+  String root, {
+  required bool dryRun,
+  bool overwrite = false,
+}) {
+  return g.OptimizeRequest(
+    scan: g.ScanRequest(
+      tool: 'video_optimizer',
+      included: [root],
+      reference: const [],
+      excludedPaths: const [],
+      excludedItems: const [],
+      allowedExtensions: const [],
+      excludedExtensions: const [],
+      recursive: false,
+      useCache: false,
+      minSizeKib: '',
+      maxSizeKib: '',
+      fields: const [
+        g.FieldValue(
+          id: 'vid_opt_mode',
+          value: g.FieldPayload.choice('Transcode'),
+        ),
+      ],
+    ),
+    paths: [clip],
+    transcode: g.TranscodeOptions(
+      codec: 'h264',
+      hardwareEncoder: 'none',
+      quality: 28,
+      failIfNotSmaller: false,
+      overwriteOriginal: overwrite,
+      limitVideoSize: false,
+      maxWidth: 0,
+      maxHeight: 0,
+      noiseReduction: 'none',
+      noiseReductionStrength: 0,
+      customFfmpegCommand: '',
+    ),
     dryRun: dryRun,
   );
 }
