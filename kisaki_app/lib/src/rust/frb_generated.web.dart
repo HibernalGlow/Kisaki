@@ -46,6 +46,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ExportRequest dco_decode_box_autoadd_export_request(dynamic raw);
 
   @protected
+  MoveRequest dco_decode_box_autoadd_move_request(dynamic raw);
+
+  @protected
   ProgressUpdate dco_decode_box_autoadd_progress_update(dynamic raw);
 
   @protected
@@ -59,6 +62,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ColumnDef dco_decode_column_def(dynamic raw);
+
+  @protected
+  ConflictPolicy dco_decode_conflict_policy(dynamic raw);
 
   @protected
   DeleteOutcome dco_decode_delete_outcome(dynamic raw);
@@ -106,6 +112,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<FieldValue> dco_decode_list_field_value(dynamic raw);
 
   @protected
+  List<MoveItem> dco_decode_list_move_item(dynamic raw);
+
+  @protected
   Int64List dco_decode_list_prim_i_64_strict(dynamic raw);
 
   @protected
@@ -119,6 +128,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ToolSpec> dco_decode_list_tool_spec(dynamic raw);
+
+  @protected
+  MoveAction dco_decode_move_action(dynamic raw);
+
+  @protected
+  MoveItem dco_decode_move_item(dynamic raw);
+
+  @protected
+  MoveOutcome dco_decode_move_outcome(dynamic raw);
+
+  @protected
+  MoveRequest dco_decode_move_request(dynamic raw);
+
+  @protected
+  MoveStatus dco_decode_move_status(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -184,6 +208,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  MoveRequest sse_decode_box_autoadd_move_request(SseDeserializer deserializer);
+
+  @protected
   ProgressUpdate sse_decode_box_autoadd_progress_update(
     SseDeserializer deserializer,
   );
@@ -201,6 +228,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ColumnDef sse_decode_column_def(SseDeserializer deserializer);
+
+  @protected
+  ConflictPolicy sse_decode_conflict_policy(SseDeserializer deserializer);
 
   @protected
   DeleteOutcome sse_decode_delete_outcome(SseDeserializer deserializer);
@@ -248,6 +278,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<FieldValue> sse_decode_list_field_value(SseDeserializer deserializer);
 
   @protected
+  List<MoveItem> sse_decode_list_move_item(SseDeserializer deserializer);
+
+  @protected
   Int64List sse_decode_list_prim_i_64_strict(SseDeserializer deserializer);
 
   @protected
@@ -261,6 +294,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ToolSpec> sse_decode_list_tool_spec(SseDeserializer deserializer);
+
+  @protected
+  MoveAction sse_decode_move_action(SseDeserializer deserializer);
+
+  @protected
+  MoveItem sse_decode_move_item(SseDeserializer deserializer);
+
+  @protected
+  MoveOutcome sse_decode_move_outcome(SseDeserializer deserializer);
+
+  @protected
+  MoveRequest sse_decode_move_request(SseDeserializer deserializer);
+
+  @protected
+  MoveStatus sse_decode_move_status(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -332,6 +380,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_move_request(
+    MoveRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_progress_update(
     ProgressUpdate self,
     SseSerializer serializer,
@@ -357,6 +411,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_column_def(ColumnDef self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_conflict_policy(
+    ConflictPolicy self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_delete_outcome(DeleteOutcome self, SseSerializer serializer);
@@ -410,6 +470,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_move_item(List<MoveItem> self, SseSerializer serializer);
+
+  @protected
   void sse_encode_list_prim_i_64_strict(
     Int64List self,
     SseSerializer serializer,
@@ -432,6 +495,21 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_list_tool_spec(List<ToolSpec> self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_move_action(MoveAction self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_move_item(MoveItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_move_outcome(MoveOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_move_request(MoveRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_move_status(MoveStatus self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
