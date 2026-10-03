@@ -13,7 +13,10 @@ import 'types.dart';
 Stream<ScanEvent> startScan({required ScanRequest request}) =>
     RustLib.instance.api.crateApiScanStartScan(request: request);
 
-/// Asks the running scan to stop at the next checkpoint; the partial result is still delivered.
+/// Asks whatever is in flight to stop at its next checkpoint: a scan keeps its partial result, and a
+/// file operation reports the rows it never attempted as stopped. Returns false when nothing runs.
 bool requestStop() => RustLib.instance.api.crateApiScanRequestStop();
 
+/// Whether a scan is running. File operations are not scans: they are serialized on their own stop
+/// flag, so a second one is refused rather than started.
 bool isScanning() => RustLib.instance.api.crateApiScanIsScanning();
