@@ -331,6 +331,115 @@ class ExportRequest {
   final bool grouped;
 }
 
+/// The names the engine considers correct, applied to the two scanners that can fix them.
+class RenameRequest {
+  const RenameRequest({
+    required this.tool,
+    required this.scan,
+    required this.paths,
+    required this.dryRun,
+  });
+
+  final String tool;
+  final ScanRequest scan;
+  final List<String> paths;
+  final bool dryRun;
+}
+
+enum RenameStatus { renamed, planned, failed, skipped }
+
+class RenameItem {
+  const RenameItem({
+    required this.from,
+    required this.to,
+    required this.status,
+    required this.detail,
+  });
+
+  final String from;
+  final String to;
+  final RenameStatus status;
+  final String detail;
+}
+
+class RenameOutcome {
+  const RenameOutcome({
+    required this.renamed,
+    required this.planned,
+    required this.failed,
+    required this.skipped,
+    required this.items,
+    required this.messages,
+  });
+
+  final int renamed;
+  final int planned;
+  final int failed;
+  final int skipped;
+  final List<RenameItem> items;
+  final String messages;
+}
+
+enum MoveAction { move, copy }
+
+enum MoveConflictPolicy { skip, overwrite, rename, error }
+
+enum MoveStatus { moved, copied, planned, skipped, failed }
+
+class MoveItem {
+  const MoveItem({
+    required this.from,
+    required this.to,
+    required this.status,
+    required this.detail,
+  });
+
+  final String from;
+  final String to;
+  final MoveStatus status;
+  final String detail;
+}
+
+/// Move and copy share a request because the engine decides per item, and the dry run reports the
+/// same plan the real run would follow.
+class MoveRequest {
+  const MoveRequest({
+    required this.paths,
+    required this.destination,
+    required this.action,
+    required this.conflict,
+    required this.preserveStructure,
+    required this.dryRun,
+  });
+
+  final List<String> paths;
+  final String destination;
+  final MoveAction action;
+  final MoveConflictPolicy conflict;
+  final bool preserveStructure;
+  final bool dryRun;
+}
+
+class MoveOutcome {
+  const MoveOutcome({
+    required this.moved,
+    required this.copied,
+    required this.planned,
+    required this.skipped,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  final int moved;
+  final int copied;
+  final int planned;
+  final int skipped;
+  final int failed;
+  final List<MoveItem> items;
+  final String messages;
+}
+
 class EngineInfo {
   const EngineInfo({
     required this.coreVersion,
