@@ -222,6 +222,23 @@ class StubEngine implements KisakiEngine {
     return simiuUndoOutcome;
   }
 
+  final List<ExifRequest> exifCalls = <ExifRequest>[];
+  ExifOutcome exifOutcome = const ExifOutcome(
+    stripped: 0,
+    candidates: 0,
+    planned: 0,
+    skipped: 0,
+    failed: 0,
+    items: <ExifItem>[],
+    messages: '',
+  );
+
+  @override
+  Future<ExifOutcome> cleanExif(ExifRequest request) async {
+    exifCalls.add(request);
+    return exifOutcome;
+  }
+
   @override
   Future<String> exportResults(ExportRequest request) async {
     exports.add(request);

@@ -31,4 +31,6 @@ abstract interface class KisakiEngine {
   Future<SimiuApplyOutcome> applySimiuSet(SimiuApplyRequest request);
 
   Future<SimiuUndoOutcome> undoSimiuSet(SimiuUndoRequest request);
+
+  Future<ExifOutcome> cleanExif(ExifRequest request);
 }
