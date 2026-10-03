@@ -18,6 +18,8 @@ class AnalysisPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
+    final String tool = controller.tool?.id ?? '';
+    final bool canRename = tool == 'bad_names' || tool == 'bad_extensions';
     return ListView(
       padding: const EdgeInsets.all(BoardTokens.section),
       children: <Widget>[
@@ -116,6 +118,37 @@ class AnalysisPanel extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: BoardTokens.gap),
+        Row(
+          children: <Widget>[
+            Expanded(
+              child: BoardAction(
+                key: const Key('fix-names'),
+                labelKey: 'action-fix-names',
+                icon: Icons.drive_file_rename_outline_rounded,
+                onPressed:
+                    canRename &&
+                        controller.selectedCount > 0 &&
+                        !controller.actionRunning
+                    ? controller.requestRename
+                    : null,
+              ),
+            ),
+            const SizedBox(width: BoardTokens.gap),
+            Expanded(
+              child: BoardAction(
+                key: const Key('move-selection'),
+                labelKey: 'action-move',
+                icon: Icons.drive_folder_upload_outlined,
+                onPressed:
+                    controller.selectedCount == 0 || controller.actionRunning
+                    ? null
+                    : () => showMoveSheet(context, controller),
+              ),
+            ),
+          ],
+        ),
+
         const SizedBox(height: BoardTokens.gap * 2),
         if (controller.messages.isNotEmpty ||
             controller.critical != null) ...<Widget>[
@@ -199,6 +232,79 @@ class _PlanBlock extends StatelessWidget {
               color: palette.fgFaint,
             ),
           ),
+      ],
+    );
+  }
+}
+
+/// The reference asks for a destination and whether to move or copy, then confirms through the same
+/// dry-run gate as deletion.
+Future<void> showMoveSheet(BuildContext context, BoardController controller) =>
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => _MoveSheet(controller: controller),
+    );
+
+class _MoveSheet extends StatefulWidget {
+  const _MoveSheet({required this.controller});
+
+  final BoardController controller;
+
+  @override
+  State<_MoveSheet> createState() => _MoveSheetState();
+}
+
+class _MoveSheetState extends State<_MoveSheet> {
+  String _destination = '';
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(Labels.of('move-sheet-title')),
+      content: SizedBox(
+        width: 320,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            MicroHeading(Labels.of('move-destination')),
+            const SizedBox(height: BoardTokens.gapSmall),
+            BoardField(
+              key: const Key('move-destination-field'),
+              labelKey: 'move-destination',
+              value: _destination,
+              onChanged: (String value) => setState(() => _destination = value),
+            ),
+          ],
+        ),
+      ),
+      actions: <Widget>[
+        BoardAction(
+          key: const Key('move-sheet-cancel'),
+          labelKey: 'confirm-cancel',
+          dense: true,
+          onPressed: () => Navigator.of(context).pop(),
+        ),
+        BoardAction(
+          key: const Key('move-sheet-move'),
+          labelKey: 'action-move-move',
+          dense: true,
+          onPressed: () {
+            final String destination = _destination;
+            Navigator.of(context).pop();
+            widget.controller.requestMove(destination, MoveAction.move);
+          },
+        ),
+        BoardAction(
+          key: const Key('move-sheet-copy'),
+          labelKey: 'action-move-copy',
+          dense: true,
+          onPressed: () {
+            final String destination = _destination;
+            Navigator.of(context).pop();
+            widget.controller.requestMove(destination, MoveAction.copy);
+          },
+        ),
       ],
     );
   }

@@ -23,4 +23,8 @@ abstract interface class KisakiEngine {
   Future<DeleteOutcome> deleteFiles(DeleteRequest request);
 
   Future<String> exportResults(ExportRequest request);
+
+  Future<RenameOutcome> renameFiles(RenameRequest request);
+
+  Future<MoveOutcome> moveFiles(MoveRequest request);
 }

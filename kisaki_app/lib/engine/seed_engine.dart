@@ -181,6 +181,54 @@ class SeedEngine implements KisakiEngine {
   }
 
   @override
+  Future<RenameOutcome> renameFiles(RenameRequest request) async {
+    // The engine decides the new names, so a seed answer reports the plan and touches nothing.
+    final List<RenameItem> items = <RenameItem>[
+      for (final String path in request.paths)
+        RenameItem(
+          from: path,
+          to: path,
+          status: request.dryRun ? RenameStatus.planned : RenameStatus.skipped,
+          detail: 'seed engine',
+        ),
+    ];
+    return RenameOutcome(
+      renamed: 0,
+      planned: request.dryRun ? request.paths.length : 0,
+      failed: 0,
+      skipped: request.dryRun ? 0 : request.paths.length,
+      items: items,
+      messages: request.dryRun
+          ? 'dry run: ${request.paths.length} seed paths planned, nothing renamed'
+          : 'seed engine: no file is renamed',
+    );
+  }
+
+  @override
+  Future<MoveOutcome> moveFiles(MoveRequest request) async {
+    final List<MoveItem> items = <MoveItem>[
+      for (final String path in request.paths)
+        MoveItem(
+          from: path,
+          to: '${request.destination}/${path.split('/').last}',
+          status: request.dryRun ? MoveStatus.planned : MoveStatus.skipped,
+          detail: 'seed engine',
+        ),
+    ];
+    return MoveOutcome(
+      moved: 0,
+      copied: 0,
+      planned: request.dryRun ? request.paths.length : 0,
+      skipped: request.dryRun ? 0 : request.paths.length,
+      failed: 0,
+      items: items,
+      messages: request.dryRun
+          ? 'dry run: ${request.paths.length} seed paths planned, nothing moved'
+          : 'seed engine: no file is moved',
+    );
+  }
+
+  @override
   Future<String> exportResults(ExportRequest request) async => request.path;
 
   /// Roots the scan got through at the reported percentage, always at least one.
