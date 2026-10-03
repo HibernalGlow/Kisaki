@@ -6,6 +6,7 @@ members = [
     "cedinia",
     "krokiet",
     "kisaki",
+    "kisaki_app/rust",
 ]
 exclude = [
     "misc/test_read_perf",
