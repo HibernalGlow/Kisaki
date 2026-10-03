@@ -249,6 +249,52 @@ pub struct MoveOutcome {
     pub messages: String,
 }
 
+/// Strips EXIF tags from the selection. `override_file` writes back over the original; the default
+/// leaves it untouched and writes a side file, because discarding metadata is not reversible.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExifRequest {
+    /// The scan block that produced the rows, so the engine sees the same options and folders.
+    pub scan: ScanRequest,
+    pub paths: Vec<String>,
+    pub override_file: bool,
+    pub dry_run: bool,
+}
+
+/// What happened to one selected file.
+#[derive(Debug, Clone, PartialEq)]
+pub enum ExifStatus {
+    /// Written over the original.
+    Stripped,
+    /// Original untouched, cleaned copy written next to it.
+    Candidate,
+    Planned,
+    /// Nothing to remove, or the engine did not report the file.
+    Skipped,
+    Failed,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExifItem {
+    pub path: String,
+    /// Where the result was written; empty while a file is skipped.
+    pub target: String,
+    pub tags_removed: i32,
+    pub status: ExifStatus,
+    pub detail: String,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct ExifOutcome {
+    pub stripped: i32,
+    pub candidates: i32,
+    pub planned: i32,
+    pub skipped: i32,
+    pub failed: i32,
+    /// One entry per selected path, in request order.
+    pub items: Vec<ExifItem>,
+    pub messages: String,
+}
+
 #[derive(Debug, Clone, PartialEq)]
 pub struct EngineInfo {
     pub core_version: String,

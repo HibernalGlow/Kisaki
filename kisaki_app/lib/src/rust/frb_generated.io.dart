@@ -41,6 +41,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   DeleteRequest dco_decode_box_autoadd_delete_request(dynamic raw);
 
   @protected
+  ExifRequest dco_decode_box_autoadd_exif_request(dynamic raw);
+
+  @protected
   ExportRequest dco_decode_box_autoadd_export_request(dynamic raw);
 
   @protected
@@ -74,6 +77,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EngineInfo dco_decode_engine_info(dynamic raw);
 
   @protected
+  ExifItem dco_decode_exif_item(dynamic raw);
+
+  @protected
+  ExifOutcome dco_decode_exif_outcome(dynamic raw);
+
+  @protected
+  ExifRequest dco_decode_exif_request(dynamic raw);
+
+  @protected
+  ExifStatus dco_decode_exif_status(dynamic raw);
+
+  @protected
   ExportRequest dco_decode_export_request(dynamic raw);
 
   @protected
@@ -102,6 +117,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ColumnDef> dco_decode_list_column_def(dynamic raw);
+
+  @protected
+  List<ExifItem> dco_decode_list_exif_item(dynamic raw);
 
   @protected
   List<FieldDef> dco_decode_list_field_def(dynamic raw);
@@ -201,6 +219,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  ExifRequest sse_decode_box_autoadd_exif_request(SseDeserializer deserializer);
+
+  @protected
   ExportRequest sse_decode_box_autoadd_export_request(
     SseDeserializer deserializer,
   );
@@ -240,6 +261,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   EngineInfo sse_decode_engine_info(SseDeserializer deserializer);
 
   @protected
+  ExifItem sse_decode_exif_item(SseDeserializer deserializer);
+
+  @protected
+  ExifOutcome sse_decode_exif_outcome(SseDeserializer deserializer);
+
+  @protected
+  ExifRequest sse_decode_exif_request(SseDeserializer deserializer);
+
+  @protected
+  ExifStatus sse_decode_exif_status(SseDeserializer deserializer);
+
+  @protected
   ExportRequest sse_decode_export_request(SseDeserializer deserializer);
 
   @protected
@@ -268,6 +301,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<ColumnDef> sse_decode_list_column_def(SseDeserializer deserializer);
+
+  @protected
+  List<ExifItem> sse_decode_list_exif_item(SseDeserializer deserializer);
 
   @protected
   List<FieldDef> sse_decode_list_field_def(SseDeserializer deserializer);
@@ -372,6 +408,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_box_autoadd_exif_request(
+    ExifRequest self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_export_request(
     ExportRequest self,
     SseSerializer serializer,
@@ -426,6 +468,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_engine_info(EngineInfo self, SseSerializer serializer);
 
   @protected
+  void sse_encode_exif_item(ExifItem self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_exif_outcome(ExifOutcome self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_exif_request(ExifRequest self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_exif_status(ExifStatus self, SseSerializer serializer);
+
+  @protected
   void sse_encode_export_request(ExportRequest self, SseSerializer serializer);
 
   @protected
@@ -457,6 +511,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<ColumnDef> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_list_exif_item(List<ExifItem> self, SseSerializer serializer);
 
   @protected
   void sse_encode_list_field_def(List<FieldDef> self, SseSerializer serializer);

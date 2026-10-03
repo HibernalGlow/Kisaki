@@ -73,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.12.0';
 
   @override
-  int get rustContentHash => 31292044;
+  int get rustContentHash => 716275820;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -85,6 +85,8 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
 }
 
 abstract class RustLibApi extends BaseApi {
+  Future<ExifOutcome> crateApiActionsCleanExif({required ExifRequest request});
+
   List<FieldValue> crateApiSchemaDefaultFields({required String tool});
 
   Future<DeleteOutcome> crateApiActionsDeleteFiles({
@@ -123,13 +125,41 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   });
 
   @override
+  Future<ExifOutcome> crateApiActionsCleanExif({required ExifRequest request}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_exif_request(request, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 1,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_exif_outcome,
+          decodeErrorData: sse_decode_String,
+        ),
+        constMeta: kCrateApiActionsCleanExifConstMeta,
+        argValues: [request],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiActionsCleanExifConstMeta =>
+      const TaskConstMeta(debugName: "clean_exif", argNames: ["request"]);
+
+  @override
   List<FieldValue> crateApiSchemaDefaultFields({required String tool}) {
     return handler.executeSync(
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(tool, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 1)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 2)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_field_value,
@@ -157,7 +187,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 2,
+            funcId: 3,
             port: port_,
           );
         },
@@ -181,7 +211,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 3)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 4)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_engine_info,
@@ -209,7 +239,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 4,
+            funcId: 5,
             port: port_,
           );
         },
@@ -234,7 +264,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(tool, serializer);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 5)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 6)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_field_def,
@@ -259,7 +289,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
@@ -283,7 +313,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 7)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -305,7 +335,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 8)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 9)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_list_tool_spec,
@@ -331,7 +361,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 10,
             port: port_,
           );
         },
@@ -361,7 +391,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 11,
             port: port_,
           );
         },
@@ -385,7 +415,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       SyncTask(
         callFfi: () {
           final serializer = SseSerializer(generalizedFrbRustBinding);
-          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 11)!;
+          return pdeCallFfi(generalizedFrbRustBinding, serializer, funcId: 12)!;
         },
         codec: SseCodec(
           decodeSuccessData: sse_decode_bool,
@@ -414,7 +444,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 12,
+              funcId: 13,
               port: port_,
             );
           },
@@ -464,6 +494,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   DeleteRequest dco_decode_box_autoadd_delete_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_delete_request(raw);
+  }
+
+  @protected
+  ExifRequest dco_decode_box_autoadd_exif_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_exif_request(raw);
   }
 
   @protected
@@ -567,6 +603,58 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExifItem dco_decode_exif_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return ExifItem(
+      path: dco_decode_String(arr[0]),
+      target: dco_decode_String(arr[1]),
+      tagsRemoved: dco_decode_i_32(arr[2]),
+      status: dco_decode_exif_status(arr[3]),
+      detail: dco_decode_String(arr[4]),
+    );
+  }
+
+  @protected
+  ExifOutcome dco_decode_exif_outcome(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 7)
+      throw Exception('unexpected arr length: expect 7 but see ${arr.length}');
+    return ExifOutcome(
+      stripped: dco_decode_i_32(arr[0]),
+      candidates: dco_decode_i_32(arr[1]),
+      planned: dco_decode_i_32(arr[2]),
+      skipped: dco_decode_i_32(arr[3]),
+      failed: dco_decode_i_32(arr[4]),
+      items: dco_decode_list_exif_item(arr[5]),
+      messages: dco_decode_String(arr[6]),
+    );
+  }
+
+  @protected
+  ExifRequest dco_decode_exif_request(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return ExifRequest(
+      scan: dco_decode_scan_request(arr[0]),
+      paths: dco_decode_list_String(arr[1]),
+      overrideFile: dco_decode_bool(arr[2]),
+      dryRun: dco_decode_bool(arr[3]),
+    );
+  }
+
+  @protected
+  ExifStatus dco_decode_exif_status(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return ExifStatus.values[raw as int];
+  }
+
+  @protected
   ExportRequest dco_decode_export_request(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
@@ -662,6 +750,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<ColumnDef> dco_decode_list_column_def(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_column_def).toList();
+  }
+
+  @protected
+  List<ExifItem> dco_decode_list_exif_item(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_exif_item).toList();
   }
 
   @protected
@@ -988,6 +1082,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExifRequest sse_decode_box_autoadd_exif_request(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_exif_request(deserializer));
+  }
+
+  @protected
   ExportRequest sse_decode_box_autoadd_export_request(
     SseDeserializer deserializer,
   ) {
@@ -1107,6 +1209,66 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  ExifItem sse_decode_exif_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_path = sse_decode_String(deserializer);
+    var var_target = sse_decode_String(deserializer);
+    var var_tagsRemoved = sse_decode_i_32(deserializer);
+    var var_status = sse_decode_exif_status(deserializer);
+    var var_detail = sse_decode_String(deserializer);
+    return ExifItem(
+      path: var_path,
+      target: var_target,
+      tagsRemoved: var_tagsRemoved,
+      status: var_status,
+      detail: var_detail,
+    );
+  }
+
+  @protected
+  ExifOutcome sse_decode_exif_outcome(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_stripped = sse_decode_i_32(deserializer);
+    var var_candidates = sse_decode_i_32(deserializer);
+    var var_planned = sse_decode_i_32(deserializer);
+    var var_skipped = sse_decode_i_32(deserializer);
+    var var_failed = sse_decode_i_32(deserializer);
+    var var_items = sse_decode_list_exif_item(deserializer);
+    var var_messages = sse_decode_String(deserializer);
+    return ExifOutcome(
+      stripped: var_stripped,
+      candidates: var_candidates,
+      planned: var_planned,
+      skipped: var_skipped,
+      failed: var_failed,
+      items: var_items,
+      messages: var_messages,
+    );
+  }
+
+  @protected
+  ExifRequest sse_decode_exif_request(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_scan = sse_decode_scan_request(deserializer);
+    var var_paths = sse_decode_list_String(deserializer);
+    var var_overrideFile = sse_decode_bool(deserializer);
+    var var_dryRun = sse_decode_bool(deserializer);
+    return ExifRequest(
+      scan: var_scan,
+      paths: var_paths,
+      overrideFile: var_overrideFile,
+      dryRun: var_dryRun,
+    );
+  }
+
+  @protected
+  ExifStatus sse_decode_exif_status(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return ExifStatus.values[inner];
+  }
+
+  @protected
   ExportRequest sse_decode_export_request(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_tool = sse_decode_String(deserializer);
@@ -1221,6 +1383,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var ans_ = <ColumnDef>[];
     for (var idx_ = 0; idx_ < len_; ++idx_) {
       ans_.add(sse_decode_column_def(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  List<ExifItem> sse_decode_list_exif_item(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <ExifItem>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_exif_item(deserializer));
     }
     return ans_;
   }
@@ -1651,6 +1825,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_exif_request(
+    ExifRequest self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_exif_request(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_export_request(
     ExportRequest self,
     SseSerializer serializer,
@@ -1752,6 +1935,43 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_exif_item(ExifItem self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.path, serializer);
+    sse_encode_String(self.target, serializer);
+    sse_encode_i_32(self.tagsRemoved, serializer);
+    sse_encode_exif_status(self.status, serializer);
+    sse_encode_String(self.detail, serializer);
+  }
+
+  @protected
+  void sse_encode_exif_outcome(ExifOutcome self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.stripped, serializer);
+    sse_encode_i_32(self.candidates, serializer);
+    sse_encode_i_32(self.planned, serializer);
+    sse_encode_i_32(self.skipped, serializer);
+    sse_encode_i_32(self.failed, serializer);
+    sse_encode_list_exif_item(self.items, serializer);
+    sse_encode_String(self.messages, serializer);
+  }
+
+  @protected
+  void sse_encode_exif_request(ExifRequest self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_scan_request(self.scan, serializer);
+    sse_encode_list_String(self.paths, serializer);
+    sse_encode_bool(self.overrideFile, serializer);
+    sse_encode_bool(self.dryRun, serializer);
+  }
+
+  @protected
+  void sse_encode_exif_status(ExifStatus self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
   void sse_encode_export_request(ExportRequest self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_String(self.tool, serializer);
@@ -1843,6 +2063,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.length, serializer);
     for (final item in self) {
       sse_encode_column_def(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_exif_item(
+    List<ExifItem> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_exif_item(item, serializer);
     }
   }
 

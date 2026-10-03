@@ -1,7 +1,7 @@
 use flutter_rust_bridge::frb;
 
-use crate::api::types::{DeleteOutcome, DeleteRequest, ExportRequest, MoveOutcome, MoveRequest, RenameOutcome, RenameRequest};
-use crate::engine::{fix, ops, relocate, runner};
+use crate::api::types::{DeleteOutcome, DeleteRequest, ExifOutcome, ExifRequest, ExportRequest, MoveOutcome, MoveRequest, RenameOutcome, RenameRequest};
+use crate::engine::{exif, fix, ops, relocate, runner};
 
 /// Deletes or trashes the selected rows through the engine's own file operations, so trash
 /// behaviour matches every other frontend. Dry run plans without touching the filesystem.
@@ -29,4 +29,11 @@ pub async fn rename_files(request: RenameRequest) -> Result<RenameOutcome, Strin
 #[frb]
 pub async fn move_files(request: MoveRequest) -> Result<MoveOutcome, String> {
     runner::blocking(move || relocate::apply(&request)).await
+}
+
+/// Strips EXIF tags from the selected photos through the engine's own remover. The original file is
+/// left alone by default and the cleaned copy is written beside it; `override_file` replaces it.
+#[frb]
+pub async fn clean_exif(request: ExifRequest) -> Result<ExifOutcome, String> {
+    runner::blocking(move || exif::strip(&request)).await
 }

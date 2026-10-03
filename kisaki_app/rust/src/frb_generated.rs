@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 31292044;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 716275820;
 
 // Section: executor
 
@@ -46,6 +46,35 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__actions__clean_exif_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "clean_exif",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::types::ExifRequest>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::actions::clean_exif(api_request).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__schema__default_fields_impl(
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
     rust_vec_len_: i32,
@@ -469,6 +498,77 @@ impl SseDecode for crate::api::types::EngineInfo {
     }
 }
 
+impl SseDecode for crate::api::types::ExifItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_path = <String>::sse_decode(deserializer);
+        let mut var_target = <String>::sse_decode(deserializer);
+        let mut var_tagsRemoved = <i32>::sse_decode(deserializer);
+        let mut var_status = <crate::api::types::ExifStatus>::sse_decode(deserializer);
+        let mut var_detail = <String>::sse_decode(deserializer);
+        return crate::api::types::ExifItem {
+            path: var_path,
+            target: var_target,
+            tags_removed: var_tagsRemoved,
+            status: var_status,
+            detail: var_detail,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::ExifOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_stripped = <i32>::sse_decode(deserializer);
+        let mut var_candidates = <i32>::sse_decode(deserializer);
+        let mut var_planned = <i32>::sse_decode(deserializer);
+        let mut var_skipped = <i32>::sse_decode(deserializer);
+        let mut var_failed = <i32>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::types::ExifItem>>::sse_decode(deserializer);
+        let mut var_messages = <String>::sse_decode(deserializer);
+        return crate::api::types::ExifOutcome {
+            stripped: var_stripped,
+            candidates: var_candidates,
+            planned: var_planned,
+            skipped: var_skipped,
+            failed: var_failed,
+            items: var_items,
+            messages: var_messages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::ExifRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_scan = <crate::api::types::ScanRequest>::sse_decode(deserializer);
+        let mut var_paths = <Vec<String>>::sse_decode(deserializer);
+        let mut var_overrideFile = <bool>::sse_decode(deserializer);
+        let mut var_dryRun = <bool>::sse_decode(deserializer);
+        return crate::api::types::ExifRequest {
+            scan: var_scan,
+            paths: var_paths,
+            override_file: var_overrideFile,
+            dry_run: var_dryRun,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::ExifStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::ExifStatus::Stripped,
+            1 => crate::api::types::ExifStatus::Candidate,
+            2 => crate::api::types::ExifStatus::Planned,
+            3 => crate::api::types::ExifStatus::Skipped,
+            4 => crate::api::types::ExifStatus::Failed,
+            _ => unreachable!("Invalid variant for ExifStatus: {}", inner),
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::ExportRequest {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -603,6 +703,18 @@ impl SseDecode for Vec<crate::api::types::ColumnDef> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<crate::api::types::ColumnDef>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::types::ExifItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::types::ExifItem>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1041,12 +1153,13 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        2 => wire__crate__api__actions__delete_files_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__actions__move_files_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire__crate__api__actions__clean_exif_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__actions__delete_files_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__actions__move_files_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1059,12 +1172,12 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__schema__default_fields_impl(ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__info__engine_info_impl(ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
+        2 => wire__crate__api__schema__default_fields_impl(ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__info__engine_info_impl(ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1160,6 +1273,83 @@ impl flutter_rust_bridge::IntoDart for crate::api::types::EngineInfo {
 impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::EngineInfo {}
 impl flutter_rust_bridge::IntoIntoDart<crate::api::types::EngineInfo> for crate::api::types::EngineInfo {
     fn into_into_dart(self) -> crate::api::types::EngineInfo {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::ExifItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.path.into_into_dart().into_dart(),
+            self.target.into_into_dart().into_dart(),
+            self.tags_removed.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ExifItem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ExifItem> for crate::api::types::ExifItem {
+    fn into_into_dart(self) -> crate::api::types::ExifItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::ExifOutcome {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.stripped.into_into_dart().into_dart(),
+            self.candidates.into_into_dart().into_dart(),
+            self.planned.into_into_dart().into_dart(),
+            self.skipped.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.messages.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ExifOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ExifOutcome> for crate::api::types::ExifOutcome {
+    fn into_into_dart(self) -> crate::api::types::ExifOutcome {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::ExifRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.scan.into_into_dart().into_dart(),
+            self.paths.into_into_dart().into_dart(),
+            self.override_file.into_into_dart().into_dart(),
+            self.dry_run.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ExifRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ExifRequest> for crate::api::types::ExifRequest {
+    fn into_into_dart(self) -> crate::api::types::ExifRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::ExifStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Stripped => 0.into_dart(),
+            Self::Candidate => 1.into_dart(),
+            Self::Planned => 2.into_dart(),
+            Self::Skipped => 3.into_dart(),
+            Self::Failed => 4.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::ExifStatus {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ExifStatus> for crate::api::types::ExifStatus {
+    fn into_into_dart(self) -> crate::api::types::ExifStatus {
         self
     }
 }
@@ -1645,6 +1835,59 @@ impl SseEncode for crate::api::types::EngineInfo {
     }
 }
 
+impl SseEncode for crate::api::types::ExifItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.path, serializer);
+        <String>::sse_encode(self.target, serializer);
+        <i32>::sse_encode(self.tags_removed, serializer);
+        <crate::api::types::ExifStatus>::sse_encode(self.status, serializer);
+        <String>::sse_encode(self.detail, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::ExifOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.stripped, serializer);
+        <i32>::sse_encode(self.candidates, serializer);
+        <i32>::sse_encode(self.planned, serializer);
+        <i32>::sse_encode(self.skipped, serializer);
+        <i32>::sse_encode(self.failed, serializer);
+        <Vec<crate::api::types::ExifItem>>::sse_encode(self.items, serializer);
+        <String>::sse_encode(self.messages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::ExifRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::types::ScanRequest>::sse_encode(self.scan, serializer);
+        <Vec<String>>::sse_encode(self.paths, serializer);
+        <bool>::sse_encode(self.override_file, serializer);
+        <bool>::sse_encode(self.dry_run, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::ExifStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::ExifStatus::Stripped => 0,
+                crate::api::types::ExifStatus::Candidate => 1,
+                crate::api::types::ExifStatus::Planned => 2,
+                crate::api::types::ExifStatus::Skipped => 3,
+                crate::api::types::ExifStatus::Failed => 4,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
 impl SseEncode for crate::api::types::ExportRequest {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1763,6 +2006,16 @@ impl SseEncode for Vec<crate::api::types::ColumnDef> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <crate::api::types::ColumnDef>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::types::ExifItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::types::ExifItem>::sse_encode(item, serializer);
         }
     }
 }
