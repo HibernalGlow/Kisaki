@@ -372,6 +372,27 @@ fn register_cache_root() {
 }
 
 /// The shape of a request with nothing selected, which is refused before any folder is read.
+/// The stopped branch of `gate` is where a stopped optimize run is decided, and it is reached
+/// before any ffmpeg call, so this covers it without a clip or a toolchain.
+#[test]
+fn a_stopped_optimize_run_is_gated_before_any_work_starts() {
+    let mut request = empty_request();
+    request.dry_run = false;
+    let file = Path::new("clip.mp4");
+    let side = Path::new("clip.czkawka_optimized.mp4");
+
+    let stopped = Arc::new(AtomicBool::new(true));
+    assert_eq!(
+        gate(&request, file, side, &stopped),
+        Some((OptimizeStatus::Skipped, "The run was stopped".to_string())),
+        "a stopped run must skip the file"
+    );
+
+    // An idle flag falls through to the next check instead, so the assertion above is not vacuous.
+    let idle = Arc::new(AtomicBool::new(false));
+    assert_eq!(gate(&request, file, side, &idle), None);
+}
+
 fn empty_request() -> OptimizeRequest {
     OptimizeRequest {
         scan: scan_request(Path::new("/tmp")),
