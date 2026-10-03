@@ -545,7 +545,7 @@ FilterResult applyFilters({
   );
 
   final List<ScanRow> kept = <ScanRow>[];
-  for (final List<ScanRow> group in _groupsOf(rows, tool)) {
+  for (final List<ScanRow> group in groupsOf(rows, tool)) {
     if (!_matchesGroupRanges(group, state) ||
         !_matchesGroupMark(group, selected, state.mark)) {
       continue;
@@ -582,7 +582,7 @@ FilterResult applyFilters({
 /// Groups rows the way the engine grouped them: `groupSize` is what the scanner reported, so a
 /// single-member result never merges with an unrelated neighbour just because the selected tool
 /// happens to be a grouped one. Group ids may repeat per tool, so rows travel in scan order.
-List<List<ScanRow>> _groupsOf(List<ScanRow> rows, ToolSpec? tool) {
+List<List<ScanRow>> groupsOf(List<ScanRow> rows, ToolSpec? tool) {
   final Map<Object, List<ScanRow>> blocks = <Object, List<ScanRow>>{};
   for (final ScanRow row in rows) {
     final Object key = row.groupSize > 1
@@ -780,8 +780,8 @@ FilterStats _stats(
   return FilterStats(
     totalItems: all.length,
     filteredItems: kept.length,
-    totalGroups: _groupsOf(all, tool).length,
-    filteredGroups: _groupsOf(kept, tool).length,
+    totalGroups: groupsOf(all, tool).length,
+    filteredGroups: groupsOf(kept, tool).length,
     selectedItems: all
         .where((ScanRow row) => selected.contains(row.path))
         .length,

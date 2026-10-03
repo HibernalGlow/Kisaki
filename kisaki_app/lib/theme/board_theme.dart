@@ -34,6 +34,11 @@ class BoardTokens {
   static const double colGroup = 76;
   static const double colName = 236;
 
+  // Control widths inside the dialogs, all on the 4px grid so rows line up across sections.
+  static const double fieldWidth = 152;
+  static const double modeWidth = 132;
+  static const double directionWidth = 104;
+
   static const double fsCaption = 10;
   static const double fsLabel = 11;
   static const double fsBody = 12;
