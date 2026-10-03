@@ -4,6 +4,7 @@ import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
+import '../theme/swiss_grid.dart';
 import '../util/format.dart';
 import 'overlays.dart';
 import 'widgets/primitives.dart';
@@ -18,41 +19,57 @@ class AnalysisPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
     return ListView(
-      padding: const EdgeInsets.all(BoardTokens.pad),
+      padding: const EdgeInsets.all(BoardTokens.section),
       children: <Widget>[
-        Wrap(
-          spacing: BoardTokens.gap * 2,
-          runSpacing: BoardTokens.gap,
-          children: <Widget>[
-            MetricTile(
-              labelKey: 'metric-files',
-              value: '${controller.fileCount}',
+        SwissGrid(
+          children: <SwissCell>[
+            SwissCell(
+              span: 6,
+              child: MetricTile(
+                labelKey: 'metric-files',
+                value: '${controller.fileCount}',
+              ),
             ),
-            MetricTile(
-              labelKey: 'metric-groups',
-              value: '${controller.groupCount}',
+            SwissCell(
+              span: 6,
+              child: MetricTile(
+                labelKey: 'metric-groups',
+                value: '${controller.groupCount}',
+              ),
             ),
-            MetricTile(
-              labelKey: 'metric-total',
-              value: humanBytes(controller.totalBytes),
+            SwissCell(
+              span: 6,
+              child: MetricTile(
+                labelKey: 'metric-total',
+                value: humanBytes(controller.totalBytes),
+              ),
             ),
-            MetricTile(
-              labelKey: 'metric-reclaimable',
-              value: humanBytes(controller.reclaimableBytes),
-              accent: palette.ok,
+            SwissCell(
+              span: 6,
+              child: MetricTile(
+                labelKey: 'metric-reclaimable',
+                value: humanBytes(controller.reclaimableBytes),
+                accent: palette.ok,
+              ),
             ),
-            MetricTile(
-              labelKey: 'metric-selected',
-              value: '${controller.selectedCount}',
-              accent: controller.selectedCount > 0 ? palette.primary : null,
+            SwissCell(
+              span: 6,
+              child: MetricTile(
+                labelKey: 'metric-selected',
+                value: '${controller.selectedCount}',
+                accent: controller.selectedCount > 0 ? palette.primary : null,
+              ),
             ),
-            MetricTile(
-              labelKey: 'metric-selected-size',
-              value: controller.selectedSizeText,
+            SwissCell(
+              span: 6,
+              child: MetricTile(
+                labelKey: 'metric-selected-size',
+                value: controller.selectedSizeText,
+              ),
             ),
           ],
         ),
-        const SizedBox(height: BoardTokens.gap * 2),
+        const SizedBox(height: BoardTokens.section),
         const Hairline(),
         const SizedBox(height: BoardTokens.gap),
         ToggleRow(

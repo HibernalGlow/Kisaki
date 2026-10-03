@@ -475,10 +475,13 @@ class _ResultRow extends StatelessWidget {
                 text,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontSize: BoardTokens.fsLabel,
-                  color: palette.fg,
-                ),
+                // Right-aligned columns are the numeric ones, and they are set in tabular figures.
+                style: columns[column].alignRight
+                    ? palette.tableFigure()
+                    : TextStyle(
+                        fontSize: BoardTokens.fsLabel,
+                        color: palette.fg,
+                      ),
               ),
             ),
           ),
