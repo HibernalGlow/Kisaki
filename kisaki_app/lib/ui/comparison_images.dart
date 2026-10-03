@@ -186,8 +186,8 @@ final ComparisonImageCache comparisonImageCache = ComparisonImageCache();
 
 /// A single picture in a pane or a thumbnail slot. It owns no controller of its own because the
 /// dialog repaints from the cache, not from a per-widget future.
-class ComparisonFileImage extends StatefulWidget {
-  const ComparisonFileImage({
+class DiskImage extends StatefulWidget {
+  const DiskImage({
     required this.path,
     required this.placeholder,
     this.fit = BoxFit.contain,
@@ -199,10 +199,10 @@ class ComparisonFileImage extends StatefulWidget {
   final BoxFit fit;
 
   @override
-  State<ComparisonFileImage> createState() => _ComparisonFileImageState();
+  State<DiskImage> createState() => _DiskImageState();
 }
 
-class _ComparisonFileImageState extends State<ComparisonFileImage> {
+class _DiskImageState extends State<DiskImage> {
   @override
   void initState() {
     super.initState();
@@ -211,7 +211,7 @@ class _ComparisonFileImageState extends State<ComparisonFileImage> {
   }
 
   @override
-  void didUpdateWidget(ComparisonFileImage oldWidget) {
+  void didUpdateWidget(DiskImage oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.path != widget.path) {
       comparisonImageCache.load(widget.path);
@@ -251,8 +251,8 @@ class _ComparisonFileImageState extends State<ComparisonFileImage> {
   }
 }
 
-class ComparisonMissingImage extends StatelessWidget {
-  const ComparisonMissingImage({required this.path, super.key});
+class MissingImage extends StatelessWidget {
+  const MissingImage({required this.path, super.key});
 
   final String? path;
 
@@ -302,10 +302,10 @@ class ComparisonImagePane extends StatelessWidget {
               border: Border.all(color: palette.border),
               color: palette.sunken,
             ),
-            child: ComparisonFileImage(
+            child: DiskImage(
               key: Key('comparison-pane-$labelKey'),
               path: entry.path,
-              placeholder: ComparisonMissingImage(path: entry.path),
+              placeholder: MissingImage(path: entry.path),
             ),
           ),
         ),
