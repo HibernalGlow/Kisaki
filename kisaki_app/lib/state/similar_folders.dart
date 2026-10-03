@@ -55,7 +55,7 @@ List<FolderStat> buildSimilarFolders(
   final Map<String, _Accumulator> stats = <String, _Accumulator>{};
   for (int index = 0; index < groups.length; index++) {
     for (final ScanRow row in groups[index]) {
-      final String? folder = _parentPath(row.path);
+      final String? folder = parentPath(row.path);
       if (folder == null) {
         continue;
       }
@@ -101,7 +101,7 @@ List<FolderStat> buildSimilarFolders(
 
 /// Keeps the separator style of the incoming path, because a Windows result must not be shown with
 /// forward slashes.
-String? _parentPath(String path) {
+String? parentPath(String path) {
   final String normalized = path
       .replaceAll(r'\', '/')
       .replaceAll(RegExp(r'/+$'), '');

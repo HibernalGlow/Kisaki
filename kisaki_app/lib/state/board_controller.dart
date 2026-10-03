@@ -13,6 +13,7 @@ import 'image_comparison.dart';
 import 'row_projection.dart';
 import 'selection_model.dart';
 import 'similar_folders.dart';
+import 'simiu_model.dart';
 import 'selection_rules.dart';
 
 export 'row_projection.dart' show GroupSelection;
@@ -113,6 +114,7 @@ class BoardController extends ChangeNotifier {
   bool _assistantMessageIsError = false;
   ComparisonState _comparison = const ComparisonState();
   bool _folderView = false;
+  final SimiuModel _simiu = SimiuModel();
   int _sortColumn = -1;
   bool _sortAscending = true;
 
@@ -716,7 +718,10 @@ class BoardController extends ChangeNotifier {
   List<List<ScanRow>> get boardGroups => groupsOf(_visible, _tool);
 
   /// Only the image scanner rolls its groups up into folders, like the reference's view switch.
-  bool get supportsFolderView => _tool?.id == 'similar_images';
+  /// The reference hides that switch while Simiu sets are being planned, because the sets replace
+  /// the table rather than organising it.
+  bool get supportsFolderView =>
+      _tool?.id == 'similar_images' && !_simiu.enabled;
   bool get folderView => _folderView && supportsFolderView;
   void setFolderView(bool value) {
     if (_folderView == value) {
@@ -743,6 +748,164 @@ class BoardController extends ChangeNotifier {
     await Clipboard.setData(ClipboardData(text: text));
     _setStatus('status_copied', args: <String, Object>{'path': text});
     notifyListeners();
+  }
+
+  SimiuModel get simiu => _simiu;
+
+  /// Only the image scanner has a set plan to make, like the reference's mode selector.
+  bool get supportsSimiuSets => _tool?.id == 'similar_images';
+
+  SimiuPlan get simiuPlan => _simiu.plan(_rows, _included);
+
+  void setSimiuEnabled(bool value) {
+    if (_simiu.enabled == value) {
+      return;
+    }
+    _simiu.setEnabled(value);
+    if (value) {
+      _folderView = false;
+    }
+    notifyListeners();
+  }
+
+  void setSimiuPrefix(String value) {
+    _simiu.setNamePrefix(value);
+    notifyListeners();
+  }
+
+  void setSimiuMinimumGroupSize(int value) {
+    _simiu.setMinimumGroupSize(value);
+    notifyListeners();
+  }
+
+  void setSimiuScanOrder(SimiuScanOrder value) {
+    _simiu.setScanOrder(value);
+    notifyListeners();
+  }
+
+  void setSimiuRecursive(bool value) {
+    _simiu.setRecursive(value);
+    notifyListeners();
+  }
+
+  void setSimiuMode(SimiuMode value) {
+    _simiu.setMode(value);
+    notifyListeners();
+  }
+
+  void setSimiuCleanEmptyDirectories(bool value) {
+    _simiu.setCleanEmptyDirectories(value);
+    notifyListeners();
+  }
+
+  /// Asks the confirm overlay to plan or apply the set moves; the dry-run switch decides which.
+  void requestSimiuApply() {
+    final List<SimiuOperation> operations = simiuPlan.operations;
+    if (operations.isEmpty) {
+      _setStatus('status_simiu_nothing');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _applySimiu(operations);
+    _confirm = ConfirmRequest(
+      titleKey: dryRun
+          ? 'confirm_simiu_plan_title'
+          : 'confirm_simiu_apply_title',
+      bodyKey: 'confirm_simiu_body',
+      args: <String, Object>{'count': operations.length},
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  /// Replays the newest undo journal, so a set that went wrong can be walked back.
+  void requestSimiuUndo() {
+    final String journal = _simiu.journal;
+    if (journal.isEmpty) {
+      _setStatus('status_simiu_no_journal');
+      notifyListeners();
+      return;
+    }
+    _confirmAction = () => _undoSimiu(journal);
+    _confirm = ConfirmRequest(
+      titleKey: 'confirm_simiu_undo_title',
+      bodyKey: 'confirm_simiu_undo_body',
+      args: <String, Object>{'journal': journal},
+      dryRun: dryRun,
+    );
+    notifyListeners();
+  }
+
+  Future<void> _applySimiu(List<SimiuOperation> operations) async {
+    _actionRunning = true;
+    _setStatus('status_simiu_applying');
+    notifyListeners();
+    try {
+      final SimiuApplyOutcome outcome = await engine.applySimiuSet(
+        SimiuApplyRequest(
+          mode: _simiu.mode,
+          operations: operations,
+          dryRun: dryRun,
+        ),
+      );
+      _messages = outcome.messages;
+      if (!dryRun) {
+        _simiu.recordJournals(outcome.journals);
+      }
+      _setStatus(
+        dryRun ? 'status_simiu_planned' : 'status_simiu_applied',
+        args: <String, Object>{
+          'count': dryRun ? outcome.planned : outcome.done,
+        },
+      );
+      if (outcome.failed > 0) {
+        _critical = outcome.messages;
+      }
+      _invalidatePlan();
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> _undoSimiu(String journal) async {
+    _actionRunning = true;
+    _setStatus('status_simiu_undoing');
+    notifyListeners();
+    try {
+      final SimiuUndoOutcome outcome = await engine.undoSimiuSet(
+        SimiuUndoRequest(
+          journal: journal,
+          cleanEmptyDirectories: _simiu.cleanEmptyDirectories,
+          dryRun: dryRun,
+        ),
+      );
+      _messages = outcome.messages;
+      _setStatus(
+        dryRun ? 'status_simiu_undo_planned' : 'status_simiu_undone',
+        args: <String, Object>{
+          'count': dryRun ? outcome.planned : outcome.done,
+        },
+      );
+      if (outcome.failed > 0) {
+        _critical = outcome.messages;
+      }
+      _invalidatePlan();
+    } catch (error) {
+      _critical = error.toString();
+      _setStatus('status_operation_failed');
+    } finally {
+      _actionRunning = false;
+      notifyListeners();
+    }
+  }
+
+  /// A mutation moves files the plan was built from, so the cached plan must not be reused.
+  void _invalidatePlan() {
+    _simiu.invalidate();
   }
 
   SelectionConfig get assistant => _assistant;

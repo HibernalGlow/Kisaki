@@ -231,6 +231,54 @@ class SeedEngine implements KisakiEngine {
   @override
   Future<String> exportResults(ExportRequest request) async => request.path;
 
+  @override
+  Future<SimiuApplyOutcome> applySimiuSet(SimiuApplyRequest request) async {
+    // SimiuStatus has no skipped state, so an unperformed operation is reported as it is: failed.
+    final bool plannedOnly = request.dryRun;
+    final List<SimiuItem> items = <SimiuItem>[
+      for (final SimiuOperation operation in request.operations)
+        SimiuItem(
+          from: operation.source,
+          to: operation.target,
+          status: plannedOnly ? SimiuStatus.planned : SimiuStatus.failed,
+          detail: plannedOnly ? 'seed engine' : 'seed engine writes no files',
+        ),
+    ];
+    return SimiuApplyOutcome(
+      done: 0,
+      planned: plannedOnly ? request.operations.length : 0,
+      failed: plannedOnly ? 0 : request.operations.length,
+      items: items,
+      journals: const <String>[],
+      messages: plannedOnly
+          ? 'dry run: ${request.operations.length} set operations planned, nothing written'
+          : 'seed engine: no file is put into a set',
+    );
+  }
+
+  @override
+  Future<SimiuUndoOutcome> undoSimiuSet(SimiuUndoRequest request) async {
+    final bool plannedOnly = request.dryRun;
+    return SimiuUndoOutcome(
+      done: 0,
+      planned: plannedOnly ? 1 : 0,
+      failed: plannedOnly ? 0 : 1,
+      items: <SimiuItem>[
+        SimiuItem(
+          from: request.journal,
+          to: request.journal,
+          status: plannedOnly ? SimiuStatus.planned : SimiuStatus.failed,
+          detail: plannedOnly
+              ? 'seed engine'
+              : 'seed engine keeps no journal, so nothing can be undone',
+        ),
+      ],
+      messages: plannedOnly
+          ? 'dry run: journal ${request.journal} would be replayed'
+          : 'seed engine: no journal to replay',
+    );
+  }
+
   /// Roots the scan got through at the reported percentage, always at least one.
   static List<String> _traversed(List<String> roots, int percent) {
     if (percent >= 100) {

@@ -192,6 +192,36 @@ class StubEngine implements KisakiEngine {
     return moveOutcome;
   }
 
+  final List<SimiuApplyRequest> simiuApplies = <SimiuApplyRequest>[];
+  final List<SimiuUndoRequest> simiuUndos = <SimiuUndoRequest>[];
+  SimiuApplyOutcome simiuApplyOutcome = const SimiuApplyOutcome(
+    done: 0,
+    planned: 0,
+    failed: 0,
+    items: <SimiuItem>[],
+    journals: <String>[],
+    messages: '',
+  );
+  SimiuUndoOutcome simiuUndoOutcome = const SimiuUndoOutcome(
+    done: 0,
+    planned: 0,
+    failed: 0,
+    items: <SimiuItem>[],
+    messages: '',
+  );
+
+  @override
+  Future<SimiuApplyOutcome> applySimiuSet(SimiuApplyRequest request) async {
+    simiuApplies.add(request);
+    return simiuApplyOutcome;
+  }
+
+  @override
+  Future<SimiuUndoOutcome> undoSimiuSet(SimiuUndoRequest request) async {
+    simiuUndos.add(request);
+    return simiuUndoOutcome;
+  }
+
   @override
   Future<String> exportResults(ExportRequest request) async {
     exports.add(request);

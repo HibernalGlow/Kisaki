@@ -27,4 +27,8 @@ abstract interface class KisakiEngine {
   Future<RenameOutcome> renameFiles(RenameRequest request);
 
   Future<MoveOutcome> moveFiles(MoveRequest request);
+
+  Future<SimiuApplyOutcome> applySimiuSet(SimiuApplyRequest request);
+
+  Future<SimiuUndoOutcome> undoSimiuSet(SimiuUndoRequest request);
 }
