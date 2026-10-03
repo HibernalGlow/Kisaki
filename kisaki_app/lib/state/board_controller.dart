@@ -523,7 +523,8 @@ class BoardController extends ChangeNotifier {
   }
 
   FilterState get filters => _filters;
-  List<FilterPreset> get filterPresets => List<FilterPreset>.unmodifiable(_presets);
+  List<FilterPreset> get filterPresets =>
+      List<FilterPreset>.unmodifiable(_presets);
   FilterStats get filterStats =>
       _filterResult?.stats ??
       FilterStats(
@@ -570,7 +571,9 @@ class BoardController extends ChangeNotifier {
       (FilterPreset preset) => preset.name == trimmed,
     );
     final FilterPreset preset = FilterPreset(
-      id: existing >= 0 ? _presets[existing].id : 'filter-${DateTime.now().millisecondsSinceEpoch}',
+      id: existing >= 0
+          ? _presets[existing].id
+          : 'filter-${DateTime.now().millisecondsSinceEpoch}',
       name: trimmed,
       state: _filters.copy(),
     );

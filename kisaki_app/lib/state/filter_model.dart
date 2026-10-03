@@ -69,13 +69,13 @@ enum DatePreset {
   final String wire;
 }
 
-enum AspectRatio {
+enum FilterAspectRatio {
   any('any'),
   wide('16:9'),
   classic('4:3'),
   square('1:1');
 
-  const AspectRatio(this.wire);
+  const FilterAspectRatio(this.wire);
   final String wire;
 }
 
@@ -92,13 +92,13 @@ enum FormatCategory {
   final String wire;
 }
 
-enum TextField {
+enum TextFilterField {
   name('name'),
   path('path'),
   metadata('metadata'),
   detail('detail');
 
-  const TextField(this.wire);
+  const TextFilterField(this.wire);
   final String wire;
 }
 
@@ -134,7 +134,7 @@ class FilterState {
     this.textPattern = '',
     this.textRegex = false,
     this.textCaseSensitive = false,
-    List<TextField>? textFields,
+    List<TextFilterField>? textFields,
     this.mark = MarkFilter.all,
     RangeFilter? groupCount,
     RangeFilter? groupSize,
@@ -157,9 +157,9 @@ class FilterState {
     this.minHeight,
     this.maxWidth,
     this.maxHeight,
-    this.aspectRatio = AspectRatio.any,
+    this.aspectRatio = FilterAspectRatio.any,
     this.showAllInFilteredGroups = true,
-  }) : textFields = textFields ?? TextField.values.toList(),
+  }) : textFields = textFields ?? TextFilterField.values.toList(),
        groupCount = groupCount ?? RangeFilter(min: 2, max: 100),
        groupSize =
            groupSize ?? RangeFilter(min: 0, max: 100, unit: SizeUnit.gb),
@@ -172,7 +172,7 @@ class FilterState {
   String textPattern;
   bool textRegex;
   bool textCaseSensitive;
-  List<TextField> textFields;
+  List<TextFilterField> textFields;
 
   MarkFilter mark;
   RangeFilter groupCount;
@@ -203,7 +203,7 @@ class FilterState {
   int? minHeight;
   int? maxWidth;
   int? maxHeight;
-  AspectRatio aspectRatio;
+  FilterAspectRatio aspectRatio;
 
   bool showAllInFilteredGroups;
 
@@ -217,7 +217,7 @@ class FilterState {
       'regex': textRegex,
       'caseSensitive': textCaseSensitive,
       'fields': textFields
-          .map((TextField field) => field.wire)
+          .map((TextFilterField field) => field.wire)
           .toList(growable: false),
     },
     'mark': mark.wire,
@@ -278,9 +278,9 @@ class FilterState {
       if (fields != null && fields.isNotEmpty) {
         state.textFields = fields
             .map(
-              (String wire) => TextField.values.firstWhere(
-                (TextField field) => field.wire == wire,
-                orElse: () => TextField.name,
+              (String wire) => TextFilterField.values.firstWhere(
+                (TextFilterField field) => field.wire == wire,
+                orElse: () => TextFilterField.name,
               ),
             )
             .toList();
@@ -336,9 +336,9 @@ class FilterState {
       state.minHeight = (resolution['minHeight'] as num?)?.toInt();
       state.maxWidth = (resolution['maxWidth'] as num?)?.toInt();
       state.maxHeight = (resolution['maxHeight'] as num?)?.toInt();
-      state.aspectRatio = AspectRatio.values.firstWhere(
-        (AspectRatio ratio) => ratio.wire == resolution['aspectRatio'],
-        orElse: () => AspectRatio.any,
+      state.aspectRatio = FilterAspectRatio.values.firstWhere(
+        (FilterAspectRatio ratio) => ratio.wire == resolution['aspectRatio'],
+        orElse: () => FilterAspectRatio.any,
       );
     }
     if (json['showAllInFilteredGroups'] is bool) {
@@ -401,7 +401,7 @@ class FilterState {
     textPattern: textPattern,
     textRegex: textRegex,
     textCaseSensitive: textCaseSensitive,
-    textFields: List<TextField>.of(textFields),
+    textFields: List<TextFilterField>.of(textFields),
     mark: mark,
     groupCount: groupCount.copy(),
     groupSize: groupSize.copy(),
@@ -826,7 +826,7 @@ bool _matchesResolution(ScanRow row, ToolSpec? tool, FilterState state) {
       !_inRange(size.$2, state.minHeight, state.maxHeight)) {
     return false;
   }
-  if (state.aspectRatio == AspectRatio.any) {
+  if (state.aspectRatio == FilterAspectRatio.any) {
     return true;
   }
   final List<String> parts = state.aspectRatio.wire.split(':');
@@ -869,18 +869,18 @@ int _columnIndex(ToolSpec? tool, String key) {
   return -1;
 }
 
-String _searchText(ScanRow row, ToolSpec? tool, List<TextField> fields) {
+String _searchText(ScanRow row, ToolSpec? tool, List<TextFilterField> fields) {
   final List<String> parts = <String>[];
-  if (fields.contains(TextField.name)) {
+  if (fields.contains(TextFilterField.name)) {
     parts.add(row.name);
   }
-  if (fields.contains(TextField.path)) {
+  if (fields.contains(TextFilterField.path)) {
     parts.add(row.path);
   }
-  if (fields.contains(TextField.metadata)) {
+  if (fields.contains(TextFilterField.metadata)) {
     parts.add(_cellsWhere(tool, row, _metadataKeys.contains));
   }
-  if (fields.contains(TextField.detail)) {
+  if (fields.contains(TextFilterField.detail)) {
     parts.add(
       _cellsWhere(tool, row, (String key) => !_metadataKeys.contains(key)),
     );
