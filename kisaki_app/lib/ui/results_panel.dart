@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../engine/models.dart';
 import '../l10n/labels.dart';
@@ -487,34 +489,190 @@ class _ResizeStripState extends State<_ResizeStrip> {
   }
 }
 
-class _Rows extends StatelessWidget {
+class _Rows extends StatefulWidget {
   const _Rows({required this.controller, required this.widths});
 
   final BoardController controller;
   final List<double> widths;
 
   @override
-  Widget build(BuildContext context) {
-    final List<ScanRow> visible = controller.visibleRows;
-    if (visible.isEmpty) {
-      return _EmptyRegion(controller: controller);
+  State<_Rows> createState() => _RowsState();
+}
+
+class _RowsState extends State<_Rows> {
+  /// A drag shorter than this is a click that missed a target, not a selection box.
+  static const double _boxThreshold = 8;
+
+  Offset? _origin;
+  Rect? _box;
+  int? _pointer;
+  bool _shiftHeld = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // A box drag and a scroll drag are the same gesture, so the box belongs to the modifier that
+    // stops the list from scrolling: Shift draws, Ctrl or Command draws and keeps what was picked.
+    HardwareKeyboard.instance.addHandler(_onKey);
+    _shiftHeld = HardwareKeyboard.instance.isShiftPressed;
+  }
+
+  @override
+  void dispose() {
+    HardwareKeyboard.instance.removeHandler(_onKey);
+    super.dispose();
+  }
+
+  bool _onKey(KeyEvent event) {
+    final bool pressed = event is KeyDownEvent || event is KeyRepeatEvent;
+    final bool isShift =
+        event.logicalKey == LogicalKeyboardKey.shiftLeft ||
+        event.logicalKey == LogicalKeyboardKey.shiftRight;
+    if (!isShift || _shiftHeld == pressed) {
+      return false;
     }
-    final bool grouped = controller.tool?.grouped ?? false;
-    return ListView.builder(
-      key: const Key('results-list'),
-      padding: EdgeInsets.zero,
-      itemCount: visible.length,
-      itemBuilder: (BuildContext context, int index) {
-        final ScanRow row = visible[index];
-        return Column(
-          children: <Widget>[
-            if (grouped && row.isGroupStart)
-              _GroupStrip(controller: controller, row: row, widths: widths),
-            _ResultRow(controller: controller, row: row, widths: widths),
-          ],
-        );
-      },
+    setState(() => _shiftHeld = pressed);
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final List<ScanRow> visible = widget.controller.visibleRows;
+    if (visible.isEmpty) {
+      return _EmptyRegion(controller: widget.controller);
+    }
+    final bool grouped = widget.controller.tool?.grouped ?? false;
+    final BoardPalette palette = BoardTheme.of(context);
+    return Stack(
+      children: <Widget>[
+        Listener(
+          key: const Key('results-box-area'),
+          behavior: HitTestBehavior.translucent,
+          onPointerDown: _onDown,
+          onPointerMove: _onMove,
+          onPointerUp: _onUp,
+          onPointerCancel: (_) => _clear(),
+          child: ListView.builder(
+            key: const Key('results-list'),
+            padding: EdgeInsets.zero,
+            physics: _shiftHeld ? const NeverScrollableScrollPhysics() : null,
+            itemCount: visible.length,
+            itemBuilder: (BuildContext context, int index) {
+              final ScanRow row = visible[index];
+              return Column(
+                children: <Widget>[
+                  if (grouped && row.isGroupStart)
+                    _GroupStrip(
+                      controller: widget.controller,
+                      row: row,
+                      widths: widget.widths,
+                    ),
+                  _ResultRow(
+                    controller: widget.controller,
+                    row: row,
+                    widths: widget.widths,
+                  ),
+                ],
+              );
+            },
+          ),
+        ),
+        if (_box != null)
+          Positioned.fromRect(
+            rect: _toLocal(_box!),
+            child: IgnorePointer(
+              child: DecoratedBox(
+                key: const Key('selection-box'),
+                decoration: BoxDecoration(
+                  color: palette.selection,
+                  border: Border.all(color: palette.primary),
+                ),
+                child: const SizedBox.expand(),
+              ),
+            ),
+          ),
+      ],
     );
+  }
+
+  Rect _toLocal(Rect global) {
+    final RenderBox anchor = context.findRenderObject()! as RenderBox;
+    return Rect.fromLTWH(
+      anchor.globalToLocal(global.topLeft).dx,
+      anchor.globalToLocal(global.topLeft).dy,
+      global.width,
+      global.height,
+    );
+  }
+
+  void _onDown(PointerDownEvent event) {
+    // Raw pointer events are used instead of a gesture because a pan would lose the arena to the
+    // list's own scroll drag, and because only a mouse drag is meant to draw a box.
+    if (!_shiftHeld || event.kind != PointerDeviceKind.mouse) {
+      _pointer = null;
+      return;
+    }
+    _pointer = event.pointer;
+    _origin = event.position;
+    if (_box != null) {
+      setState(() => _box = null);
+    }
+  }
+
+  void _onMove(PointerMoveEvent event) {
+    final Offset? origin = _origin;
+    if (origin == null || event.pointer != _pointer) {
+      return;
+    }
+    if ((event.position - origin).distance < _boxThreshold) {
+      return;
+    }
+    setState(() {
+      _box = Rect.fromPoints(origin, event.position);
+    });
+  }
+
+  void _onUp(PointerUpEvent event) {
+    final Rect? box = _box;
+    setState(() {
+      _box = null;
+      _origin = null;
+      _pointer = null;
+    });
+    if (box == null) {
+      return;
+    }
+    final List<String> paths = <String>[];
+    // visitChildElements only walks one level, so the descent has to recurse until it finds a row.
+    void collect(Element element) {
+      final Widget rowWidget = element.widget;
+      if (rowWidget is _ResultRow) {
+        final RenderObject? renderObject = element.renderObject;
+        if (renderObject is RenderBox) {
+          final Rect rect =
+              renderObject.localToGlobal(Offset.zero) & renderObject.size;
+          if (rect.overlaps(box)) {
+            paths.add(rowWidget.row.path);
+          }
+        }
+        return;
+      }
+      element.visitChildren(collect);
+    }
+
+    (context as Element).visitChildren(collect);
+    final bool held =
+        HardwareKeyboard.instance.isControlPressed ||
+        HardwareKeyboard.instance.isMetaPressed;
+    widget.controller.applyBoxSelection(paths, additive: held);
+  }
+
+  void _clear() {
+    setState(() {
+      _box = null;
+      _origin = null;
+      _pointer = null;
+    });
   }
 }
 
