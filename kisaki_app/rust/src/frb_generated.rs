@@ -38,7 +38,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.12.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 716275820;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1857297523;
 
 // Section: executor
 
@@ -46,6 +46,35 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__crate__api__actions__apply_simiu_set_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "apply_simiu_set",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::types::SimiuApplyRequest>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::actions::apply_simiu_set(api_request).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__actions__clean_exif_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -374,6 +403,35 @@ fn wire__crate__api__scan__start_scan_impl(
                 transform_result_sse::<_, String>(
                     (move || async move {
                         let output_ok = crate::api::scan::start_scan(api_request, api_sink).await?;
+                        Ok(output_ok)
+                    })()
+                    .await,
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__actions__undo_simiu_set_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_async::<flutter_rust_bridge::for_generated::SseCodec, _, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "undo_simiu_set",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe { flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(ptr_, rust_vec_len_, data_len_) };
+            let mut deserializer = flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_request = <crate::api::types::SimiuUndoRequest>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| async move {
+                transform_result_sse::<_, String>(
+                    (move || async move {
+                        let output_ok = crate::api::actions::undo_simiu_set(api_request).await?;
                         Ok(output_ok)
                     })()
                     .await,
@@ -804,6 +862,30 @@ impl SseDecode for Vec<crate::api::types::ScanRow> {
     }
 }
 
+impl SseDecode for Vec<crate::api::types::SimiuItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::types::SimiuItem>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<crate::api::types::SimiuOperation> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<crate::api::types::SimiuOperation>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<crate::api::types::ToolSpec> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1110,6 +1192,132 @@ impl SseDecode for crate::api::types::ScanRow {
     }
 }
 
+impl SseDecode for crate::api::types::SimiuApplyOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_done = <i32>::sse_decode(deserializer);
+        let mut var_planned = <i32>::sse_decode(deserializer);
+        let mut var_failed = <i32>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::types::SimiuItem>>::sse_decode(deserializer);
+        let mut var_journals = <Vec<String>>::sse_decode(deserializer);
+        let mut var_messages = <String>::sse_decode(deserializer);
+        return crate::api::types::SimiuApplyOutcome {
+            done: var_done,
+            planned: var_planned,
+            failed: var_failed,
+            items: var_items,
+            journals: var_journals,
+            messages: var_messages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuApplyRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_mode = <crate::api::types::SimiuMode>::sse_decode(deserializer);
+        let mut var_operations = <Vec<crate::api::types::SimiuOperation>>::sse_decode(deserializer);
+        let mut var_dryRun = <bool>::sse_decode(deserializer);
+        return crate::api::types::SimiuApplyRequest {
+            mode: var_mode,
+            operations: var_operations,
+            dry_run: var_dryRun,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_from = <String>::sse_decode(deserializer);
+        let mut var_to = <String>::sse_decode(deserializer);
+        let mut var_status = <crate::api::types::SimiuStatus>::sse_decode(deserializer);
+        let mut var_detail = <String>::sse_decode(deserializer);
+        return crate::api::types::SimiuItem {
+            from: var_from,
+            to: var_to,
+            status: var_status,
+            detail: var_detail,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuMode {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::SimiuMode::Move,
+            1 => crate::api::types::SimiuMode::Copy,
+            2 => crate::api::types::SimiuMode::Link,
+            _ => unreachable!("Invalid variant for SimiuMode: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuOperation {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_root = <String>::sse_decode(deserializer);
+        let mut var_source = <String>::sse_decode(deserializer);
+        let mut var_target = <String>::sse_decode(deserializer);
+        return crate::api::types::SimiuOperation {
+            root: var_root,
+            source: var_source,
+            target: var_target,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => crate::api::types::SimiuStatus::Planned,
+            1 => crate::api::types::SimiuStatus::Moved,
+            2 => crate::api::types::SimiuStatus::Copied,
+            3 => crate::api::types::SimiuStatus::Linked,
+            4 => crate::api::types::SimiuStatus::Restored,
+            5 => crate::api::types::SimiuStatus::Removed,
+            6 => crate::api::types::SimiuStatus::Failed,
+            _ => unreachable!("Invalid variant for SimiuStatus: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuUndoOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_done = <i32>::sse_decode(deserializer);
+        let mut var_planned = <i32>::sse_decode(deserializer);
+        let mut var_failed = <i32>::sse_decode(deserializer);
+        let mut var_items = <Vec<crate::api::types::SimiuItem>>::sse_decode(deserializer);
+        let mut var_messages = <String>::sse_decode(deserializer);
+        return crate::api::types::SimiuUndoOutcome {
+            done: var_done,
+            planned: var_planned,
+            failed: var_failed,
+            items: var_items,
+            messages: var_messages,
+        };
+    }
+}
+
+impl SseDecode for crate::api::types::SimiuUndoRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_journal = <String>::sse_decode(deserializer);
+        let mut var_cleanEmptyDirectories = <bool>::sse_decode(deserializer);
+        let mut var_dryRun = <bool>::sse_decode(deserializer);
+        return crate::api::types::SimiuUndoRequest {
+            journal: var_journal,
+            clean_empty_directories: var_cleanEmptyDirectories,
+            dry_run: var_dryRun,
+        };
+    }
+}
+
 impl SseDecode for crate::api::types::ToolSpec {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1153,13 +1361,15 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => wire__crate__api__actions__clean_exif_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__actions__delete_files_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__actions__move_files_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
+        1 => wire__crate__api__actions__apply_simiu_set_impl(port, ptr, rust_vec_len, data_len),
+        2 => wire__crate__api__actions__clean_exif_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__actions__delete_files_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__actions__export_results_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__info__init_app_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__actions__move_files_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__actions__rename_files_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__scan__start_scan_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__actions__undo_simiu_set_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1172,12 +1382,12 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        2 => wire__crate__api__schema__default_fields_impl(ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__info__engine_info_impl(ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__schema__default_fields_impl(ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__info__engine_info_impl(ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__schema__field_defs_impl(ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__scan__is_scanning_impl(ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__schema__list_tools_impl(ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__scan__request_stop_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1726,6 +1936,152 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::types::ScanRow> for crate::ap
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuApplyOutcome {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.done.into_into_dart().into_dart(),
+            self.planned.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.journals.into_into_dart().into_dart(),
+            self.messages.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuApplyOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuApplyOutcome> for crate::api::types::SimiuApplyOutcome {
+    fn into_into_dart(self) -> crate::api::types::SimiuApplyOutcome {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuApplyRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.mode.into_into_dart().into_dart(),
+            self.operations.into_into_dart().into_dart(),
+            self.dry_run.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuApplyRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuApplyRequest> for crate::api::types::SimiuApplyRequest {
+    fn into_into_dart(self) -> crate::api::types::SimiuApplyRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuItem {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.from.into_into_dart().into_dart(),
+            self.to.into_into_dart().into_dart(),
+            self.status.into_into_dart().into_dart(),
+            self.detail.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuItem {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuItem> for crate::api::types::SimiuItem {
+    fn into_into_dart(self) -> crate::api::types::SimiuItem {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuMode {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Move => 0.into_dart(),
+            Self::Copy => 1.into_dart(),
+            Self::Link => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuMode {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuMode> for crate::api::types::SimiuMode {
+    fn into_into_dart(self) -> crate::api::types::SimiuMode {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuOperation {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.root.into_into_dart().into_dart(),
+            self.source.into_into_dart().into_dart(),
+            self.target.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuOperation {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuOperation> for crate::api::types::SimiuOperation {
+    fn into_into_dart(self) -> crate::api::types::SimiuOperation {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuStatus {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self {
+            Self::Planned => 0.into_dart(),
+            Self::Moved => 1.into_dart(),
+            Self::Copied => 2.into_dart(),
+            Self::Linked => 3.into_dart(),
+            Self::Restored => 4.into_dart(),
+            Self::Removed => 5.into_dart(),
+            Self::Failed => 6.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuStatus {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuStatus> for crate::api::types::SimiuStatus {
+    fn into_into_dart(self) -> crate::api::types::SimiuStatus {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuUndoOutcome {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.done.into_into_dart().into_dart(),
+            self.planned.into_into_dart().into_dart(),
+            self.failed.into_into_dart().into_dart(),
+            self.items.into_into_dart().into_dart(),
+            self.messages.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuUndoOutcome {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuUndoOutcome> for crate::api::types::SimiuUndoOutcome {
+    fn into_into_dart(self) -> crate::api::types::SimiuUndoOutcome {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::types::SimiuUndoRequest {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.journal.into_into_dart().into_dart(),
+            self.clean_empty_directories.into_into_dart().into_dart(),
+            self.dry_run.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::types::SimiuUndoRequest {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::types::SimiuUndoRequest> for crate::api::types::SimiuUndoRequest {
+    fn into_into_dart(self) -> crate::api::types::SimiuUndoRequest {
+        self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for crate::api::types::ToolSpec {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -2090,6 +2446,26 @@ impl SseEncode for Vec<crate::api::types::ScanRow> {
     }
 }
 
+impl SseEncode for Vec<crate::api::types::SimiuItem> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::types::SimiuItem>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<crate::api::types::SimiuOperation> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <crate::api::types::SimiuOperation>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<crate::api::types::ToolSpec> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2312,6 +2688,104 @@ impl SseEncode for crate::api::types::ScanRow {
         <bool>::sse_encode(self.is_group_start, serializer);
         <bool>::sse_encode(self.is_reference, serializer);
         <Vec<i64>>::sse_encode(self.sort_keys, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuApplyOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.done, serializer);
+        <i32>::sse_encode(self.planned, serializer);
+        <i32>::sse_encode(self.failed, serializer);
+        <Vec<crate::api::types::SimiuItem>>::sse_encode(self.items, serializer);
+        <Vec<String>>::sse_encode(self.journals, serializer);
+        <String>::sse_encode(self.messages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuApplyRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <crate::api::types::SimiuMode>::sse_encode(self.mode, serializer);
+        <Vec<crate::api::types::SimiuOperation>>::sse_encode(self.operations, serializer);
+        <bool>::sse_encode(self.dry_run, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuItem {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.from, serializer);
+        <String>::sse_encode(self.to, serializer);
+        <crate::api::types::SimiuStatus>::sse_encode(self.status, serializer);
+        <String>::sse_encode(self.detail, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuMode {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::SimiuMode::Move => 0,
+                crate::api::types::SimiuMode::Copy => 1,
+                crate::api::types::SimiuMode::Link => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuOperation {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.root, serializer);
+        <String>::sse_encode(self.source, serializer);
+        <String>::sse_encode(self.target, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuStatus {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                crate::api::types::SimiuStatus::Planned => 0,
+                crate::api::types::SimiuStatus::Moved => 1,
+                crate::api::types::SimiuStatus::Copied => 2,
+                crate::api::types::SimiuStatus::Linked => 3,
+                crate::api::types::SimiuStatus::Restored => 4,
+                crate::api::types::SimiuStatus::Removed => 5,
+                crate::api::types::SimiuStatus::Failed => 6,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuUndoOutcome {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.done, serializer);
+        <i32>::sse_encode(self.planned, serializer);
+        <i32>::sse_encode(self.failed, serializer);
+        <Vec<crate::api::types::SimiuItem>>::sse_encode(self.items, serializer);
+        <String>::sse_encode(self.messages, serializer);
+    }
+}
+
+impl SseEncode for crate::api::types::SimiuUndoRequest {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.journal, serializer);
+        <bool>::sse_encode(self.clean_empty_directories, serializer);
+        <bool>::sse_encode(self.dry_run, serializer);
     }
 }
 

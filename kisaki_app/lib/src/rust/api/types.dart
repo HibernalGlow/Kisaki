@@ -9,7 +9,7 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'types.freezed.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 class ColumnDef {
   final String key;
@@ -845,6 +845,206 @@ class ScanRow {
           isGroupStart == other.isGroupStart &&
           isReference == other.isReference &&
           sortKeys == other.sortKeys;
+}
+
+class SimiuApplyOutcome {
+  final int done;
+  final int planned;
+  final int failed;
+  final List<SimiuItem> items;
+
+  /// The undo journals written, newest last. Empty for a dry run.
+  final List<String> journals;
+  final String messages;
+
+  const SimiuApplyOutcome({
+    required this.done,
+    required this.planned,
+    required this.failed,
+    required this.items,
+    required this.journals,
+    required this.messages,
+  });
+
+  @override
+  int get hashCode =>
+      done.hashCode ^
+      planned.hashCode ^
+      failed.hashCode ^
+      items.hashCode ^
+      journals.hashCode ^
+      messages.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimiuApplyOutcome &&
+          runtimeType == other.runtimeType &&
+          done == other.done &&
+          planned == other.planned &&
+          failed == other.failed &&
+          items == other.items &&
+          journals == other.journals &&
+          messages == other.messages;
+}
+
+class SimiuApplyRequest {
+  final SimiuMode mode;
+  final List<SimiuOperation> operations;
+  final bool dryRun;
+
+  const SimiuApplyRequest({
+    required this.mode,
+    required this.operations,
+    required this.dryRun,
+  });
+
+  @override
+  int get hashCode => mode.hashCode ^ operations.hashCode ^ dryRun.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimiuApplyRequest &&
+          runtimeType == other.runtimeType &&
+          mode == other.mode &&
+          operations == other.operations &&
+          dryRun == other.dryRun;
+}
+
+class SimiuItem {
+  final String from;
+  final String to;
+  final SimiuStatus status;
+  final String detail;
+
+  const SimiuItem({
+    required this.from,
+    required this.to,
+    required this.status,
+    required this.detail,
+  });
+
+  @override
+  int get hashCode =>
+      from.hashCode ^ to.hashCode ^ status.hashCode ^ detail.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimiuItem &&
+          runtimeType == other.runtimeType &&
+          from == other.from &&
+          to == other.to &&
+          status == other.status &&
+          detail == other.detail;
+}
+
+/// How a file reaches its set folder: relocated, duplicated, or a second name for the same bytes.
+enum SimiuMode { move, copy, link }
+
+/// One "put this file in that set folder" decision. Which images belong to which set is a judgement
+/// about the scan result, so the board makes it and the bridge only performs it and journals it.
+class SimiuOperation {
+  /// The scanned root the set folder lives under; one undo journal is written per root.
+  final String root;
+  final String source;
+  final String target;
+
+  const SimiuOperation({
+    required this.root,
+    required this.source,
+    required this.target,
+  });
+
+  @override
+  int get hashCode => root.hashCode ^ source.hashCode ^ target.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimiuOperation &&
+          runtimeType == other.runtimeType &&
+          root == other.root &&
+          source == other.source &&
+          target == other.target;
+}
+
+/// What happened to one file, for both the apply and the undo direction.
+enum SimiuStatus {
+  planned,
+  moved,
+  copied,
+  linked,
+
+  /// Restored to its original place by an undo.
+  restored,
+
+  /// A copied or linked result that an undo removed again.
+  removed,
+  failed,
+}
+
+class SimiuUndoOutcome {
+  final int done;
+  final int planned;
+  final int failed;
+  final List<SimiuItem> items;
+  final String messages;
+
+  const SimiuUndoOutcome({
+    required this.done,
+    required this.planned,
+    required this.failed,
+    required this.items,
+    required this.messages,
+  });
+
+  @override
+  int get hashCode =>
+      done.hashCode ^
+      planned.hashCode ^
+      failed.hashCode ^
+      items.hashCode ^
+      messages.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimiuUndoOutcome &&
+          runtimeType == other.runtimeType &&
+          done == other.done &&
+          planned == other.planned &&
+          failed == other.failed &&
+          items == other.items &&
+          messages == other.messages;
+}
+
+class SimiuUndoRequest {
+  final String journal;
+
+  /// Removes the set folders an apply created, as long as they are empty by then.
+  final bool cleanEmptyDirectories;
+  final bool dryRun;
+
+  const SimiuUndoRequest({
+    required this.journal,
+    required this.cleanEmptyDirectories,
+    required this.dryRun,
+  });
+
+  @override
+  int get hashCode =>
+      journal.hashCode ^ cleanEmptyDirectories.hashCode ^ dryRun.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is SimiuUndoRequest &&
+          runtimeType == other.runtimeType &&
+          journal == other.journal &&
+          cleanEmptyDirectories == other.cleanEmptyDirectories &&
+          dryRun == other.dryRun;
 }
 
 /// One user-facing scanner, described so Dart can render it without hardcoding a table per tool.

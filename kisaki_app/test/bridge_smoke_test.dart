@@ -531,6 +531,84 @@ void main() {
     },
     timeout: const Timeout(Duration(minutes: 3)),
   );
+
+  test(
+    'the bridge sorts a set into folders and undoes it from the journal',
+    () async {
+      final root = await Directory.systemTemp.createTemp('kisaki_simiu_');
+      final canonicalRoot = await root.resolveSymbolicLinks();
+      addTearDown(() => root.delete(recursive: true));
+      final one = await _write(root, 'loose/one.png', 'first');
+      final two = await _write(root, 'loose/two.png', 'second');
+      final set = '$canonicalRoot/sets/set---001';
+      // Both files name the same entry inside the set, so the second one has to move aside.
+      final operations = [
+        g.SimiuOperation(
+          root: canonicalRoot,
+          source: one.path,
+          target: '$set/one.png',
+        ),
+        g.SimiuOperation(
+          root: canonicalRoot,
+          source: two.path,
+          target: '$set/one.png',
+        ),
+      ];
+
+      final dry = await g_actions.applySimiuSet(
+        request: _simiu(operations, dryRun: true),
+      );
+      expect(
+        (dry.planned, dry.done, dry.failed, dry.journals.length),
+        (2, 0, 0, 0),
+        reason: '${dry.items}',
+      );
+      expect(
+        dry.items[1].to,
+        '$set/one_01.png',
+        reason: 'a dry run reserves names the way the real run does',
+      );
+      expect(
+        Directory(set).existsSync(),
+        isFalse,
+        reason: 'a planned apply must not even create the set folder',
+      );
+
+      final applied = await g_actions.applySimiuSet(
+        request: _simiu(operations, dryRun: false),
+      );
+      expect(
+        (applied.done, applied.failed, applied.journals.length),
+        (2, 0, 1),
+        reason: '${applied.items}',
+      );
+      expect(File('$set/one.png').readAsStringSync(), 'first');
+      expect(File('$set/one_01.png').readAsStringSync(), 'second');
+      expect(
+        File('$canonicalRoot/loose/one.png').existsSync(),
+        isFalse,
+        reason: 'a move leaves nothing behind',
+      );
+
+      final undone = await g_actions.undoSimiuSet(
+        request: g.SimiuUndoRequest(
+          journal: applied.journals.single,
+          cleanEmptyDirectories: true,
+          dryRun: false,
+        ),
+      );
+      expect((undone.done, undone.failed), (2, 0), reason: '${undone.items}');
+      expect(File('$canonicalRoot/loose/one.png').readAsStringSync(), 'first');
+      expect(File('$canonicalRoot/loose/two.png').readAsStringSync(), 'second');
+      expect(
+        Directory(set).existsSync(),
+        isFalse,
+        reason: 'the folder this apply created goes away once it is empty',
+      );
+      expect(undone.messages, contains('Restored 2 operation(s)'));
+    },
+    timeout: const Timeout(Duration(minutes: 3)),
+  );
 }
 
 Future<List<String>> _badNamePaths(KisakiEngine engine, String rootPath) async {
@@ -625,6 +703,19 @@ g.MoveRequest _move(
     action: action,
     conflict: conflict,
     preserveStructure: false,
+    dryRun: dryRun,
+  );
+}
+
+/// A Simiu apply request: the board already decided which file joins which set folder, and the
+/// bridge only performs that decision and journals it.
+g.SimiuApplyRequest _simiu(
+  List<g.SimiuOperation> operations, {
+  required bool dryRun,
+}) {
+  return g.SimiuApplyRequest(
+    mode: g.SimiuMode.move,
+    operations: operations,
     dryRun: dryRun,
   );
 }
