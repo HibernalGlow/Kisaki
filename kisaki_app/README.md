@@ -58,7 +58,7 @@ the Rust bridge gates.
 Every one of these is part of CI (`.github/workflows/kisaki.yml`, jobs `bridge` and `dart`).
 
 ```bash
-cargo test -p kisaki_bridge                                     # 117 tests
+cargo test -p kisaki_bridge                                     # 119 tests
 cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 cargo fmt -p kisaki_bridge -- --check                           # stable, as CI runs it
 flutter analyze
@@ -78,10 +78,11 @@ cleanup go through `czkawka_core::common::fs_ops`, which is what gives trash beh
 the other frontends.
 
 `requestStop` interrupts whichever job is in flight - a scan or one file operation - and only one file
-operation runs at a time, so a stop signal can never hit the wrong batch. Rename, move, EXIF and
-video optimize each stop between files and report the rest as skipped with `The run was stopped`;
-`deleteFiles` and `applySimiuSet` still run to completion, because their per-row result shape and their
-undo journal were built without an interruption point.
+operation runs at a time, so a stop signal can never land on the wrong batch. Delete, rename, move,
+EXIF and video optimize each stop between files, and what they never attempted is reported as stopped
+rather than as removed or failed, so an interrupted run can never overstate reclaimed bytes.
+`applySimiuSet` still runs to completion: its undo journal has to describe exactly the operations that
+happened.
 
 | Verb | What it does |
 |---|---|
