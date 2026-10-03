@@ -52,6 +52,10 @@ class Labels {
 
   static bool knows(String key) => _table.containsKey(key);
 
+  /// The authored table, for the test that checks every placeholder can be substituted.
+  @visibleForTesting
+  static Map<String, String> get table => _table;
+
   static const Map<String, String> _table = {
     'action-add-dirs': 'Add directories',
     'action-add-files': 'Add files',
@@ -74,6 +78,13 @@ class Labels {
     'action-select-group': 'Select group',
     'action-stop': 'Stop',
     'action-theme': 'Toggle theme',
+    'activity-clear': 'Clear activity log',
+    'activity-copied': 'Copied { \$count } entries to the clipboard.',
+    'activity-copy': 'Copy activity log',
+    'activity-empty': 'No matching entries',
+    'activity-placeholder': 'Tool, level, action or message',
+    'activity-result': '{ \$affected } affected / { \$errors } errors',
+    'activity-title': 'Activity log',
     'app-title': 'Kisaki',
     'assistant-actions-title': 'Selection actions',
     'assistant-add-criterion': 'Add criterion',
@@ -204,13 +215,13 @@ class Labels {
     'confirm_exif_body': '{ \$count } files are cleaned; the source is only rewritten because the option is on.',
     'confirm_exif_plan_title': 'Plan the EXIF cleanup?',
     'confirm_exif_title': 'Clean EXIF metadata?',
-    'confirm_move_body': '{count} paths will be written under {destination}. Existing files are never overwritten.',
+    'confirm_move_body': '{ \$count } paths will be written under { \$destination }. Existing files are never overwritten.',
     'confirm_move_title': 'Move the selection',
     'confirm_organize_body': '{ \$count } files from { \$groups } groups go into { \$folders } folders next to their own sources.',
     'confirm_organize_plan_title': 'Plan the group organize?',
     'confirm_organize_title': 'Organize the similar groups?',
     'confirm_rename_body':
-        'The engine decides the new names for {count} paths.',
+        'The engine decides the new names for { \$count } paths.',
     'confirm_rename_title': 'Fix the names',
     'confirm_simiu_apply_title': 'Apply the Simiu set operations?',
     'confirm_simiu_body': '{ \$count } moves: a set folder is created in each source directory, and every file keeps an entry in an undo journal.',
@@ -409,8 +420,8 @@ class Labels {
     'filter-text-title': 'Quick text',
     'filter-title': 'Multi-dimensional filter',
     'folders-empty': 'No similar folders at this threshold and filter.',
-    'folders-groups': '{count} groups',
-    'folders-images': '{count} images',
+    'folders-groups': '{ \$count } groups',
+    'folders-images': '{ \$count } images',
     'folders-summary': 'Rolled up by image count, size and groups touched',
     'folders-title': 'Similar folders',
     'header-results': 'Result groups',
@@ -494,6 +505,10 @@ class Labels {
     'preview-next': 'Next',
     'preview-prev': 'Previous',
     'preview-title': 'Picture preview',
+    'log-operation-started':
+        '{ \$action } asked the engine for { \$count } paths.',
+    'log-scan-started': 'Scan started.',
+    'log-stopping': 'Stop requested.',
     'rust_init_error_title': 'Kisaki failed to start',
     'rust_no_included_paths':
         'Add at least one included directory before scanning',
@@ -518,7 +533,7 @@ class Labels {
     'simiu-scan-order-label': 'Order to plan',
     'status-ready': 'Kisaki is ready.',
     'status_cancelled': 'Scan stopped',
-    'status_copied': 'Copied {path} to the clipboard.',
+    'status_copied': 'Copied { \$path } to the clipboard.',
     'status_deleting': 'Applying file operations...',
     'status_dry_run_only': 'Dry run only - no files were changed',
     'status_exif_cleaning': 'Cleaning EXIF metadata...',
@@ -530,8 +545,8 @@ class Labels {
     'status_found':
         'Found { \$files } files in { \$groups } groups ({ \$size })',
     'status_move_needs_destination': 'Choose a destination folder first.',
-    'status_move_planned': 'Dry run planned {count} moves to {destination}.',
-    'status_moved': 'Moved {count} paths to {destination}.',
+    'status_move_planned': 'Dry run planned { \$count } moves to { \$destination }.',
+    'status_moved': 'Moved { \$count } paths to { \$destination }.',
     'status_moving': 'Moving files...',
     'status_nothing_found': 'Scan finished, nothing found',
     'status_nothing_selected': 'Select at least one result first',
@@ -547,8 +562,8 @@ class Labels {
     'status_removed_all': 'Removed { \$count } paths',
     'status_removed_partial':
         'Removed { \$removed } paths, { \$failed } failed',
-    'status_rename_planned': 'Dry run planned {count} renames.',
-    'status_renamed': 'Renamed {count} paths.',
+    'status_rename_planned': 'Dry run planned { \$count } renames.',
+    'status_renamed': 'Renamed { \$count } paths.',
     'status_renaming': 'Renaming files...',
     'status_scanning': 'Scanning...',
     'status_simiu_applied': 'Put { \$count } files into their set folders.',

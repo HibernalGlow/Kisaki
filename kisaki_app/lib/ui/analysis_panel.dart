@@ -6,6 +6,7 @@ import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
 import '../theme/swiss_grid.dart';
 import '../util/format.dart';
+import 'activity_log_panel.dart';
 import 'exif_card.dart';
 import 'organize_card.dart';
 import 'overlays.dart';
@@ -183,6 +184,11 @@ class AnalysisPanel extends StatelessWidget {
             onPressed: () => KisakiOverlays.openMessages(context, controller),
           ),
         ],
+        const SizedBox(height: BoardTokens.section),
+        ActivityLogPanel(
+          controller: controller,
+          key: const Key('activity-card'),
+        ),
       ],
     );
   }
