@@ -4,6 +4,7 @@ import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
+import 'filter_panel.dart';
 import 'widgets/primitives.dart';
 
 /// Middle lane: header strip, sticky column header, row list, and the empty states.
@@ -103,12 +104,27 @@ class _ResultsHeader extends StatelessWidget {
                       hintText: Labels.of('placeholder-filter'),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: BoardTokens.gap,
-                        vertical: 6,
+                        vertical: BoardTokens.gapSmall,
                       ),
                     ),
                     onChanged: controller.setFilter,
                   ),
                 ),
+                BoardAction(
+                  key: const Key('open-filters'),
+                  labelKey: 'filter-filter',
+                  dense: true,
+                  tone: controller.filters.activeCount > 0
+                      ? palette.primary
+                      : null,
+                  onPressed: () => FilterPanel.open(context, controller),
+                ),
+                if (controller.filters.activeCount > 0)
+                  Text(
+                    '${controller.filters.activeCount}',
+                    key: const Key('active-filter-count'),
+                    style: palette.text.labelSmall,
+                  ),
                 BoardAction(
                   key: const Key('select-all'),
                   labelKey: 'action-select-all',
