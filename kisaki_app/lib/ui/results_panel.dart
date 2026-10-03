@@ -6,6 +6,7 @@ import '../state/board_controller.dart';
 import '../state/row_projection.dart';
 import '../theme/board_theme.dart';
 import 'assistant_panel.dart';
+import 'comparison_view.dart';
 import 'filter_panel.dart';
 import 'widgets/primitives.dart';
 
@@ -127,6 +128,20 @@ class _ResultsHeader extends StatelessWidget {
                     key: const Key('active-filter-count'),
                     style: palette.text.labelSmall,
                   ),
+                BoardAction(
+                  key: const Key('open-comparison'),
+                  labelKey: 'action-compare',
+                  dense: true,
+                  onPressed:
+                      controller.canCompareSelection &&
+                          controller.selectedRows.isNotEmpty
+                      ? () => ComparisonView.open(
+                          context,
+                          controller,
+                          controller.selectedRows.first,
+                        )
+                      : null,
+                ),
                 BoardAction(
                   key: const Key('open-assistant'),
                   labelKey: 'assistant-title',
