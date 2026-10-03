@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 import 'engine/kisaki_engine.dart';
@@ -11,14 +13,14 @@ Future<void> main() async {
   runApp(KisakiApp(engine: await _resolveEngine()));
 }
 
-/// The bridge is authoritative; if the dylib is missing the board still opens on seeded data so
-/// the UI can be reviewed without a Rust build.
+/// The Rust engine is the only acceptable data source, because the board deletes files. Seeded
+/// data exists for UI review and must be asked for explicitly, never silently substituted.
 Future<KisakiEngine> _resolveEngine() async {
-  try {
-    return await KisakiRustLib.init();
-  } on Object {
+  if (Platform.environment['KISAKI_SEED'] == '1') {
+    debugPrint('Kisaki: KISAKI_SEED=1, running on seeded demo data');
     return SeedEngine();
   }
+  return KisakiRustLib.init();
 }
 
 class KisakiApp extends StatelessWidget {
