@@ -153,11 +153,7 @@ class MetricTile extends StatelessWidget {
           value,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: TextStyle(
-            fontSize: BoardTokens.fsMetric,
-            fontWeight: FontWeight.w600,
-            color: accent ?? palette.fg,
-          ),
+          style: palette.metricFigure(color: accent ?? palette.fg),
         ),
       ],
     );
