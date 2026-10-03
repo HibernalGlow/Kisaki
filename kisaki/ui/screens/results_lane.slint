@@ -14,7 +14,7 @@ component ColumnHeaderCell inherits Rectangle {
 
     horizontal-stretch: 1;
     min-width: 72px;
-    height: 26px;
+    height: Theme.chip_height;
 
     area := TouchArea {
         mouse-cursor: MouseCursor.pointer;
@@ -24,7 +24,7 @@ component ColumnHeaderCell inherits Rectangle {
     }
 
     HorizontalLayout {
-        spacing: 3px;
+        spacing: Theme.gap_small;
         alignment: root.right_aligned ? LayoutAlignment.end : LayoutAlignment.start;
 
         Text {
@@ -141,7 +141,7 @@ component ResultRowDelegate inherits Rectangle {
     HorizontalLayout {
         padding-left: 8px;
         padding-right: 8px;
-        spacing: 6px;
+        spacing: Theme.gap_small;
         alignment: center;
 
         CheckMark {
@@ -212,10 +212,10 @@ export component ResultsBody inherits Rectangle {
         spacing: 0px;
 
         HorizontalLayout {
-            height: 30px;
+            height: Theme.control_height;
             padding-left: 8px;
             padding-right: 8px;
-            spacing: 6px;
+            spacing: Theme.gap_small;
             alignment: center;
 
             MicroHeading {
@@ -229,7 +229,7 @@ export component ResultsBody inherits Rectangle {
                 horizontal-stretch: 1;
             }
             LineEdit {
-                width: 190px;
+                width: Theme.filter_width;
                 text <=> AppState.filter_text;
                 placeholder-text: Translations.placeholder_filter;
                 font-size: Theme.fs_label;
@@ -247,13 +247,13 @@ export component ResultsBody inherits Rectangle {
         }
 
         Rectangle {
-            height: 26px;
+            height: Theme.chip_height;
             background: Palette.sunken;
 
             HorizontalLayout {
                 padding-left: 8px;
                 padding-right: 8px;
-                spacing: 6px;
+                spacing: Theme.gap_small;
 
                 Rectangle {
                     width: Theme.col_select;
@@ -262,7 +262,7 @@ export component ResultsBody inherits Rectangle {
                         checked: AppState.select_state == 2;
                         state: AppState.select_state;
                         x: 0px;
-                        y: 5px;
+                        y: Theme.gap_small;
                         clicked => {
                             Callabler.toggle_all_rows();
                         }

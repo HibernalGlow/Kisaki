@@ -12,7 +12,7 @@ export component AnalysisBody inherits Rectangle {
         // Hairline-separated metric readout: the 1px gaps between tiles are the
         // dividers.
         Rectangle {
-            height: 54px;
+            height: Theme.metric_height;
             background: Palette.hairline;
 
             HorizontalLayout {
@@ -52,7 +52,7 @@ export component AnalysisBody inherits Rectangle {
 
                 HorizontalLayout {
                     spacing: 1px;
-                    height: 54px;
+                    height: Theme.metric_height;
 
                     MetricTile {
                         label: Translations.metric_selected;

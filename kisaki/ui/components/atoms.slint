@@ -14,7 +14,7 @@ export component Capsule inherits Rectangle {
     in property <string> text;
     in property <ButtonVariant> variant: ButtonVariant.Neutral;
     in property <bool> enabled: true;
-    in property <length> cap_width: content.preferred-width + 22px;
+    in property <length> cap_width: content.preferred-width + Theme.gap * 3;
     in property <length> cap_height: 28px;
     callback clicked;
 
@@ -103,8 +103,8 @@ export component Toggle inherits Rectangle {
     callback clicked;
 
     width: 32px;
-    height: 18px;
-    border-radius: 9px;
+    height: Theme.glyph_height;
+    border-radius: root.height / 2;
     background: root.checked
         ? Palette.primary
         : root.enabled ? Palette.border : Palette.sunken;
@@ -112,9 +112,9 @@ export component Toggle inherits Rectangle {
     knob := Rectangle {
         x: root.checked ? root.width - self.width - 2px : 2px;
         y: 2px;
-        width: 14px;
-        height: 14px;
-        border-radius: 7px;
+        width: 16px;
+        height: 16px;
+        border-radius: self.height / 2;
         background: Palette.card;
         animate x {
             duration: 120ms;
@@ -137,7 +137,7 @@ export component ToggleRow inherits Rectangle {
     in property <bool> enabled: true;
     callback clicked;
 
-    height: 30px;
+    height: Theme.control_height;
     border-radius: Theme.radius;
     border-width: 1px;
     border-color: Palette.border_soft;
@@ -210,7 +210,7 @@ export component Badge inherits Rectangle {
     in property <bool> strong: false;
     in property <bool> muted: false;
 
-    width: content.preferred-width + 10px;
+    width: content.preferred-width + Theme.gap + Theme.gap_small;
     height: 16px;
     border-radius: 8px;
     border-width: 1px;
@@ -218,7 +218,7 @@ export component Badge inherits Rectangle {
     background: root.muted ? Palette.sunken : transparent;
 
     content := Text {
-        x: 5px;
+        x: Theme.gap_small;
         text: root.text;
         color: root.strong ? Palette.primary : Palette.fg_muted;
         font-size: Theme.fs_caption;
@@ -257,8 +257,8 @@ export component MetricTile inherits Rectangle {
         spacing: 2px;
         padding-left: 8px;
         padding-right: 8px;
-        padding-top: 7px;
-        padding-bottom: 7px;
+        padding-top: Theme.pad;
+        padding-bottom: Theme.pad;
 
         Text {
             text: root.label;
@@ -280,7 +280,7 @@ export component EmptyState inherits Rectangle {
 
     VerticalLayout {
         alignment: center;
-        spacing: 6px;
+        spacing: Theme.gap_small;
 
         Text {
             text: root.text;

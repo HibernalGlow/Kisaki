@@ -11,7 +11,7 @@ component TabPill inherits Rectangle {
     in property <bool> selected: false;
     callback picked;
 
-    height: 26px;
+    height: Theme.chip_height;
     width: content.preferred-width + 20px;
     border-radius: Theme.radius;
     background: root.selected ? Palette.primary_soft : area.has-hover ? Palette.hover : transparent;
@@ -24,7 +24,7 @@ component TabPill inherits Rectangle {
     }
 
     content := Text {
-        x: 10px;
+        x: Theme.gap + Theme.gap_small;
         text: root.text;
         color: root.selected ? Palette.primary : Palette.fg_muted;
         font-size: Theme.fs_body;
@@ -105,21 +105,21 @@ component PathEditor inherits Rectangle {
 
         ScrollView {
             visible: root.rows.length > 0;
-            max-height: 170px;
+            max-height: Theme.path_width;
             min-height: 40px;
             vertical-stretch: 0;
 
             VerticalLayout {
-                spacing: 3px;
+                spacing: Theme.gap_small;
                 for row[idx] in root.rows: Rectangle {
-                    height: 26px;
+                    height: Theme.chip_height;
                     border-radius: Theme.radius;
                     background: Palette.raised;
 
                     HorizontalLayout {
-                        padding-left: 6px;
-                        padding-right: 6px;
-                        spacing: 6px;
+                        padding-left: Theme.gap_small;
+                        padding-right: Theme.gap_small;
+                        spacing: Theme.gap_small;
                         alignment: center;
 
                         CheckMark {
@@ -147,7 +147,7 @@ component PathEditor inherits Rectangle {
                             glyph: "*";
                             label: Translations.label_reference;
                             active: row.is_reference;
-                            box_size: 22px;
+                            box_size: Theme.chip_height;
                             clicked => {
                                 Callabler.toggle_reference(idx);
                             }
@@ -159,16 +159,16 @@ component PathEditor inherits Rectangle {
 
         EmptyState {
             visible: root.rows.length == 0;
-            min-height: 34px;
+            min-height: Theme.control_height + Theme.gap_small;
             text: Translations.empty_paths;
         }
 
         VerticalLayout {
             visible: AppState.manual_open && root.manual_visible;
-            spacing: 3px;
+            spacing: Theme.gap_small;
 
             LineEdit {
-                height: 54px;
+                height: Theme.metric_height;
                 text <=> AppState.manual_text;
                 placeholder-text: Translations.placeholder_manual;
                 font-size: Theme.fs_label;
@@ -205,10 +205,10 @@ component PathEditor inherits Rectangle {
 component FieldRow inherits Rectangle {
     in property <FieldDef> field;
 
-    height: 30px;
+    height: Theme.control_height;
 
     HorizontalLayout {
-        spacing: 6px;
+        spacing: Theme.gap_small;
         alignment: center;
 
         Text {
@@ -229,14 +229,14 @@ component FieldRow inherits Rectangle {
             visible: root.field.kind == FieldKind.Bool;
             text: root.field.label;
             checked: root.field.value_bool;
-            width: 170px;
+            width: Theme.path_width;
             clicked => {
                 Callabler.field_bool_changed(root.field.id, !root.field.value_bool);
             }
         }
         LineEdit {
             visible: root.field.kind == FieldKind.Number || root.field.kind == FieldKind.Text;
-            width: 150px;
+            width: Theme.field_width;
             text: root.field.value_text;
             placeholder-text: root.field.suffix;
             font-size: Theme.fs_label;
@@ -246,7 +246,7 @@ component FieldRow inherits Rectangle {
         }
         ComboBox {
             visible: root.field.kind == FieldKind.Select;
-            width: 150px;
+            width: Theme.field_width;
             model: root.field.choices;
             current-index: root.field.choice_index;
             selected(value) => {
@@ -261,7 +261,7 @@ export component SourceBody inherits Rectangle {
         spacing: 0px;
 
         HorizontalLayout {
-            height: 30px;
+            height: Theme.control_height;
             padding-left: Theme.pad;
             padding-right: Theme.pad;
             spacing: 4px;
@@ -326,7 +326,7 @@ export component SourceBody inherits Rectangle {
                     }
 
                     HorizontalLayout {
-                        spacing: 6px;
+                        spacing: Theme.gap_small;
                         alignment: center;
 
                         Text {
@@ -337,7 +337,7 @@ export component SourceBody inherits Rectangle {
                         }
                         LineEdit {
                             text <=> AppState.min_size_kib;
-                            width: 70px;
+                            width: Theme.action_width;
                             font-size: Theme.fs_label;
                         }
                         Text {
@@ -348,7 +348,7 @@ export component SourceBody inherits Rectangle {
                         }
                         LineEdit {
                             text <=> AppState.max_size_kib;
-                            width: 70px;
+                            width: Theme.action_width;
                             font-size: Theme.fs_label;
                         }
                     }
@@ -384,7 +384,7 @@ export component SourceBody inherits Rectangle {
 
                 VerticalLayout {
                     visible: AppState.source_tab == 1;
-                    spacing: 3px;
+                    spacing: Theme.gap_small;
 
                     for f in AppState.fields: FieldRow {
                         field: f;
