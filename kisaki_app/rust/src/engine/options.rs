@@ -13,9 +13,10 @@ enum Initial {
     Flag(bool),
     Choice(&'static str),
     Integer(i64),
-    /// A float the engine takes directly (`duration_tolerance_pct`), carried as text because the
-    /// FFI has no float payload. Defaults are written the way they should be displayed ("0.6").
-    Decimal(&'static str),
+    /// Free text: a name pattern, an allowed-character set, or a float the engine takes directly
+    /// (`duration_tolerance_pct`). Floats ride text because the FFI has no float payload, and the
+    /// defaults are written the way they should be displayed ("0.6").
+    Text(&'static str),
     Tokens(&'static [&'static str]),
 }
 
@@ -72,16 +73,17 @@ const fn integer(id: &'static str, min: i64, max: i64, default: i64) -> Spec {
     }
 }
 
-/// A fractional option. It travels as text, so `min`/`max` describe the whole-number span the
-/// engine asserts on (`0..=1` for fractions, `0..=100` for percentages) rather than a slider range.
-const fn decimal(id: &'static str, min: i64, max: i64, default: &'static str) -> Spec {
+/// A free-text option. Fractional values ride it too (`min`/`max` then describe the range the
+/// engine asserts on: `0..=1` for fractions, `0..=100` for percentages), because the FFI integer
+/// payload would truncate them.
+const fn text(id: &'static str, min: i64, max: i64, default: &'static str) -> Spec {
     Spec {
         id,
         kind: FieldKind::Text,
         options: &[],
         min,
         max,
-        initial: Initial::Decimal(default),
+        initial: Initial::Text(default),
     }
 }
 
@@ -125,17 +127,17 @@ const SPECS: &[Spec] = &[
     integer("vid_hash_duration", 2, 60, 10),
     flag("vid_letterbox_crop", true),
     integer("vid_window_count", 1, 20, 5),
-    decimal("vid_duration_tolerance_pct", 0, 100, "20"),
-    decimal("vid_min_matching_windows", 0, 1, "0.6"),
-    decimal("vid_subclip_min_match", 0, 1, "0.5"),
+    text("vid_duration_tolerance_pct", 0, 100, "20"),
+    text("vid_min_matching_windows", 0, 1, "0.6"),
+    text("vid_subclip_min_match", 0, 1, "0.5"),
     flag("vid_generate_thumbnails", false),
     integer("vid_thumbnail_percentage", 0, 100, 10),
     flag("vid_thumbnail_grid", false),
     integer("vid_thumbnail_grid_tiles", 2, 6, 2),
     flag("vid_check_audio_content", false),
-    decimal("vid_audio_similarity_percent", 0, 100, "80"),
-    decimal("vid_audio_max_difference", 0, 10, "3"),
-    decimal("vid_audio_length_ratio", 0, 1, "0.1"),
+    text("vid_audio_similarity_percent", 0, 100, "80"),
+    text("vid_audio_max_difference", 0, 10, "3"),
+    text("vid_audio_length_ratio", 0, 1, "0.1"),
     integer("vid_audio_min_duration_seconds", 0, 600, 10),
     // Duplicate music
     choice("mus_check_type", &["Tags", "Fingerprint"], "Tags"),
@@ -166,6 +168,15 @@ const SPECS: &[Spec] = &[
     flag("bro_video_ffmpeg", false),
     flag("bro_font", false),
     flag("bro_markup", false),
+    // Bad extensions
+    flag("bext_include_files_without_extension", false),
+    // Bad names - the defaults reproduce NameIssues::all(), so an untouched request scans as before
+    flag("name_uppercase_extension", true),
+    flag("name_emoji_used", true),
+    flag("name_space_at_start_or_end", true),
+    flag("name_non_ascii_graphical", true),
+    flag("name_remove_duplicated_non_alphanumeric", true),
+    text("name_allowed_charset", 0, NO_CEILING, "_- ."),
     // Exif remover
     tokens("exif_ignored_tags", &[]),
     // Video optimizer
@@ -184,7 +195,7 @@ impl From<Initial> for FieldPayload {
             Initial::Flag(value) => FieldPayload::Flag(value),
             Initial::Choice(value) => FieldPayload::Choice(value.to_string()),
             Initial::Integer(value) => FieldPayload::Integer(value),
-            Initial::Decimal(value) => FieldPayload::Text(value.to_string()),
+            Initial::Text(value) => FieldPayload::Text(value.to_string()),
             Initial::Tokens(values) => FieldPayload::Tokens(values.iter().map(|value| value.to_string()).collect()),
         }
     }
