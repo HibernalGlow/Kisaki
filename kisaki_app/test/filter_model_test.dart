@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kisaki_app/engine/models.dart';
 import 'package:kisaki_app/state/filter_apply.dart';
+import 'package:kisaki_app/util/format.dart';
 import 'package:kisaki_app/state/filter_model.dart';
 
 /// Mirrors `Xiranite/packages/nodes/czkawka/src/filters.test.ts` case for case, with the same
@@ -528,6 +529,35 @@ void main() {
     expect(
       run(<TextFilterField>[TextFilterField.path], 'D:/folder').rows,
       hasLength(1),
+    );
+  });
+
+  test('quick text searches the painted date, not the engine UTC text', () {
+    final ToolSpec tool = duplicateTool();
+    final List<ScanRow> rows = <ScanRow>[
+      row(
+        path: 'D:/keep/a.jpg',
+        size: 1,
+        group: 0,
+        groupSize: 1,
+        modified: 1700000000,
+        cells: <String>['1 B', '2023-11-14 22:13:20'],
+      ),
+    ];
+    FilterResult run(String pattern) => applyFilters(
+      rows: rows,
+      selected: const <String>{},
+      state: FilterState.defaults()
+        ..textEnabled = true
+        ..textPattern = pattern
+        ..textFields = const <TextFilterField>[TextFilterField.metadata],
+      tool: tool,
+    );
+    expect(run(humanDate(1700000000)).rows, hasLength(1));
+    expect(
+      run('2023-11-14 22:13:20').rows,
+      isEmpty,
+      reason: 'the engine text is not what the table shows',
     );
   });
 }

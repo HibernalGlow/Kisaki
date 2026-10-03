@@ -4,7 +4,7 @@ import 'package:kisaki_app/engine/kisaki_engine.dart';
 import 'package:kisaki_app/engine/models.dart';
 
 const ColumnDef sizeColumn = ColumnDef(
-  key: 'col_size',
+  key: 'size',
   labelKey: 'col_size',
   flex: 0.5,
   minWidth: 84,
@@ -12,7 +12,7 @@ const ColumnDef sizeColumn = ColumnDef(
 );
 
 const ColumnDef modifiedColumn = ColumnDef(
-  key: 'col_modified',
+  key: 'modified',
   labelKey: 'col_modified',
   flex: 1,
   minWidth: 140,
@@ -187,12 +187,12 @@ class StubEngine implements KisakiEngine {
     directory: path.substring(0, path.lastIndexOf('/')),
     cells: <String>['${size}B', '2026-01-02'],
     sizeBytes: size,
-    modifiedTs: 1,
+    modifiedTs: 1700000000,
     groupIndex: group,
     groupSize: group < 0 ? 0 : 2,
     isGroupStart: start,
     isReference: false,
-    sortKeys: <int>[size, 1],
+    sortKeys: <int>[size, 1700000000],
   );
 
   static ScanOutcome outcome(

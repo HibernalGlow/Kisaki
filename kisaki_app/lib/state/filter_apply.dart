@@ -1,5 +1,6 @@
 import '../engine/models.dart';
 import 'filter_model.dart';
+import 'row_projection.dart';
 
 /// The filtering half of the ported model: it turns a `FilterState` into the rows and the
 /// statistics the board paints.
@@ -458,7 +459,8 @@ String _cellsWhere(
   final List<String> hits = <String>[];
   for (int index = 0; index < tool.columns.length; index++) {
     if (index < row.cells.length && accept(tool.columns[index].key)) {
-      hits.add(row.cells[index]);
+      // Searching the painted text, so a query that is on screen always finds its row.
+      hits.add(displayCell(tool.columns[index], row, index));
     }
   }
   return hits.join('\n');
