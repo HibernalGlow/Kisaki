@@ -1,6 +1,7 @@
+use czkawka_core::common::model::ToolType;
+
 use crate::api::types::{ColumnDef, FieldDef, FieldValue, ToolSpec};
 use crate::engine::options;
-use czkawka_core::common::model::ToolType;
 
 /// Const-friendly column shape; `.into()` is not callable in a `const`, so the FFI-facing
 /// `ColumnDef` is built when the registry is read.
@@ -13,7 +14,13 @@ struct ColumnSpec {
 }
 
 const fn column(key: &'static str, label_key: &'static str, flex: f64, min_width: f64, align_right: bool) -> ColumnSpec {
-    ColumnSpec { key, label_key, flex, min_width, align_right }
+    ColumnSpec {
+        key,
+        label_key,
+        flex,
+        min_width,
+        align_right,
+    }
 }
 
 impl ColumnSpec {
@@ -143,7 +150,27 @@ static TOOLS: &[Entry] = &[
         label_key: "tool_similar_videos",
         grouped: true,
         columns: &[COL_SIZE, COL_DURATION, COL_RESOLUTION, COL_CODEC, COL_BITRATE, COL_MODIFIED],
-        field_ids: &["vid_tolerance", "vid_ignore_same_size", "vid_skip_forward", "vid_hash_duration", "vid_letterbox_crop"],
+        field_ids: &[
+            "vid_tolerance",
+            "vid_ignore_same_size",
+            "vid_ignore_same_resolution",
+            "vid_skip_forward",
+            "vid_hash_duration",
+            "vid_letterbox_crop",
+            "vid_window_count",
+            "vid_duration_tolerance_pct",
+            "vid_min_matching_windows",
+            "vid_subclip_min_match",
+            "vid_generate_thumbnails",
+            "vid_thumbnail_percentage",
+            "vid_thumbnail_grid",
+            "vid_thumbnail_grid_tiles",
+            "vid_check_audio_content",
+            "vid_audio_similarity_percent",
+            "vid_audio_max_difference",
+            "vid_audio_length_ratio",
+            "vid_audio_min_duration_seconds",
+        ],
     },
     Entry {
         id: "duplicate_music",
@@ -228,6 +255,7 @@ static TOOLS: &[Entry] = &[
         columns: &[COL_SIZE, COL_CODEC, COL_RESOLUTION, COL_INFO, COL_MODIFIED],
         field_ids: &[
             "vid_opt_mode",
+            "vid_opt_crop_mechanism",
             "vid_opt_excluded_codecs",
             "vid_opt_black_pixel_threshold",
             "vid_opt_black_bar_min_percentage",
@@ -287,7 +315,6 @@ pub fn defaults(tool: &str) -> Vec<FieldValue> {
     };
     options::defaults(entry.field_ids)
 }
-
 
 #[cfg(test)]
 mod tests {

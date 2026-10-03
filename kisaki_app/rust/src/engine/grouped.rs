@@ -1,4 +1,5 @@
 use std::cmp::Reverse;
+use std::ops::RangeInclusive;
 use std::sync::Arc;
 use std::sync::atomic::AtomicBool;
 
@@ -15,9 +16,10 @@ use czkawka_core::tools::similar_images::core::{get_string_from_similarity, retu
 use czkawka_core::tools::similar_images::{GeometricInvariance, ImagesEntry, SimilarImages, SimilarImagesParameters, SimilarityPreset};
 use czkawka_core::tools::similar_videos::core::{format_bitrate_opt, format_duration_opt};
 use czkawka_core::tools::similar_videos::{
-    DEFAULT_AUDIO_LENGTH_RATIO, DEFAULT_AUDIO_MAXIMUM_DIFFERENCE, DEFAULT_AUDIO_MIN_DURATION_SECONDS, DEFAULT_AUDIO_SIMILARITY_PERCENT,
-    DEFAULT_DURATION_TOLERANCE_PCT, DEFAULT_MIN_MATCHING_WINDOWS, DEFAULT_SUBCLIP_MIN_MATCH, DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE,
-    DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL, DEFAULT_WINDOW_COUNT, MAX_TOLERANCE, SimilarVideos, SimilarVideosParameters, VideosEntry,
+    ALLOWED_AUDIO_LENGTH_RATIO, ALLOWED_AUDIO_SIMILARITY_PERCENT, ALLOWED_DURATION_TOLERANCE_PCT, ALLOWED_MATCH_FRACTION, ALLOWED_SKIP_FORWARD_AMOUNT, ALLOWED_VID_HASH_DURATION,
+    ALLOWED_WINDOW_COUNT, DEFAULT_AUDIO_LENGTH_RATIO, DEFAULT_AUDIO_MAXIMUM_DIFFERENCE, DEFAULT_AUDIO_MIN_DURATION_SECONDS, DEFAULT_AUDIO_SIMILARITY_PERCENT, DEFAULT_CROP_DETECT,
+    DEFAULT_DURATION_TOLERANCE_PCT, DEFAULT_MIN_MATCHING_WINDOWS, DEFAULT_SKIP_FORWARD_AMOUNT, DEFAULT_SUBCLIP_MIN_MATCH, DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE,
+    DEFAULT_VID_HASH_DURATION, DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL, DEFAULT_WINDOW_COUNT, MAX_TOLERANCE, SimilarVideos, SimilarVideosParameters, VideosEntry,
 };
 
 use crate::api::types::{FieldPayload, ScanRequest, ToolSpec};
@@ -25,13 +27,7 @@ use crate::engine::runner::ProgressSender;
 use crate::engine::{EngineOutcome, EngineRow, FieldStore, config};
 
 /// Scanners whose output is a set of groups: duplicates, similar images, similar videos, music.
-pub fn run(
-    spec: &ToolSpec,
-    request: &ScanRequest,
-    store: &FieldStore,
-    sender: ProgressSender,
-    stop: Arc<AtomicBool>,
-) -> Result<EngineOutcome, String> {
+pub fn run(spec: &ToolSpec, request: &ScanRequest, store: &FieldStore, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let options = Options::new(request, store);
     match spec.id.as_str() {
         "duplicate_files" => run_duplicates(spec, request, &options, sender, stop),
@@ -42,13 +38,7 @@ pub fn run(
     }
 }
 
-fn run_duplicates(
-    spec: &ToolSpec,
-    request: &ScanRequest,
-    options: &Options<'_>,
-    sender: ProgressSender,
-    stop: Arc<AtomicBool>,
-) -> Result<EngineOutcome, String> {
+fn run_duplicates(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let params = DuplicateFinderParameters::new(
         check_method(options)?,
         hash_type(options)?,
@@ -112,13 +102,7 @@ fn duplicate_row(entry: &DuplicateEntry) -> EngineRow {
     )
 }
 
-fn run_similar_images(
-    spec: &ToolSpec,
-    request: &ScanRequest,
-    options: &Options<'_>,
-    sender: ProgressSender,
-    stop: Arc<AtomicBool>,
-) -> Result<EngineOutcome, String> {
+fn run_similar_images(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let hash_size = image_hash_size(options)?;
     let params = SimilarImagesParameters::new(
         return_similarity_from_similarity_preset(similarity_preset(options)?, hash_size),
@@ -180,35 +164,40 @@ fn image_row(entry: &ImagesEntry, hash_size: u8) -> EngineRow {
     )
 }
 
-fn run_similar_videos(
-    spec: &ToolSpec,
-    request: &ScanRequest,
-    options: &Options<'_>,
-    sender: ProgressSender,
-    stop: Arc<AtomicBool>,
-) -> Result<EngineOutcome, String> {
-    // The exposed option set is tolerance, same-size exclusion, skip forward, hash duration and
-    // letterbox cropping; every other parameter stays at the engine default, as in the Slint UI.
+fn run_similar_videos(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+    // Every parameter the engine takes is exposed; each value is clamped into the range
+    // SimilarVideosParameters::new asserts on, because an assert there panics the scan thread.
     let params = SimilarVideosParameters::new(
         options.integer("vid_tolerance", 2).clamp(0, i64::from(MAX_TOLERANCE)) as i32,
         options.flag("vid_ignore_same_size", false),
-        false,
-        options.integer("vid_skip_forward", 15).clamp(0, 300) as u32,
-        options.integer("vid_hash_duration", 10).clamp(2, 60) as u32,
-        options.flag("vid_letterbox_crop", true),
-        DEFAULT_WINDOW_COUNT,
-        DEFAULT_DURATION_TOLERANCE_PCT,
-        DEFAULT_MIN_MATCHING_WINDOWS,
-        DEFAULT_SUBCLIP_MIN_MATCH,
-        false,
-        DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL,
-        false,
-        DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE,
-        false,
-        DEFAULT_AUDIO_SIMILARITY_PERCENT,
-        DEFAULT_AUDIO_MAXIMUM_DIFFERENCE,
-        DEFAULT_AUDIO_LENGTH_RATIO,
-        DEFAULT_AUDIO_MIN_DURATION_SECONDS,
+        options.flag("vid_ignore_same_resolution", false),
+        whole(&ALLOWED_SKIP_FORWARD_AMOUNT, options.integer("vid_skip_forward", i64::from(DEFAULT_SKIP_FORWARD_AMOUNT))),
+        whole(&ALLOWED_VID_HASH_DURATION, options.integer("vid_hash_duration", i64::from(DEFAULT_VID_HASH_DURATION))),
+        options.flag("vid_letterbox_crop", DEFAULT_CROP_DETECT),
+        whole(&ALLOWED_WINDOW_COUNT, options.integer("vid_window_count", i64::from(DEFAULT_WINDOW_COUNT))),
+        fraction(
+            &ALLOWED_DURATION_TOLERANCE_PCT,
+            options.number("vid_duration_tolerance_pct", DEFAULT_DURATION_TOLERANCE_PCT),
+        ),
+        fraction(&ALLOWED_MATCH_FRACTION, options.number("vid_min_matching_windows", DEFAULT_MIN_MATCHING_WINDOWS)),
+        fraction(&ALLOWED_MATCH_FRACTION, options.number("vid_subclip_min_match", DEFAULT_SUBCLIP_MIN_MATCH)),
+        options.flag("vid_generate_thumbnails", false),
+        u8::try_from(options.integer("vid_thumbnail_percentage", i64::from(DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL)).clamp(0, 100))
+            .unwrap_or(DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL),
+        options.flag("vid_thumbnail_grid", false),
+        u8::try_from(options.integer("vid_thumbnail_grid_tiles", i64::from(DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE)).clamp(2, 6)).unwrap_or(DEFAULT_THUMBNAIL_GRID_TILES_PER_SIDE),
+        options.flag("vid_check_audio_content", false),
+        fraction(
+            &ALLOWED_AUDIO_SIMILARITY_PERCENT,
+            options.number("vid_audio_similarity_percent", DEFAULT_AUDIO_SIMILARITY_PERCENT),
+        ),
+        // Only the two percentages and the ratio are asserted by the engine; the maximum
+        // difference is a plain f64, so it just needs to stay non-negative.
+        options.number("vid_audio_max_difference", DEFAULT_AUDIO_MAXIMUM_DIFFERENCE).max(0.0),
+        fraction(&ALLOWED_AUDIO_LENGTH_RATIO, options.number("vid_audio_length_ratio", DEFAULT_AUDIO_LENGTH_RATIO)),
+        options
+            .integer("vid_audio_min_duration_seconds", i64::from(DEFAULT_AUDIO_MIN_DURATION_SECONDS))
+            .clamp(0, 600) as u32,
     );
 
     let mut tool = SimilarVideos::new(params);
@@ -268,13 +257,7 @@ fn video_row(entry: &VideosEntry) -> EngineRow {
     )
 }
 
-fn run_same_music(
-    spec: &ToolSpec,
-    request: &ScanRequest,
-    options: &Options<'_>,
-    sender: ProgressSender,
-    stop: Arc<AtomicBool>,
-) -> Result<EngineOutcome, String> {
+fn run_same_music(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let params = SameMusicParameters::new(
         music_similarity(options),
         options.flag("mus_approximate", true),
@@ -386,17 +369,8 @@ fn build_grouped(groups: Vec<Group>) -> Vec<EngineRow> {
 
 /// Packs the rows into the engine outcome, refusing to hand Dart a row that does not fill the
 /// declared columns.
-fn grouped_outcome(
-    spec: &ToolSpec,
-    rows: Vec<EngineRow>,
-    stopped: bool,
-    messages: String,
-    critical: Option<String>,
-) -> Result<EngineOutcome, String> {
-    if let Some(row) = rows
-        .iter()
-        .find(|row| row.cells.len() != spec.columns.len() || row.sort_keys.len() != spec.columns.len())
-    {
+fn grouped_outcome(spec: &ToolSpec, rows: Vec<EngineRow>, stopped: bool, messages: String, critical: Option<String>) -> Result<EngineOutcome, String> {
+    if let Some(row) = rows.iter().find(|row| row.cells.len() != spec.columns.len() || row.sort_keys.len() != spec.columns.len()) {
         return Err(format!(
             "Scanner '{}' built a row with {} cells for '{}' but declares {} columns",
             spec.id,
@@ -482,10 +456,18 @@ impl<'a> Options<'a> {
 }
 
 fn normalize_key(raw: &str) -> String {
-    raw.chars()
-        .filter(|c| c.is_alphanumeric())
-        .flat_map(char::to_lowercase)
-        .collect()
+    raw.chars().filter(|c| c.is_alphanumeric()).flat_map(char::to_lowercase).collect()
+}
+
+/// Snaps a whole-number option into the range the engine asserts on, so an out-of-range request
+/// clamps instead of panicking the scan thread.
+fn whole(range: &RangeInclusive<u32>, value: i64) -> u32 {
+    value.clamp(i64::from(*range.start()), i64::from(*range.end())) as u32
+}
+
+/// Same guard for the fractional options (`0.0..=1.0` and percentage ranges).
+fn fraction(range: &RangeInclusive<f64>, value: f64) -> f64 {
+    value.clamp(*range.start(), *range.end())
 }
 
 fn invalid_choice(id: &str, value: &str, accepted: &str) -> String {
@@ -531,11 +513,7 @@ fn similarity_preset(options: &Options<'_>) -> Result<SimilarityPreset, String> 
         "small" => Ok(SimilarityPreset::Small),
         "verysmall" => Ok(SimilarityPreset::VerySmall),
         "minimal" => Ok(SimilarityPreset::Minimal),
-        value => Err(invalid_choice(
-            "img_similarity",
-            value,
-            "original, very_high, high, medium, small, very_small, minimal",
-        )),
+        value => Err(invalid_choice("img_similarity", value, "original, very_high, high, medium, small, very_small, minimal")),
     }
 }
 
@@ -571,11 +549,7 @@ fn geometric_invariance(options: &Options<'_>) -> Result<GeometricInvariance, St
         "off" => Ok(GeometricInvariance::Off),
         "mirrorflip" => Ok(GeometricInvariance::MirrorFlip),
         "mirrorfliprotate90" => Ok(GeometricInvariance::MirrorFlipRotate90),
-        value => Err(invalid_choice(
-            "img_geometric_invariance",
-            value,
-            "off, mirror_flip, mirror_flip_rotate90",
-        )),
+        value => Err(invalid_choice("img_geometric_invariance", value, "off, mirror_flip, mirror_flip_rotate90")),
     }
 }
 
@@ -696,6 +670,52 @@ mod tests {
 
     fn row(size: u64, name: &str) -> EngineRow {
         EngineRow::new(PathBuf::from(format!("/x/{name}")), vec![], vec![], size, 0)
+    }
+
+    #[test]
+    fn out_of_range_numbers_clamp_instead_of_reaching_the_engine_asserts() {
+        assert_eq!(whole(&ALLOWED_WINDOW_COUNT, 0), 1);
+        assert_eq!(whole(&ALLOWED_WINDOW_COUNT, 999), 20);
+        assert_eq!(whole(&ALLOWED_SKIP_FORWARD_AMOUNT, -5), 0);
+        assert_eq!(whole(&ALLOWED_VID_HASH_DURATION, 10), 10);
+
+        assert_eq!(fraction(&ALLOWED_MATCH_FRACTION, 1.4), 1.0);
+        assert_eq!(fraction(&ALLOWED_DURATION_TOLERANCE_PCT, -3.0), 0.0);
+        assert_eq!(fraction(&ALLOWED_AUDIO_LENGTH_RATIO, 0.25), 0.25);
+    }
+
+    #[test]
+    fn video_defaults_satisfy_the_ranges_the_engine_asserts_on() {
+        // A default outside an asserted range would panic the scan thread on every video scan.
+        let ids = [
+            "vid_skip_forward",
+            "vid_hash_duration",
+            "vid_window_count",
+            "vid_duration_tolerance_pct",
+            "vid_min_matching_windows",
+            "vid_subclip_min_match",
+            "vid_audio_similarity_percent",
+            "vid_audio_length_ratio",
+        ];
+        let values = crate::engine::options::defaults(&ids);
+        let number = |id: &str| -> f64 {
+            let payload = values.iter().find(|value| value.id == id).unwrap_or_else(|| panic!("missing default: {id}"));
+            match &payload.value {
+                FieldPayload::Text(text) => text.parse().unwrap_or_else(|_| panic!("{id} default is not a number: {text}")),
+                FieldPayload::Integer(value) => *value as f64,
+                other => panic!("{id} default should be numeric, got {other:?}"),
+            }
+        };
+        let whole_number = |id: &str| number(id) as u32;
+
+        assert!(ALLOWED_SKIP_FORWARD_AMOUNT.contains(&whole_number("vid_skip_forward")));
+        assert!(ALLOWED_VID_HASH_DURATION.contains(&whole_number("vid_hash_duration")));
+        assert!(ALLOWED_WINDOW_COUNT.contains(&whole_number("vid_window_count")));
+        assert!(ALLOWED_DURATION_TOLERANCE_PCT.contains(&number("vid_duration_tolerance_pct")));
+        assert!(ALLOWED_MATCH_FRACTION.contains(&number("vid_min_matching_windows")));
+        assert!(ALLOWED_MATCH_FRACTION.contains(&number("vid_subclip_min_match")));
+        assert!(ALLOWED_AUDIO_SIMILARITY_PERCENT.contains(&number("vid_audio_similarity_percent")));
+        assert!(ALLOWED_AUDIO_LENGTH_RATIO.contains(&number("vid_audio_length_ratio")));
     }
 
     #[test]
