@@ -1,0 +1,44 @@
+// Every callback here is registered exactly once in kisaki/src/callbacks.rs.
+export global Callabler {
+    // Navigation
+    callback tool_selected(index: int);
+    callback toggle_theme();
+    callback reset_layout();
+
+    // Scan lifecycle
+    callback scan_requested();
+    callback stop_requested();
+
+    // Path lane
+    callback add_directories(list: int);
+    callback add_files();
+    callback commit_manual_paths(list: int, text: string);
+    callback remove_checked_paths(list: int);
+    callback clear_paths(list: int);
+    callback toggle_reference(index: int);
+    callback toggle_path_checked(list: int, index: int);
+    callback source_tab_changed(index: int);
+
+    // Per-tool algorithm fields, owned by Rust because they live in a model.
+    callback field_bool_changed(id: int, value: bool);
+    callback field_text_changed(id: int, value: string);
+    callback field_choice_changed(id: int, index: int);
+
+    // Results table
+    callback row_toggled(index: int);
+    callback group_toggled(index: int);
+    callback toggle_all_rows();
+    callback column_sorted(index: int);
+    callback filter_changed(value: string);
+    callback row_opened(index: int);
+
+    // File operations
+    callback delete_selected();
+    callback confirm_accepted();
+    callback confirm_rejected();
+    callback export_results();
+
+    // Status
+    callback show_errors();
+    callback hide_errors();
+}

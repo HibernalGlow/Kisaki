@@ -1,0 +1,113 @@
+import { ScrollView } from "std-widgets.slint";
+import { Palette, Theme } from "../globals/theme.slint";
+import { AppState } from "../globals/app_state.slint";
+import { Callabler } from "../globals/callabler.slint";
+import { Translations } from "../globals/translations.slint";
+import { ButtonVariant, Capsule, MetricTile, ToggleRow } from "../components/atoms.slint";
+
+export component AnalysisBody inherits Rectangle {
+    VerticalLayout {
+        spacing: 0px;
+
+        // Hairline-separated metric readout: the 1px gaps between tiles are the
+        // dividers.
+        Rectangle {
+            height: 54px;
+            background: Palette.hairline;
+
+            HorizontalLayout {
+                spacing: 1px;
+
+                MetricTile {
+                    label: Translations.metric_files;
+                    value: AppState.metrics.has_results ? "\{AppState.metrics.files}" : "-";
+                    horizontal-stretch: 1;
+                }
+                MetricTile {
+                    label: Translations.metric_groups;
+                    value: AppState.metrics.has_results ? "\{AppState.metrics.groups}" : "-";
+                    horizontal-stretch: 1;
+                }
+                MetricTile {
+                    label: Translations.metric_total;
+                    value: AppState.metrics.has_results ? AppState.metrics.total_size : "-";
+                    horizontal-stretch: 1;
+                }
+                MetricTile {
+                    label: Translations.metric_reclaimable;
+                    value: AppState.metrics.has_results ? AppState.metrics.reclaimable : "-";
+                    accent: true;
+                    horizontal-stretch: 1;
+                }
+            }
+        }
+
+        ScrollView {
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                alignment: stretch;
+                spacing: Theme.gap_small;
+                padding: Theme.pad;
+
+                HorizontalLayout {
+                    spacing: 1px;
+                    height: 54px;
+
+                    MetricTile {
+                        label: Translations.metric_selected;
+                        value: "\{AppState.metrics.selected}";
+                        horizontal-stretch: 1;
+                    }
+                    MetricTile {
+                        label: Translations.metric_selected_size;
+                        value: AppState.metrics.selected_size;
+                        horizontal-stretch: 1;
+                    }
+                }
+
+                Text {
+                    text: Translations.hint_dry_run;
+                    color: Palette.fg_faint;
+                    font-size: Theme.fs_caption;
+                    wrap: word-wrap;
+                }
+
+                ToggleRow {
+                    text: Translations.label_dry_run;
+                    checked: AppState.dry_run;
+                    clicked => {
+                        AppState.dry_run = !AppState.dry_run;
+                    }
+                }
+                ToggleRow {
+                    text: Translations.label_trash;
+                    checked: AppState.move_to_trash;
+                    enabled: !AppState.running && !AppState.dry_run;
+                    clicked => {
+                        AppState.move_to_trash = !AppState.move_to_trash;
+                    }
+                }
+
+                Capsule {
+                    text: Translations.action_delete;
+                    variant: ButtonVariant.Danger;
+                    enabled: AppState.can_delete;
+                    cap_height: 32px;
+                    clicked => {
+                        Callabler.delete_selected();
+                    }
+                }
+                Capsule {
+                    text: Translations.action_export;
+                    variant: ButtonVariant.Neutral;
+                    enabled: AppState.has_results && !AppState.running;
+                    cap_height: 32px;
+                    clicked => {
+                        Callabler.export_results();
+                    }
+                }
+            }
+        }
+    }
+}

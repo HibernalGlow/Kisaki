@@ -1,0 +1,92 @@
+// Core data shapes shared between Rust and the Kisaki UI.
+
+export enum ToolId {
+    DuplicateFiles,
+    EmptyFolders,
+    BigFiles,
+    EmptyFiles,
+    TemporaryFiles,
+    SimilarImages,
+    SimilarVideos,
+    DuplicateMusic,
+    InvalidSymlinks,
+    BrokenFiles,
+    BadExtensions,
+    BadNames,
+    ExifRemover,
+    VideoOptimizer,
+}
+
+export enum Phase {
+    Idle,
+    Running,
+    Completed,
+    Stopped,
+    Error,
+}
+
+export enum FieldKind {
+    Bool,
+    Number,
+    Text,
+    Select,
+}
+
+// One entry in the header tool menu; `glyph` is a short non-verbal marker,
+// never the only carrier of meaning.
+export struct ToolEntry {
+    id: ToolId,
+    label: string,
+    glyph: string,
+}
+
+// A results column. Columns flex with `stretch` so the table never needs
+// horizontal scrolling, which keeps the header and the rows aligned.
+export struct ColumnDef {
+    title: string,
+    stretch: float,
+    min_width: length,
+    align_right: bool,
+}
+
+export struct ResultRow {
+    checked: bool,
+    is_group_start: bool,
+    group_index: int,
+    group_size: int,
+    is_reference: bool,
+    // Index into the Rust row store, so filtering never invalidates a callback argument.
+    store_index: int,
+    glyph: string,
+    name: string,
+    path: string,
+    cells: [string],
+}
+
+export struct PathRow {
+    path: string,
+    is_reference: bool,
+    checked: bool,
+}
+
+// Schema-driven option row, rendered by the Algorithm tab.
+export struct FieldDef {
+    id: int,
+    kind: FieldKind,
+    label: string,
+    value_bool: bool,
+    value_text: string,
+    choices: [string],
+    choice_index: int,
+    suffix: string,
+}
+
+export struct Metrics {
+    files: int,
+    groups: int,
+    total_size: string,
+    reclaimable: string,
+    selected: int,
+    selected_size: string,
+    has_results: bool,
+}

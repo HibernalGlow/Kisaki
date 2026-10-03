@@ -1,0 +1,70 @@
+import { ColumnDef, FieldDef, Metrics, PathRow, Phase, ResultRow, ToolEntry, ToolId } from "common.slint";
+
+// Transient application state. Persisted settings live in Rust and are pushed
+// in here at start-up; the UI never writes to disk directly.
+export global AppState {
+    in-out property <ToolId> active_tool: ToolId.DuplicateFiles;
+    in-out property <Phase> phase: Phase.Idle;
+    in-out property <[ToolEntry]> tool_entries;
+    in-out property <bool> tool_menu_open: false;
+    // Kept in sync with active_tool by Rust so the header can show it cheaply.
+    in-out property <string> active_label: "";
+    in-out property <string> active_glyph: "";
+    in-out property <string> action_summary: "";
+    in-out property <int> language_index: 0;
+
+    // Lane geometry
+    in-out property <length> source_width: 300px;
+    in-out property <length> analysis_width: 300px;
+    in-out property <bool> source_collapsed: false;
+    in-out property <bool> analysis_collapsed: false;
+    in-out property <int> source_tab: 0;
+
+    in-out property <[PathRow]> included_paths;
+    in-out property <[PathRow]> excluded_paths;
+    in-out property <[FieldDef]> fields;
+    in-out property <bool> manual_open: false;
+    in-out property <string> manual_text: "";
+
+    // Shared scan conditions, kept as raw text because they are comma lists.
+    in-out property <string> excluded_items: "*/.git/*,*/cache/*";
+    in-out property <string> allowed_extensions: "";
+    in-out property <string> excluded_extensions: "";
+    in-out property <string> min_size_kib: "1";
+    in-out property <string> max_size_kib: "4000000";
+    in-out property <bool> recursive_search: true;
+    in-out property <bool> use_cache: true;
+
+    // Results
+    in-out property <[ColumnDef]> columns;
+    in-out property <[ResultRow]> results;
+    in-out property <string> filter_text: "";
+    in-out property <int> sort_column: -1;
+    in-out property <bool> sort_ascending: true;
+    in-out property <int> select_state: 0;
+    in-out property <int> visible_count: 0;
+
+    // File operations
+    in-out property <bool> dry_run: true;
+    in-out property <bool> move_to_trash: true;
+    in-out property <bool> confirm_open: false;
+    in-out property <string> confirm_title: "";
+    in-out property <string> confirm_body: "";
+
+    // Progress and status
+    in-out property <int> progress_all: 0;
+    in-out property <int> progress_current: -1;
+    in-out property <string> progress_label: "";
+    in-out property <string> status_text: "";
+    in-out property <string> error_text: "";
+    in-out property <bool> errors_open: false;
+    in-out property <Metrics> metrics;
+
+    out property <bool> running: phase == Phase.Running;
+    out property <bool> has_results: results.length > 0;
+    out property <bool> any_path: included_paths.length > 0;
+    // A scan only makes sense with at least one included directory and nothing in flight.
+    out property <bool> can_scan: any_path && !running;
+    out property <bool> can_stop: running;
+    out property <bool> can_delete: metrics.selected > 0 && !running;
+}

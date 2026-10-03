@@ -1,0 +1,199 @@
+import { Palette, Theme } from "../globals/theme.slint";
+import { Translations } from "../globals/translations.slint";
+import { GlyphButton, MicroHeading } from "./atoms.slint";
+
+// A horizontal swimlane: 32px header with a collapse control and a body slot.
+export component Lane inherits Rectangle {
+    in property <string> title: "";
+    // Shown instead of the title when the lane is folded away, so no per
+    // character slicing is needed.
+    in property <string> short: "L";
+    in-out property <bool> collapsed: false;
+    in property <bool> active: false;
+    callback toggled;
+
+    Rectangle {
+        x: 0px;
+        y: 0px;
+        width: parent.width;
+        height: parent.height;
+        border-radius: Theme.radius;
+        border-width: 1px;
+        border-color: root.active ? Palette.primary : Palette.border;
+        background: Palette.card;
+        clip: true;
+    }
+
+    VerticalLayout {
+        visible: root.collapsed;
+        alignment: start;
+        spacing: 4px;
+        padding-top: 8px;
+
+        GlyphButton {
+            glyph: ">>";
+            label: root.title;
+            width: 24px;
+            height: 24px;
+            x: 8px;
+            clicked => {
+                root.toggled();
+            }
+        }
+        Text {
+            text: root.short;
+            color: Palette.fg_muted;
+            font-size: Theme.fs_metric;
+            font-weight: 700;
+            horizontal-alignment: center;
+        }
+    }
+
+    content := VerticalLayout {
+        visible: !root.collapsed;
+        spacing: 0px;
+
+        Rectangle {
+            height: Theme.lane_header_height;
+            background: Palette.sunken;
+
+            HorizontalLayout {
+                padding-left: 8px;
+                padding-right: 8px;
+                spacing: 6px;
+                alignment: start;
+
+                GlyphButton {
+                    glyph: "<<";
+                    label: root.title;
+                    width: 22px;
+                    height: 22px;
+                    clicked => {
+                        root.toggled();
+                    }
+                }
+                MicroHeading {
+                    label: root.title;
+                    horizontal-stretch: 1;
+                }
+            }
+            Rectangle {
+                y: parent.height - 1px;
+                height: 1px;
+                width: parent.width;
+                background: Palette.hairline;
+            }
+        }
+
+        Rectangle {
+            vertical-stretch: 1;
+            @children
+        }
+    }
+}
+
+export component DragHandle inherits Rectangle {
+    in property <length> current: 300px;
+    callback resized(new_width: length);
+    callback reset();
+
+    property <bool> dragging: false;
+    property <length> grab: 0px;
+    property <length> begin: 0px;
+
+    width: 8px;
+    background: transparent;
+
+    TouchArea {
+        mouse-cursor: ew-resize;
+        pointer-event(event) => {
+            if (event.button == PointerEventButton.left && event.kind == PointerEventKind.down) {
+                root.dragging = true;
+                root.grab = self.mouse-x;
+                root.begin = root.current;
+            } else if (event.kind == PointerEventKind.up || event.kind == PointerEventKind.cancel) {
+                root.dragging = false;
+            }
+        }
+        moved => {
+            if (root.dragging) {
+                root.resized(root.begin + self.mouse-x - root.grab);
+            }
+        }
+        double-clicked => {
+            root.reset();
+        }
+    }
+
+    Rectangle {
+        x: 3px;
+        width: 2px;
+        height: parent.height;
+        background: parent.dragging ? Palette.primary : Palette.hairline;
+    }
+}
+
+export component ProgressRail inherits Rectangle {
+    in property <int> percent: 0;
+    in property <bool> indeterminate: false;
+    in property <bool> danger: false;
+
+    height: 6px;
+    border-radius: 3px;
+    background: Palette.sunken;
+
+    Rectangle {
+        x: 0px;
+        y: 0px;
+        width: root.indeterminate
+            ? parent.width
+            : parent.width * Math.max(0, Math.min(100, root.percent)) / 100;
+        height: parent.height;
+        border-radius: 3px;
+        background: root.danger ? Palette.danger : root.indeterminate ? Palette.border : Palette.primary;
+        animate width {
+            duration: 160ms;
+        }
+    }
+}
+
+export component StatusBar inherits Rectangle {
+    in property <string> text: "";
+    in property <int> percent: 0;
+    in property <bool> indeterminate: false;
+    in property <bool> danger: false;
+    callback show_details;
+
+    height: 22px;
+
+    HorizontalLayout {
+        spacing: 6px;
+        alignment: center;
+
+        ProgressRail {
+            percent: root.percent;
+            indeterminate: root.indeterminate;
+            danger: root.danger;
+            horizontal-stretch: 1;
+        }
+        Text {
+            text: root.text == "" ? Translations.status_ready : root.text;
+            color: root.danger ? Palette.danger : Palette.fg_muted;
+            font-size: Theme.fs_label;
+            overflow: elide;
+            max-width: 260px;
+            vertical-alignment: center;
+        }
+        GlyphButton {
+            visible: root.danger;
+            glyph: "!";
+            danger: true;
+            label: Translations.label_errors;
+            width: 22px;
+            height: 22px;
+            clicked => {
+                root.show_details();
+            }
+        }
+    }
+}

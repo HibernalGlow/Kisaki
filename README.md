@@ -1,209 +1,136 @@
-<div align="center"><img src="https://github.com/user-attachments/assets/f5e4b290-d001-4cf4-9f52-dab65a30e441" alt="krokiet_logo" width="600" /></div>
-     
-**Krokiet** ((IPA: [ˈkrɔcɛt]), "croquette" in Polish) new generation GUI frontend, simple, multiplatform, fast and free app to remove unnecessary files from your computer.
+<p>
+  <img src="./assets/readme/hero.svg" width="100%" alt="Kisaki - a three-lane Slint desktop frontend for the Czkawka cleaning engine">
+</p>
 
+<p align="right">English · <a href="./README_zh.md">简体中文</a></p>
 
-<div align="center"><img src="https://user-images.githubusercontent.com/41945903/102616149-66490400-4137-11eb-9cd6-813b2b070834.png" alt="czkawka_logo" width="600" /></div>
+**Kisaki is a new desktop frontend for the [Czkawka](https://github.com/qarmin/czkawka) cleaning
+engine, built with Slint.** This repository is a fork of Czkawka: the scanning engine and every
+other frontend in it are upstream's, and `kisaki/` is what this fork adds.
 
-**Czkawka** (_tch•kav•ka_ (IPA: [ˈʧ̑kafka]), "hiccup" in Polish) older gtk4 GUI frontend, superseded by Krokiet. **Version 12.0 is the last released version** - no new binaries will be provided. New users and existing users are encouraged to switch to Krokiet.
+## What the fork adds
 
-<div align="center"><img src="https://github.com/user-attachments/assets/ed6dfeea-a984-49e8-a621-8d6ae521c760" alt="cedinia_logo" width="600" /></div>
+One crate, and 37 lines outside it.
 
-**Cedinia** - Android touch friendly GUI frontend for Czkawka Core, built with Slint.
+| | |
+|:--|:--|
+| `kisaki/` | 3 744 lines of Rust in 16 files, 2 247 lines of Slint in 12 files |
+| Outside `kisaki/` | `Cargo.toml` (workspace member), `justfile`, `misc/run_checks.sh`, `misc/change_version.py`, `Cargo.lock`, `.github/workflows/kisaki.yml`, plus `data/com.github.hibernerglow.kisaki.desktop` and `.metainfo.xml` |
+| Boundary | `czkawka_core` is never modified to make a UI feature easier, and upstream crates are never restyled - both would destroy future rebases |
 
-## Features
+Kisaki does not reuse Krokiet's UI. Its Rust side mirrors Krokiet's *mechanisms* (a worker thread per
+scan, a `crossbeam` progress channel, an `Arc<AtomicBool>` stop flag, all Slint mutation pushed back
+through `upgrade_in_event_loop`), while the layout, navigation, result table, progress display,
+file-operation surface and theming are Kisaki's own.
 
-- **Written in memory-safe Rust** - almost 100% unsafe code free
-- **Amazingly fast** - due multithreading and efficient algorithms
-- **Free, Open Source without any ads**
-- **Multiplatform** - runs on Linux, Windows, macOS, FreeBSD, x86, ARM, RISC-V and even Android
-- **Cache support** - second and further scans should be much faster than the first one
-- **Easy to run, easy to compile** - minimal runtime and build dependencies, portable version available
-- **CLI frontend** - for easy automation
-- **GUI frontend** - uses Slint or GTK 4 frameworks
-- **Core library** - allows to reuse functionality in other apps
-- **Android app** - touch-friendly frontend for Android devices
-- **No spying** - Czkawka does not have access to the Internet, nor does it collect any user information or statistics
-- **Multilingual** - support multiple languages like Polish, English or Italian
-- **Multiple tools to use**:
-    - **Duplicates** - Finds duplicates based on file name, size or hash
-    - **Empty Folders** - Finds empty folders with the help of an advanced algorithm
-    - **Big Files** - Finds the provided number of the biggest files in given location
-    - **Empty Files** - Looks for empty files across the drive
-    - **Temporary Files** - Finds temporary files
-    - **Similar Images** - Finds images which are not exactly the same (different resolution, watermarks)
-    - **Similar Videos** - Looks for visually similar videos
-    - **Same Music** - Searches for similar music by tags or by reading content and comparing it
-    - **Invalid Symbolic Links** - Shows symbolic links which point to non-existent files/directories
-    - **Broken Files** - Finds files that are invalid or corrupted
-    - **Bad Extensions** - Lists files whose content not match with their extension
-    - **Exif Remover** - Removes Exif metadata from various file types
-    - **Video Optimizer** - Crops from static parts and converts videos to more efficient formats
-    - **Bad Names** - Finds files with names that may be not wanted (e.g., containing special characters)
+## The board, measured
 
-![Krokiet](https://github.com/user-attachments/assets/3cc7ec6a-3d6a-42cb-9d33-4b0f0c547af6)
+<p>
+  <img src="./assets/readme/lane_board.svg" width="100%" alt="Dimensioned drawing of the Kisaki window: a header bar over a Source lane, a Results lane and an Analysis lane, with the measured minimums, clamps and the 48 pixel collapsed strip">
+</p>
 
-![Czkawka](https://github.com/user-attachments/assets/b0409515-1bec-4e13-8fac-7bdfa15f5848)
+Two decisions are load-bearing:
 
-Changelog about each version can be found in [CHANGELOG.md](Changelog.md).
+- **Swiss / International Typographic Style.** Flat surfaces, one 8 px spacing unit, 1 px hairlines as
+  the only ornament, hierarchy carried by type size and weight, and colour reserved for state -
+  `primary` for selection and running, `danger` for destructive, `warn` and `ok` for outcomes. No
+  shadows, no gradients, no icon artwork: markers are typographic until a real asset exists. Both
+  palettes derive from a single `Theme.dark` flag.
+- **Three swimlanes.** A header bar carries the scanner picker, scan/stop, the live progress rail, the
+  theme toggle and the layout reset. Below it sit Source (paths plus schema-driven algorithm options),
+  Results (the table) and Analysis (metrics, dry-run and trash toggles, delete, export). Lanes are
+  drag-resizable, double-click resets to 300 px, and each collapses to a 48 px strip that shows a
+  single letter.
+- **Measured.** Window 1280 x 800 preferred and 940 x 560 minimum, 32 px lane headers, 6 px corners,
+  Source clamped to 220..560, Analysis to 210..520, Results at least 360 wide, and the three overlays
+  stacked at z 100, 200 and 300.
 
-New releases can be found in [Github releases](https://github.com/qarmin/czkawka/releases) and nightly builds also in [Nightly releases](https://github.com/qarmin/czkawka/releases/tag/Nightly)
+## Scanners
 
-You can read more about the 12.0 release, its new features, and the issues that were fixed in the following articles:
-- English article - https://medium.com/@qarmin/krokiet-czkawka-12-0-6fa09c43c3b9
-- Polish article - https://medium.com/@qarmin/krokiet-czkawka-12-0-c5dad2116793
+Fourteen, all of them the engine's:
 
-## Usage, installation, compilation, requirements, license
+duplicates · empty folders · big files · empty files · temporary files · similar images · similar
+videos · same music · invalid symlinks · broken files · bad extensions · bad names · EXIF remover ·
+video optimizer
 
-Each tool uses different technologies, so you can find instructions for each of them in the appropriate file:
+## How a scan runs
 
-- [Krokiet GUI (Slint frontend)](krokiet/README.md)</br>
-- [Czkawka GUI (GTK frontend)](czkawka_gui/README.md)</br>
-- [Czkawka CLI](czkawka_cli/README.md)</br>
-- [Czkawka Core](czkawka_core/README.md)</br>
-- [Cedinia](cedinia/README.md)</br>
+<p>
+  <img src="./assets/readme/dataflow.svg" width="100%" alt="Data flow diagram: the event-loop lane runs UI to Callabler to AppStore to results refresh back to the UI as a model, while the worker lane runs scan start to a czkawka_core scanner to a progress channel, crossing threads only via the spawned thread and upgrade_in_event_loop">
+</p>
 
-## Comparison to other tools
+- `AppStore` behind an `Arc<Mutex<_>>` is the single source of truth; Slint models are projections of it.
+- The table hands back a position in the **visible** model, and `store.visible` maps it to the
+  canonical row - a UI index is never used to index `store.rows`.
+- Selection is keyed by **path**, so it survives re-sorting and re-filtering.
+- A `ModelRc` is never touched off the event loop.
+- `Callabler` callbacks are registered exactly once each; `misc/find_unused_callbacks.py` fails on
+  zero or duplicate registrations.
 
-In this comparison remember, that even if app have same features they may work different(e.g. one app may have more
-options to choose than other).
+## Build
 
-|                           |   Krokiet   |   Czkawka   | Cedinia | FSlint |     DupeGuru      |  Bleachbit  |
-|:-------------------------:|:-----------:|:-----------:|:-------:|:------:|:-----------------:|:-----------:|
-|         Language          |    Rust     |    Rust     |  Rust   | Python |   Python/Obj-C    |   Python    |
-|  Framework base language  |    Rust     |      C      |  Rust   |   C    | C/C++/Obj-C/Swift |      C      |
-|         Framework         |    Slint    |    GTK 4    |  Slint  | PyGTK2 | Qt 5 (PyQt)/Cocoa |   PyGTK3    |
-|            OS             | Lin,Mac,Win | Lin,Mac,Win | Android |  Lin   |    Lin,Mac,Win    | Lin,Mac,Win |
-|     Duplicate finder      |      ✔      |      ✔      |    ✔    |   ✔    |         ✔         |             |
-|        Empty files        |      ✔      |      ✔      |    ✔    |   ✔    |                   |             |
-|       Empty folders       |      ✔      |      ✔      |    ✔    |   ✔    |                   |             |
-|      Temporary files      |      ✔      |      ✔      |    ✔    |   ✔    |                   |      ✔      |
-|         Big files         |      ✔      |      ✔      |    ✔    |        |                   |             |
-|      Similar images       |      ✔      |      ✔      |    ✔    |        |         ✔         |             |
-|   Similar videos(audio)   |      ✔      |      ✔      |    ✔    |        |                   |             |
-|  Similar videos(frames)   |      ✔      |      ✔      |         |        |                   |             |
-|  Music duplicates(tags)   |      ✔      |      ✔      |    ✔    |        |         ✔         |             |
-| Music duplicates(content) |      ✔      |      ✔      |    ✔    |        |                   |             |
-|     Invalid symlinks      |      ✔      |      ✔      |         |   ✔    |                   |             |
-|       Broken files        |      ✔      |      ✔      |    ✔    |        |                   |             |
-| Invalid names/extensions  |      ✔      |      ✔      |    ✔    |   ✔    |                   |             |
-|       Exif cleaner        |      ✔      |             |    ✔    |        |                   |             |
-|      Video optimizer      |      ✔      |             |         |        |                   |             |
-|         Bad Names         |      ✔      |             |    ✔    |        |                   |             |
-|      Names conflict       |             |             |         |   ✔    |                   |             |
-|    Installed packages     |             |             |         |   ✔    |                   |             |
-|          Bad ID           |             |             |         |   ✔    |                   |             |
-|   Non stripped binaries   |             |             |         |   ✔    |                   |             |
-|   Redundant whitespace    |             |             |         |   ✔    |                   |             |
-|     Overwriting files     |             |             |         |   ✔    |                   |      ✔      |
-|     Portable version      |      ✔      |      ✔      |         |        |                   |      ✔      |
-|    Multiple languages     |      ✔      |      ✔      |    ✔    |   ✔    |         ✔         |      ✔      |
-|       Cache support       |      ✔      |      ✔      |    ✔    |        |         ✔         |             |
-|   In active development   |     Yes     |    No**     | Yes***  |   No   |  No<sup>*</sup>   |     Yes     |
+```sh
+cargo build -p kisaki     # debug
+just run kisaki           # debug run
+just runr kisaki          # fast_release run
+```
 
-<p><sup>*</sup> Few small commits added recently and last version released in 2023</p> 
-<p><sup>**</sup> Czkawka GTK 12.0 was the last released version - no new binaries will be provided</p>
-<p><sup>***</sup> Cedinia is an android app, video tools are not available due missing ffmpeg in Android</p>
+Default features are `winit_femtovg` and `winit_software`. Native-library features stay off by
+default, exactly like Krokiet: `heif`, `libraw`, `libavif`, `xdg_portal_trash`. Renderer backends can
+be swapped with `femtovg_wgpu`, `skia_opengl` or `skia_vulkan`.
 
-## Other apps
+Requires Rust 1.94.1 or newer (edition 2024).
 
-There are many similar applications to Czkawka on the Internet, which do some things better and some things worse:
+Before declaring any work on this crate done, run the per-package gates rather than the whole
+workspace:
 
-### GUI
+```sh
+cargo clippy -p kisaki --all-targets --all-features -- -D warnings
+python3 misc/find_unused_callbacks.py kisaki
+python3 misc/find_unused_fluent_translations.py kisaki
+```
 
-- [DupeGuru](https://github.com/arsenetar/dupeguru) - Many options to customize
-- [FSlint](https://github.com/pixelb/fslint) - A little outdated, but still have some tools not available in Czkawka
-- [AntiDupl.NET](https://github.com/ermig1979/AntiDupl) - Shows a lot of metadata of compared images
-- [Video Duplicate Finder](https://github.com/0x90d/videoduplicatefinder) - Finds similar videos(surprising, isn't it)
+## Safety
 
-### CLI
+Delete and export default to **dry run**, which produces a per-item plan and touches no files. Dry run
+has to be turned off before anything is written, and the confirmation dialog states which mode is
+active. Deletion goes through `czkawka_core`'s file operations, so "move to trash" behaves as it does
+in every other Czkawka frontend.
 
-Due to limited time, the biggest emphasis is on the GUI version so if you are looking for really good and feature-packed
-console apps, then take a look at these:
+## Not here yet
 
-- [Fclones](https://github.com/pkolaczk/fclones) - One of the fastest tools to find duplicates; it is written also in
-  Rust
-- [Rmlint](https://github.com/sahib/rmlint) - Nice console interface and also is feature packed
-- [RdFind](https://github.com/pauldreik/rdfind) - Fast, but written in C++ ¯\\\_(ツ)\_/¯
+Result thumbnails and image preview, the four-mode image comparison dialog, the smart selection
+assistant, the multi-dimensional filter panel (only the text filter is wired), the Simiu set mode, and
+the video-optimize and EXIF execution dialogs. These are planned page-by-page additions, not gaps in
+the scan engine.
 
+## The rest of the family
 
-## Projects using Czkawka
+| Crate | What it is | License | Docs |
+|:--|:--|:--|:--|
+| `czkawka_core` | scanning engine, used by every frontend | MIT | [README](czkawka_core/README.md) |
+| `czkawka_cli` | command-line frontend | MIT | [README](czkawka_cli/README.md) |
+| `czkawka_gui` | legacy GTK 4 frontend, maintenance only | MIT | [README](czkawka_gui/README.md) |
+| `krokiet` | upstream Slint desktop frontend | GPL-3.0-only | [README](krokiet/README.md) |
+| `cedinia` | Slint frontend for Android | GPL-3.0-only | [README](cedinia/README.md) |
+| `kisaki` | this fork's Slint desktop frontend | GPL-3.0-only | [README](kisaki/README.md) |
 
-Czkawka exposes its common functionality through a crate called **`czkawka_core`**, which can be reused by other projects.
+## Translations
 
-It is written in Rust and is used by all Czkawka frontends (`czkawka_gui`, `czkawka_cli`, `krokiet`, `cedinia`).
-
-It is also used by external projects, such as:
-
-- **Czkawka Tauri** - https://github.com/shixinhuang99/czkawka-tauri - A Tauri-based GUI frontend for Czkawka.
-- **page-dewarp** - https://github.com/lmmx/page-dewarp - A library for dewarping document images using a cubic sheet model.
-
-Bindings are also available for:
-
-- **Python** - https://pypi.org/project/czkawka/
-
-Some projects work as wrappers around `czkawka_cli`. Without directly depending on `czkawka_core`, they allow simple scanning and retrieving results in JSON format:
-
-- **Schluckauf** - https://github.com/fadykuzman/schluckauf
-
-## Thanks
-
-Big thanks to Pádraig Brady, creator of fantastic FSlint, because without his work I wouldn't create this tool.
-
-Thanks also to all the people who contributed to the project in every possible way
-
-Also, I really appreciate work of people that create crates on which Czkawka is based and for that I try to report bugs to make it even better.
-
-## How to help?
-
-- **Creating issues** - Mainly related to bugs, oddly behaving functionality, etc. As you can see from the issue tracker, there are plenty of ideas for new features, but most of them are either difficult to implement or not aligned with the vision of the project, which evolves slightly over time.
-- **Creating pull requests** - Bug fixes are of course very welcome. Regarding new features, it is best to consult with me before implementing them to confirm they align with the project vision. A POC implemented in Rust as external script/project would be useful, especially for more complex features, to ensure there are no technical limitations.
-- **Updating translations** - The project uses the Crowdin platform, where translations can be created and updated. In the case of a new release and missing translations, I use machine translation, which is often inaccurate, so updating translations is highly appreciated.
-- **Creating packages for various platforms** - Due to the difficulties related to adding and maintaining support for each new platform, such as learning package formats like deb or rpm, creating installers and packages, I decided to mainly focus on providing prebuilt binaries. However, having the project available in distribution repositories or in projects such as Chocolatey, Homebrew or Winget would be beneficial for users who prefer centralized repositories.
-- **Creating articles, videos, tutorials, etc.** - Any material that helps people better understand this program and its capabilities is welcome.
-- **Recommending it to friends, family, coworkers, etc.** - This is probably the simplest way to help the project become even more popular, which gives me motivation to continue developing the program. Here are a few example ways to naturally mention this program in a regular conversation:
-
-**S** - Someone  
-**Y** - You  
-
-### Situation 1:
-
-- **S** - Hey Anon, I have a lot of junk on my disk, what should I do?
-- **Y** - Download Krokiet/Czkawka. They are completely free and works on almost every system.
-- **S** - Thanks man!
-
-### Situation 2:
-
-- **S** - I am so thirsty...
-- **Y** - Have you heard about Krokiet/Czkawka?
-- **S** - Wait, what?
-- **Y** - Krokiet and Czkawka, in case you did not know, let you clean unnecessary files from your disk. They are completely free...
-- **S** - That is nice, but I am thirsty...
-- **Y** - ...they work on Windows, Linux and macOS, and some people even port them to FreeBSD and Android...
-
-
-## AI Policy
-The vast majority of the code in this project was written by me (qarmin) without using AI. However, as AI tools have improved and can significantly simplify development and reduce boilerplate, I see no reason to forbid their use. I have also added a AGENTS.md file to the repo to make it easier to provide AI tools with context about the project’s style and code structure.
-
-That said, every pull request, whether created with AI or not, must meet proper quality standards. The author must be able to clearly explain what the code does, without relying on AI for that explanation. I manually review every PR and test each change, so the risk of incorrect code slipping through is low. Still, to avoid wasting time, please refrain from submitting AI Slop PRs.
-
-## Officially Supported Projects
-Only this repository, [prebuild-binaries](https://github.com/qarmin/czkawka/releases), projects on [crates.io](https://crates.io/crates/czkawka_gui) and [flathub](https://flathub.org/apps/com.github.qarmin.czkawka) are directly maintained by me.  
-
-Czkawka does not have an official website, so do not trust any sites that claim to be the official one.  
-
-If you use packages from unofficial sources, make sure they are safe.
+Strings use [Fluent](https://projectfluent.org/). Only `kisaki/i18n/en/kisaki.ftl` is authored by
+hand; every other locale is generated and managed in Crowdin, and manual edits to non-English files
+are overwritten by `just unpack_translations`. The FTL keys, the `Translations` Slint properties and
+the generated `set_*` calls in `src/translations.rs` are one set - edit the `.slint` defaults and
+regenerate, never hand-maintain two of the three.
 
 ## License
 
-The entire code in this repository is licensed under the [MIT](https://mit-license.org/) license.
+`czkawka_core`, `czkawka_cli` and `czkawka_gui` are MIT. `krokiet`, `cedinia` and `kisaki` are
+GPL-3.0-only, because Slint requires it. Images and audio in this repository are CC BY 4.0.
 
-All images and audio files are licensed under the [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) license.
+## Credit
 
-The Czkawka GTK GUI and CLI applications are licensed under the [MIT](https://mit-license.org/) license, while the Krokiet and Cedinia(due Slint license requirements) are licensed under the [GPL-3.0-only](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
-
-## Donations
-
-If you are using the app, I would appreciate a donation for its further development, which can be
-done [here](https://github.com/sponsors/qarmin).
-
+The engine and every frontend but `kisaki/` come from
+[qarmin/czkawka](https://github.com/qarmin/czkawka), whose own homepage, feature list and comparison
+against similar tools live upstream. Releases for the upstream project are published there; this fork
+does not ship binaries.

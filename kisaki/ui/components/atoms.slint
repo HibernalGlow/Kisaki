@@ -1,0 +1,293 @@
+import { Palette, Theme } from "../globals/theme.slint";
+
+// Small building blocks. Everything here is drawn from primitives so that the
+// dark and light palettes stay in control of the result.
+
+export enum ButtonVariant {
+    Neutral,
+    Primary,
+    Danger,
+    Ghost,
+}
+
+export component Capsule inherits Rectangle {
+    in property <string> text;
+    in property <ButtonVariant> variant: ButtonVariant.Neutral;
+    in property <bool> enabled: true;
+    in property <length> cap_width: content.preferred-width + 22px;
+    in property <length> cap_height: 28px;
+    callback clicked;
+
+    height: root.cap_height;
+    width: root.cap_width;
+    border-radius: Theme.radius;
+    border-width: root.variant == ButtonVariant.Ghost ? 0px : 1px;
+    border-color: root.variant == ButtonVariant.Danger
+        ? Palette.danger
+        : root.variant == ButtonVariant.Primary ? Palette.primary : Palette.border;
+    background: !root.enabled
+        ? Palette.raised
+        : area.pressed
+            ? Palette.pressed
+            : root.variant == ButtonVariant.Primary
+                ? Palette.primary
+                : root.variant == ButtonVariant.Danger ? Palette.danger : Palette.raised;
+
+    area := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? MouseCursor.pointer : MouseCursor.default;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    content := Text {
+        x: (parent.width - self.preferred-width) / 2;
+        text: root.text;
+        color: !root.enabled
+            ? Palette.fg_faint
+            : root.variant == ButtonVariant.Primary || root.variant == ButtonVariant.Danger
+                ? Palette.fg_inverted
+                : Palette.fg;
+        font-size: Theme.fs_body;
+        vertical-alignment: center;
+    }
+}
+
+// Square icon button holding one glyph character; `label` carries the
+// accessible meaning so the glyph is never the only signal.
+export component GlyphButton inherits Rectangle {
+    in property <string> glyph: "+";
+    in property <string> label: "";
+    in property <bool> enabled: true;
+    in property <bool> active: false;
+    in property <bool> danger: false;
+    in property <length> box_size: 28px;
+    callback clicked;
+
+    width: root.box_size;
+    height: root.box_size;
+    border-radius: Theme.radius;
+    border-width: 1px;
+    border-color: root.active ? Palette.primary : Palette.border;
+    background: !root.enabled
+        ? Palette.sunken
+        : root.active
+            ? Palette.primary_soft
+            : area.pressed
+                ? Palette.pressed
+                : area.has-hover ? Palette.hover : Palette.raised;
+
+    area := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? MouseCursor.pointer : MouseCursor.default;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    Text {
+        text: root.glyph;
+        color: !root.enabled
+            ? Palette.fg_faint
+            : root.danger ? Palette.danger : root.active ? Palette.primary : Palette.fg_muted;
+        font-size: Theme.fs_body;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+export component Toggle inherits Rectangle {
+    in property <bool> checked: false;
+    in property <bool> enabled: true;
+    callback clicked;
+
+    width: 32px;
+    height: 18px;
+    border-radius: 9px;
+    background: root.checked
+        ? Palette.primary
+        : root.enabled ? Palette.border : Palette.sunken;
+
+    knob := Rectangle {
+        x: root.checked ? root.width - self.width - 2px : 2px;
+        y: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 7px;
+        background: Palette.card;
+        animate x {
+            duration: 120ms;
+        }
+    }
+
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? MouseCursor.pointer : MouseCursor.default;
+        clicked => {
+            root.clicked();
+        }
+    }
+}
+
+// A labelled switch row: the whole row is the hit target.
+export component ToggleRow inherits Rectangle {
+    in property <string> text;
+    in property <bool> checked: false;
+    in property <bool> enabled: true;
+    callback clicked;
+
+    height: 30px;
+    border-radius: Theme.radius;
+    border-width: 1px;
+    border-color: Palette.border_soft;
+    background: area.has-hover && root.enabled ? Palette.hover : Palette.raised;
+
+    area := TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? MouseCursor.pointer : MouseCursor.default;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    HorizontalLayout {
+        padding-left: 8px;
+        padding-right: 8px;
+        spacing: 8px;
+        alignment: center;
+
+        Text {
+            text: root.text;
+            color: root.enabled ? Palette.fg : Palette.fg_faint;
+            font-size: Theme.fs_body;
+            vertical-alignment: center;
+            overflow: elide;
+            horizontal-stretch: 1;
+        }
+        Toggle {
+            checked: root.checked;
+            enabled: root.enabled;
+        }
+    }
+}
+
+export component CheckMark inherits Rectangle {
+    in property <bool> checked: false;
+    // 1 renders the indeterminate dash used by the table select header.
+    in property <int> state: 0;
+    in property <bool> enabled: true;
+    in property <length> box_size: 16px;
+    callback clicked;
+
+    width: root.box_size;
+    height: root.box_size;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: checked || state == 1 ? Palette.primary : Palette.border;
+    background: checked || state == 1 ? Palette.primary_soft : Palette.sunken;
+
+    TouchArea {
+        enabled: root.enabled;
+        mouse-cursor: root.enabled ? MouseCursor.pointer : MouseCursor.default;
+        clicked => {
+            root.clicked();
+        }
+    }
+
+    Text {
+        text: state == 1 ? "-" : checked ? "x" : "";
+        color: Palette.primary;
+        font-size: Theme.fs_caption;
+        font-weight: 700;
+        horizontal-alignment: center;
+        vertical-alignment: center;
+    }
+}
+
+export component Badge inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> strong: false;
+    in property <bool> muted: false;
+
+    width: content.preferred-width + 10px;
+    height: 16px;
+    border-radius: 8px;
+    border-width: 1px;
+    border-color: root.strong ? Palette.primary : Palette.border;
+    background: root.muted ? Palette.sunken : transparent;
+
+    content := Text {
+        x: 5px;
+        text: root.text;
+        color: root.strong ? Palette.primary : Palette.fg_muted;
+        font-size: Theme.fs_caption;
+        vertical-alignment: center;
+    }
+}
+
+// Uppercase micro heading used at the top of every card and lane.
+export component MicroHeading inherits Rectangle {
+    in property <string> label;
+    in property <color> ink: Palette.fg_faint;
+
+    height: 16px;
+
+    Text {
+        text: root.label;
+        color: root.ink;
+        font-size: Theme.fs_caption;
+        font-weight: 600;
+        letter-spacing: 1.2px;
+        horizontal-alignment: left;
+        vertical-alignment: center;
+    }
+}
+
+export component MetricTile inherits Rectangle {
+    in property <string> label: "";
+    in property <string> value: "-";
+    in property <bool> accent: false;
+
+    height: 52px;
+    background: Palette.card;
+
+    VerticalLayout {
+        alignment: start;
+        spacing: 2px;
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-top: 7px;
+        padding-bottom: 7px;
+
+        Text {
+            text: root.label;
+            color: Palette.fg_faint;
+            font-size: Theme.fs_caption;
+        }
+        Text {
+            text: root.value;
+            color: root.accent ? Palette.primary : Palette.fg;
+            font-size: Theme.fs_metric;
+            font-weight: 600;
+            overflow: elide;
+        }
+    }
+}
+
+export component EmptyState inherits Rectangle {
+    in property <string> text: "";
+
+    VerticalLayout {
+        alignment: center;
+        spacing: 6px;
+
+        Text {
+            text: root.text;
+            color: Palette.fg_faint;
+            font-size: Theme.fs_body;
+            horizontal-alignment: center;
+            wrap: word-wrap;
+        }
+    }
+}

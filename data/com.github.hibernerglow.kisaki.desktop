@@ -1,0 +1,19 @@
+[Desktop Entry]
+Categories=System;FileTools
+Exec=kisaki
+Icon=com.github.hibernerglow.kisaki
+StartupWMClass=kisaki
+Terminal=false
+TryExec=kisaki
+Type=Application
+
+Name=Kisaki
+Name[zh_CN]=Kisaki
+Name[pl]=Kisaki
+
+GenericName=File cleanup tool
+GenericName[zh_CN]=文件清理工具
+Comment=Find duplicate files, similar images and other unwanted data
+Comment[zh_CN]=查找重复文件、相似图片及其他无用数据
+Keywords=cleaner;duplicates;similar;files;space;
+Keywords[zh_CN]=清理;重复;相似;文件;空间;

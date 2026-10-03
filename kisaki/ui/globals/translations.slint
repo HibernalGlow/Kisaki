@@ -1,0 +1,68 @@
+// Slint has no Fluent support, so every user-visible string lives here as a slot.
+// Kisaki's src/translations.rs overwrites all of them at start-up and on every
+// language change; the values below are the English fallbacks.
+export global Translations {
+    in-out property <string> app_title: "Kisaki";
+    in-out property <string> tool_selector: "Scanner";
+    in-out property <string> lane_source: "Scan conditions";
+    in-out property <string> lane_results: "Results";
+    in-out property <string> lane_analysis: "Analysis and actions";
+
+    in-out property <string> tab_paths: "Paths";
+    in-out property <string> tab_algorithm: "Algorithm";
+
+    in-out property <string> action_scan: "Scan";
+    in-out property <string> action_stop: "Stop";
+    in-out property <string> action_add_dirs: "Add directories";
+    in-out property <string> action_add_files: "Add files";
+    in-out property <string> action_add_manual: "Type paths";
+    in-out property <string> action_clear: "Clear list";
+    in-out property <string> action_remove_checked: "Remove checked";
+    in-out property <string> action_reset_layout: "Reset lane layout";
+    in-out property <string> action_theme: "Toggle theme";
+    in-out property <string> action_delete: "Delete selected";
+    in-out property <string> action_export: "Export results";
+    in-out property <string> action_close: "Close";
+    in-out property <string> confirm_ok: "Confirm";
+    in-out property <string> confirm_cancel: "Cancel";
+
+    in-out property <string> label_included: "Included";
+    in-out property <string> label_excluded: "Excluded";
+    in-out property <string> label_reference: "Reference folder";
+    in-out property <string> label_recursive: "Recursive search";
+    in-out property <string> label_cache: "Use cache";
+    in-out property <string> label_min_size: "Minimum size (KiB)";
+    in-out property <string> label_max_size: "Maximum size (KiB)";
+    in-out property <string> label_excluded_items: "Excluded rules";
+    in-out property <string> label_allowed_ext: "Allowed extensions";
+    in-out property <string> label_excluded_ext: "Excluded extensions";
+    in-out property <string> label_no_options: "This scanner has no additional options.";
+    in-out property <string> label_dry_run: "Dry run";
+    in-out property <string> label_trash: "Move to trash";
+    in-out property <string> label_errors: "Scan messages";
+    in-out property <string> hint_dry_run: "Delete and export only produce a plan while dry run is on.";
+    in-out property <string> empty_paths: "No directories added yet.";
+    in-out property <string> placeholder_manual: "Paste paths, one per line";
+    in-out property <string> placeholder_filter: "Filter results";
+
+    in-out property <string> header_results: "Result groups";
+    in-out property <string> col_name: "Name";
+    in-out property <string> col_group: "Group";
+    in-out property <string> badge_reference: "ref";
+
+    in-out property <string> empty_running: "Analyzing files...";
+    in-out property <string> empty_filtered: "Nothing matches the current filter.";
+    in-out property <string> empty_error: "The scan failed, please retry.";
+    in-out property <string> empty_stopped: "Scan stopped, no results returned.";
+    in-out property <string> empty_done: "Scan finished, nothing found.";
+    in-out property <string> empty_idle: "Add a directory and start a scan.";
+
+    in-out property <string> metric_files: "Files";
+    in-out property <string> metric_groups: "Groups";
+    in-out property <string> metric_total: "Total size";
+    in-out property <string> metric_reclaimable: "Reclaimable";
+    in-out property <string> metric_selected: "Selected";
+    in-out property <string> metric_selected_size: "Selected size";
+    in-out property <string> status_ready: "Kisaki is ready.";
+    in-out property <string> confirm_title: "Confirm this operation";
+}

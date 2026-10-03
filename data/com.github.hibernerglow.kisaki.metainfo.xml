@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  AppStream metadata for Kisaki.
+
+  Deliberate choices:
+  - The id is com.github.hibernerglow.kisaki, matching the fork's own hosting and
+    the CFBundleIdentifier in kisaki/packaging/macos_bundle.sh. Kisaki is a separate
+    product, so it must not collide with upstream's io.github.qarmin.* ids.
+  - No <screenshots> block: no Kisaki screenshots exist yet, and pointing at a stock
+    or upstream image would be a false claim in software-centre listings.
+  - No <icon> block: no icon asset exists yet, so nothing is invented to fill it.
+-->
+<component type="desktop-application">
+  <id>com.github.hibernerglow.kisaki</id>
+  <name>Kisaki</name>
+  <summary>Desktop frontend for the Czkawka file cleanup engine</summary>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <description>
+    <p>Kisaki drives czkawka_core with a modern three-lane interface: scan conditions,
+    results and analysis side by side. It finds:</p>
+    <ul>
+      <li>Duplicate files</li>
+      <li>Similar images</li>
+      <li>Similar videos</li>
+      <li>Same music</li>
+      <li>Empty folders</li>
+      <li>Empty files</li>
+      <li>Broken files</li>
+      <li>Temporary files</li>
+      <li>Big files</li>
+      <li>Invalid symlinks</li>
+      <li>Bad extensions and bad names</li>
+      <li>EXIF tags to strip</li>
+      <li>Videos that can be transcoded or cropped</li>
+    </ul>
+    <p>Deleting and exporting default to dry run, so an operation produces a reviewable
+    plan before anything is written to disk.</p>
+  </description>
+  <launchable type="desktop-id">com.github.hibernerglow.kisaki.desktop</launchable>
+  <releases>
+    <release version="12.0.2" date="2026-10-03"/>
+  </releases>
+  <content_rating type="oars-1.0"/>
+  <developer id="com.github.hibernerglow">
+    <name>HibernalGlow</name>
+  </developer>
+  <url type="homepage">https://github.com/HibernalGlow/Kisaki</url>
+  <url type="bugtracker">https://github.com/HibernalGlow/Kisaki/issues</url>
+  <url type="translate">https://crowdin.com/project/czkawka</url>
+  <requires>
+    <display_length compare="ge">940</display_length>
+  </requires>
+</component>

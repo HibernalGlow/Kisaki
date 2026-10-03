@@ -1,0 +1,404 @@
+import { ComboBox, LineEdit, ScrollView } from "std-widgets.slint";
+import { Palette, Theme } from "../globals/theme.slint";
+import { AppState } from "../globals/app_state.slint";
+import { FieldDef, FieldKind, PathRow } from "../globals/common.slint";
+import { Callabler } from "../globals/callabler.slint";
+import { Translations } from "../globals/translations.slint";
+import { Badge, CheckMark, EmptyState, GlyphButton, MicroHeading, ToggleRow } from "../components/atoms.slint";
+
+component TabPill inherits Rectangle {
+    in property <string> text: "";
+    in property <bool> selected: false;
+    callback picked;
+
+    height: 26px;
+    width: content.preferred-width + 20px;
+    border-radius: Theme.radius;
+    background: root.selected ? Palette.primary_soft : area.has-hover ? Palette.hover : transparent;
+
+    area := TouchArea {
+        mouse-cursor: MouseCursor.pointer;
+        clicked => {
+            root.picked();
+        }
+    }
+
+    content := Text {
+        x: 10px;
+        text: root.text;
+        color: root.selected ? Palette.primary : Palette.fg_muted;
+        font-size: Theme.fs_body;
+        font-weight: root.selected ? 600 : 400;
+        vertical-alignment: center;
+    }
+}
+
+component PathEditor inherits Rectangle {
+    in property <string> title: "";
+    in property <int> list: 0;
+    in property <[PathRow]> rows;
+    in property <bool> allow_files: false;
+    in property <bool> allow_reference: false;
+    in property <bool> manual_visible: false;
+
+    height: body.preferred-height;
+
+    body := VerticalLayout {
+        spacing: Theme.gap_small;
+
+        HorizontalLayout {
+            spacing: 4px;
+            alignment: start;
+
+            MicroHeading {
+                label: root.title;
+            }
+            Badge {
+                text: "\{root.rows.length}";
+                muted: true;
+            }
+            Rectangle {
+                horizontal-stretch: 1;
+            }
+            GlyphButton {
+                glyph: "+D";
+                label: Translations.action_add_dirs;
+                clicked => {
+                    Callabler.add_directories(root.list);
+                }
+            }
+            GlyphButton {
+                visible: root.allow_files;
+                glyph: "+F";
+                label: Translations.action_add_files;
+                clicked => {
+                    Callabler.add_files();
+                }
+            }
+            GlyphButton {
+                glyph: "+T";
+                label: Translations.action_add_manual;
+                active: AppState.manual_open && root.manual_visible;
+                clicked => {
+                    AppState.manual_open = !AppState.manual_open;
+                }
+            }
+            GlyphButton {
+                glyph: "-";
+                label: Translations.action_remove_checked;
+                enabled: root.rows.length > 0;
+                danger: true;
+                clicked => {
+                    Callabler.remove_checked_paths(root.list);
+                }
+            }
+            GlyphButton {
+                glyph: "x";
+                label: Translations.action_clear;
+                enabled: root.rows.length > 0;
+                danger: true;
+                clicked => {
+                    Callabler.clear_paths(root.list);
+                }
+            }
+        }
+
+        ScrollView {
+            visible: root.rows.length > 0;
+            max-height: 170px;
+            min-height: 40px;
+            vertical-stretch: 0;
+
+            VerticalLayout {
+                spacing: 3px;
+                for row[idx] in root.rows: Rectangle {
+                    height: 26px;
+                    border-radius: Theme.radius;
+                    background: Palette.raised;
+
+                    HorizontalLayout {
+                        padding-left: 6px;
+                        padding-right: 6px;
+                        spacing: 6px;
+                        alignment: center;
+
+                        CheckMark {
+                            checked: row.checked;
+                            clicked => {
+                                Callabler.toggle_path_checked(root.list, idx);
+                            }
+                        }
+                        Text {
+                            text: row.path;
+                            color: Palette.fg;
+                            font-size: Theme.fs_label;
+                            overflow: elide;
+                            horizontal-stretch: 1;
+                            horizontal-alignment: left;
+                            vertical-alignment: center;
+                        }
+                        Badge {
+                            visible: row.is_reference;
+                            text: Translations.badge_reference;
+                            strong: true;
+                        }
+                        GlyphButton {
+                            visible: root.allow_reference;
+                            glyph: "*";
+                            label: Translations.label_reference;
+                            active: row.is_reference;
+                            box_size: 22px;
+                            clicked => {
+                                Callabler.toggle_reference(idx);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        EmptyState {
+            visible: root.rows.length == 0;
+            min-height: 34px;
+            text: Translations.empty_paths;
+        }
+
+        VerticalLayout {
+            visible: AppState.manual_open && root.manual_visible;
+            spacing: 3px;
+
+            LineEdit {
+                height: 54px;
+                text <=> AppState.manual_text;
+                placeholder-text: Translations.placeholder_manual;
+                font-size: Theme.fs_label;
+            }
+            HorizontalLayout {
+                spacing: 4px;
+
+                GlyphButton {
+                    glyph: "OK";
+                    label: Translations.action_add_manual;
+                    enabled: AppState.manual_text != "";
+                    clicked => {
+                        Callabler.commit_manual_paths(root.list, AppState.manual_text);
+                        AppState.manual_text = "";
+                        AppState.manual_open = false;
+                    }
+                }
+                GlyphButton {
+                    glyph: "x";
+                    label: Translations.action_close;
+                    clicked => {
+                        AppState.manual_open = false;
+                        AppState.manual_text = "";
+                    }
+                }
+                Rectangle {
+                    horizontal-stretch: 1;
+                }
+            }
+        }
+    }
+}
+
+component FieldRow inherits Rectangle {
+    in property <FieldDef> field;
+
+    height: 30px;
+
+    HorizontalLayout {
+        spacing: 6px;
+        alignment: center;
+
+        Text {
+            visible: root.field.kind != FieldKind.Bool;
+            text: root.field.label;
+            color: Palette.fg;
+            font-size: Theme.fs_label;
+            vertical-alignment: center;
+            // Percentage max-width is rejected in a layout, so the elide below
+            // absorbs the overflow instead of capping the label.
+            overflow: elide;
+        }
+        Rectangle {
+            horizontal-stretch: 1;
+        }
+
+        ToggleRow {
+            visible: root.field.kind == FieldKind.Bool;
+            text: root.field.label;
+            checked: root.field.value_bool;
+            width: 170px;
+            clicked => {
+                Callabler.field_bool_changed(root.field.id, !root.field.value_bool);
+            }
+        }
+        LineEdit {
+            visible: root.field.kind == FieldKind.Number || root.field.kind == FieldKind.Text;
+            width: 150px;
+            text: root.field.value_text;
+            placeholder-text: root.field.suffix;
+            font-size: Theme.fs_label;
+            accepted => {
+                Callabler.field_text_changed(root.field.id, self.text);
+            }
+        }
+        ComboBox {
+            visible: root.field.kind == FieldKind.Select;
+            width: 150px;
+            model: root.field.choices;
+            current-index: root.field.choice_index;
+            selected(value) => {
+                Callabler.field_choice_changed(root.field.id, self.current-index);
+            }
+        }
+    }
+}
+
+export component SourceBody inherits Rectangle {
+    VerticalLayout {
+        spacing: 0px;
+
+        HorizontalLayout {
+            height: 30px;
+            padding-left: Theme.pad;
+            padding-right: Theme.pad;
+            spacing: 4px;
+            alignment: start;
+
+            TabPill {
+                text: Translations.tab_paths;
+                selected: AppState.source_tab == 0;
+                picked => {
+                    Callabler.source_tab_changed(0);
+                }
+            }
+            TabPill {
+                text: Translations.tab_algorithm;
+                selected: AppState.source_tab == 1;
+                picked => {
+                    Callabler.source_tab_changed(1);
+                }
+            }
+        }
+
+        ScrollView {
+            vertical-stretch: 1;
+
+            VerticalLayout {
+                spacing: Theme.gap;
+                padding: Theme.pad;
+
+                PathEditor {
+                    visible: AppState.source_tab == 0;
+                    title: Translations.label_included;
+                    list: 0;
+                    rows: AppState.included_paths;
+                    allow_files: true;
+                    allow_reference: true;
+                    manual_visible: true;
+                }
+                PathEditor {
+                    visible: AppState.source_tab == 0;
+                    title: Translations.label_excluded;
+                    list: 1;
+                    rows: AppState.excluded_paths;
+                }
+
+                VerticalLayout {
+                    visible: AppState.source_tab == 0;
+                    spacing: 4px;
+
+                    ToggleRow {
+                        text: Translations.label_recursive;
+                        checked: AppState.recursive_search;
+                        clicked => {
+                            AppState.recursive_search = !AppState.recursive_search;
+                        }
+                    }
+                    ToggleRow {
+                        text: Translations.label_cache;
+                        checked: AppState.use_cache;
+                        clicked => {
+                            AppState.use_cache = !AppState.use_cache;
+                        }
+                    }
+
+                    HorizontalLayout {
+                        spacing: 6px;
+                        alignment: center;
+
+                        Text {
+                            text: Translations.label_min_size;
+                            color: Palette.fg_muted;
+                            font-size: Theme.fs_label;
+                            vertical-alignment: center;
+                        }
+                        LineEdit {
+                            text <=> AppState.min_size_kib;
+                            width: 70px;
+                            font-size: Theme.fs_label;
+                        }
+                        Text {
+                            text: Translations.label_max_size;
+                            color: Palette.fg_muted;
+                            font-size: Theme.fs_label;
+                            vertical-alignment: center;
+                        }
+                        LineEdit {
+                            text <=> AppState.max_size_kib;
+                            width: 70px;
+                            font-size: Theme.fs_label;
+                        }
+                    }
+
+                    Text {
+                        text: Translations.label_excluded_items;
+                        color: Palette.fg_muted;
+                        font-size: Theme.fs_label;
+                    }
+                    LineEdit {
+                        text <=> AppState.excluded_items;
+                        font-size: Theme.fs_label;
+                    }
+                    Text {
+                        text: Translations.label_allowed_ext;
+                        color: Palette.fg_muted;
+                        font-size: Theme.fs_label;
+                    }
+                    LineEdit {
+                        text <=> AppState.allowed_extensions;
+                        font-size: Theme.fs_label;
+                    }
+                    Text {
+                        text: Translations.label_excluded_ext;
+                        color: Palette.fg_muted;
+                        font-size: Theme.fs_label;
+                    }
+                    LineEdit {
+                        text <=> AppState.excluded_extensions;
+                        font-size: Theme.fs_label;
+                    }
+                }
+
+                VerticalLayout {
+                    visible: AppState.source_tab == 1;
+                    spacing: 3px;
+
+                    for f in AppState.fields: FieldRow {
+                        field: f;
+                    }
+
+                    Text {
+                        visible: AppState.fields.length == 0;
+                        text: Translations.label_no_options;
+                        color: Palette.fg_faint;
+                        font-size: Theme.fs_label;
+                        wrap: word-wrap;
+                    }
+                }
+            }
+        }
+    }
+}

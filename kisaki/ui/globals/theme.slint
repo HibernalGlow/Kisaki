@@ -1,0 +1,75 @@
+// Design tokens. Every surface colour is derived from Theme.dark so a single
+// flag flips the whole application between the two palettes.
+
+export global Theme {
+    in-out property <bool> dark: true;
+
+    // Density: a desktop results table wants compact rows.
+    in-out property <length> row_height: 44px;
+    in-out property <length> gap: 8px;
+    in-out property <length> gap_small: 4px;
+    in-out property <length> pad: 8px;
+    in-out property <length> radius: 6px;
+    in-out property <length> lane_header_height: 32px;
+    in-out property <length> lane_collapsed_width: 48px;
+    in-out property <length> header_height: 48px;
+    in-out property <length> col_select: 42px;
+    in-out property <length> col_group: 76px;
+    in-out property <length> col_name: 236px;
+
+    in-out property <length> fs_caption: 10px;
+    in-out property <length> fs_label: 11px;
+    in-out property <length> fs_body: 12px;
+    in-out property <length> fs_title: 14px;
+    in-out property <length> fs_metric: 15px;
+}
+
+export global Palette {
+    out property <color> bg: Theme.dark ? #0e1013 : #f4f5f7;
+    out property <color> card: Theme.dark ? #171a20 : #ffffff;
+    out property <color> raised: Theme.dark ? #1d212a : #eef0f4;
+    out property <color> sunken: Theme.dark ? #12151a : #e8ebef;
+    out property <color> border: Theme.dark ? #262b34 : #d5d9e0;
+    out property <color> border_soft: Theme.dark ? #1e232a : #e3e6eb;
+    out property <color> hairline: Theme.dark ? #20252d : #dde1e7;
+
+    out property <color> fg: Theme.dark ? #e6e9ef : #17191c;
+    out property <color> fg_muted: Theme.dark ? #99a3b2 : #5d6673;
+    out property <color> fg_faint: Theme.dark ? #6a7382 : #8b95a3;
+    out property <color> fg_inverted: #ffffff;
+
+    out property <color> primary: Theme.dark ? #4f8cff : #2563eb;
+    out property <color> primary_soft: Theme.dark ? #1b2b45 : #dbeafe;
+    out property <color> selection: Theme.dark ? #1d2f4d : #dbeafe;
+    out property <color> hover: Theme.dark ? #222834 : #eceef2;
+    out property <color> pressed: Theme.dark ? #2a3140 : #e0e4ea;
+
+    out property <color> danger: Theme.dark ? #f2555a : #d92d2f;
+    out property <color> danger_soft: Theme.dark ? #2c181b : #fde8e8;
+    out property <color> warn: Theme.dark ? #f0a92e : #b45309;
+    out property <color> ok: Theme.dark ? #3fb950 : #15803d;
+
+    // Group identity stripes, cycled by group index.
+    out property <color> chart_1: Theme.dark ? #4f8cff : #2563eb;
+    out property <color> chart_2: Theme.dark ? #3fb950 : #15803d;
+    out property <color> chart_3: Theme.dark ? #f0a92e : #b45309;
+    out property <color> chart_4: Theme.dark ? #a855f7 : #7c3aed;
+    out property <color> chart_5: Theme.dark ? #06b6d4 : #0891b2;
+
+    out property <color> scrim: Theme.dark ? #00000099 : #00000066;
+
+    // Group identity stripes are cycled by group index.
+    public pure function chart_by_index(index: int) -> color {
+        let slot = Math.mod(index, 5);
+        if (slot == 0) {
+            return chart_1;
+        } else if (slot == 1) {
+            return chart_2;
+        } else if (slot == 2) {
+            return chart_3;
+        } else if (slot == 3) {
+            return chart_4;
+        }
+        chart_5;
+    }
+}
