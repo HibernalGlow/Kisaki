@@ -32,7 +32,7 @@ class HeaderBar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: BoardTokens.gap * 2),
-          _ScannerPicker(controller: controller),
+          Flexible(child: _ScannerPicker(controller: controller)),
           const SizedBox(width: BoardTokens.gap),
           _ScanControl(controller: controller),
           const SizedBox(width: BoardTokens.gap * 2),
@@ -89,12 +89,16 @@ class _ScannerPicker extends StatelessWidget {
             if (controller.tool != null)
               GlyphTile(glyph: controller.tool!.glyph, size: 18),
             const SizedBox(width: BoardTokens.gapSmall),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: BoardTokens.fsLabel,
-                fontWeight: FontWeight.w600,
-                color: palette.fg,
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: BoardTokens.fsLabel,
+                  fontWeight: FontWeight.w600,
+                  color: palette.fg,
+                ),
               ),
             ),
             const SizedBox(width: BoardTokens.gapSmall),
@@ -174,14 +178,14 @@ class _ProgressRail extends StatelessWidget {
         ),
         const SizedBox(height: BoardTokens.gapSmall),
         SizedBox(
-          height: 3,
+          height: 4,
           child: value == null && !controller.scanning
               ? ColoredBox(color: palette.hairline)
               : ClipRRect(
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(BoardTokens.radius),
                   child: LinearProgressIndicator(
                     value: value,
-                    minHeight: 3,
+                    minHeight: 4,
                     backgroundColor: palette.hairline,
                     valueColor: AlwaysStoppedAnimation<Color>(
                       controller.phase == ScanPhase.failed

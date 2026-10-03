@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kisaki_app/engine/models.dart';
@@ -170,6 +172,141 @@ void main() {
     final EdgeInsets padding = lane.padding! as EdgeInsets;
     expect(padding.top, BoardTokens.section);
     expect(padding.left, BoardTokens.section);
+  });
+
+  /// The corner sweep must reach what a lane hides below its fold, or a card only painted on scroll
+  /// can carry a rounded corner the gate never sees.
+  testWidgets(
+    'no corner is rounded anywhere the reader has to scroll to reach',
+    (WidgetTester tester) async {
+      tester.view.physicalSize = const Size(1440, 900);
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      controller.addIncluded(<String>['/data']);
+      controller.selectTool('duplicate_files');
+      controller.startScan();
+      engine.emit(
+        ScanEventCompleted(
+          StubEngine.outcome('duplicate_files', <ScanRow>[
+            StubEngine.row('/data/alpha.bin', group: 0, start: true),
+            StubEngine.row('/data/beta.bin', group: 0),
+            StubEngine.row('/data/keep.bin', group: 1, reference: true),
+          ]),
+        ),
+      );
+      await tester.pumpWidget(
+        BoardTheme(dark: true, child: KisakiBoardApp(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+
+      // Every card in the analysis lane, then the row badges, get built and then swept.
+      for (final Widget card in tester.widgetList(find.byType(SectionCard))) {
+        await tester.ensureVisible(find.byWidget(card));
+        await tester.pumpAndSettle();
+      }
+      await tester.ensureVisible(find.byType(MetricTile).last);
+      await tester.pumpAndSettle();
+
+      final List<Widget> badges = tester
+          .widgetList<Widget>(find.byType(DecoratedBox))
+          .where(
+            (widget) => (widget as DecoratedBox).decoration is BoxDecoration,
+          )
+          .where((widget) {
+            final BoxDecoration decoration =
+                (widget as DecoratedBox).decoration as BoxDecoration;
+            return decoration.borderRadius != null &&
+                decoration.borderRadius! != BorderRadius.zero;
+          })
+          .toList();
+
+      expect(
+        badges,
+        isEmpty,
+        reason: 'the board paints no rounded surface, not even a badge',
+      );
+    },
+  );
+
+  /// A desktop window is whatever the reader made it, so nothing may be clipped on the way down.
+  /// Overflow is a framework exception, which makes this a gate with teeth rather than an opinion.
+  testWidgets('a narrow window clips nothing', (WidgetTester tester) async {
+    for (final Size size in <Size>[
+      const Size(1440, 900),
+      const Size(1024, 768),
+      const Size(800, 600),
+    ]) {
+      tester.view.physicalSize = size;
+      tester.view.devicePixelRatio = 1;
+      tester.platformDispatcher.textScaleFactorTestValue = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+      addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+      controller.addIncluded(<String>['/data']);
+      controller.selectTool('duplicate_files');
+      controller.startScan();
+      engine.emit(
+        ScanEventCompleted(
+          StubEngine.outcome('duplicate_files', <ScanRow>[
+            StubEngine.row('/data/alpha.bin', group: 0, start: true),
+            StubEngine.row('/data/beta.bin', group: 0),
+            StubEngine.row('/data/keep.bin', group: 1, reference: true),
+          ]),
+        ),
+      );
+      await tester.pumpWidget(
+        BoardTheme(dark: true, child: KisakiBoardApp(controller: controller)),
+      );
+      await tester.pumpAndSettle();
+      for (final Widget card in tester.widgetList(find.byType(SectionCard))) {
+        await tester.ensureVisible(find.byWidget(card));
+        await tester.pumpAndSettle();
+      }
+
+      expect(
+        tester.takeException(),
+        isNull,
+        reason: 'the board must lay out cleanly at $size',
+      );
+    }
+  });
+
+  /// A corner is the one thing the law forbids outright, so it is checked where it is written, not
+  /// only where it happens to be painted: a widget scan only sees the branches a test reached.
+  /// Only a *literal* radius is an offence - `BoardTokens.radius` is the law's own spelling of zero.
+  test('no widget file rounds a surface', () {
+    final List<File> sources = Directory('lib')
+        .listSync(recursive: true)
+        .whereType<File>()
+        .where((File file) => file.path.endsWith('.dart'))
+        .toList();
+    expect(
+      sources,
+      isNotEmpty,
+      reason: 'a gate that reads nothing must not look green',
+    );
+
+    final RegExp literal = RegExp(r'BorderRadius\.circular\(\s*\d');
+    final List<String> offenders = <String>[];
+    for (final File file in sources) {
+      final List<String> lines = file.readAsLinesSync();
+      for (final (int index, String line) in lines.indexed) {
+        if (literal.hasMatch(line) || line.contains('BorderRadius.only(')) {
+          offenders.add('${file.path}:${index + 1} ${line.trim()}');
+        }
+      }
+    }
+
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'corners come from BoardTokens.radius, which is 0: $offenders',
+    );
   });
 
   testWidgets('grid spans wrap instead of overflowing twelve columns', (

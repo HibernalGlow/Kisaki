@@ -29,10 +29,13 @@ class ActivityLogPanel extends StatelessWidget {
           children: <Widget>[
             Row(
               children: <Widget>[
-                Text(
-                  '${shown.length}/${entries.length}',
-                  key: const Key('activity-count'),
-                  style: palette.tableFigure(color: palette.fgMuted),
+                Flexible(
+                  child: Text(
+                    '${shown.length}/${entries.length}',
+                    key: const Key('activity-count'),
+                    overflow: TextOverflow.ellipsis,
+                    style: palette.tableFigure(color: palette.fgMuted),
+                  ),
                 ),
                 const Spacer(),
                 BoardAction(
@@ -40,6 +43,7 @@ class ActivityLogPanel extends StatelessWidget {
                   labelKey: 'activity-copy',
                   icon: Icons.copy_all_outlined,
                   dense: true,
+                  iconOnly: true,
                   onPressed: entries.isEmpty
                       ? null
                       : controller.copyActivityLog,
@@ -50,6 +54,7 @@ class ActivityLogPanel extends StatelessWidget {
                   labelKey: 'activity-clear',
                   icon: Icons.delete_sweep_outlined,
                   dense: true,
+                  iconOnly: true,
                   onPressed: entries.isEmpty
                       ? null
                       : controller.clearActivityLog,
@@ -120,7 +125,7 @@ class _Entry extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: <Widget>[
-            Container(width: 3, height: 26, color: rule),
+            Container(width: 2, height: 24, color: rule),
             const SizedBox(width: BoardTokens.gapSmall),
             Expanded(
               child: Column(
