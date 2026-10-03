@@ -7,6 +7,7 @@ import '../engine/kisaki_engine.dart';
 import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../util/format.dart';
+import 'activity_log.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
 import 'group_organize.dart';
@@ -23,8 +24,10 @@ import 'selection_rules.dart';
 
 export 'row_projection.dart' show GroupSelection;
 
+part 'board_activity.dart';
 part 'board_display.dart';
 part 'board_operations.dart';
+part 'board_source_lists.dart';
 
 enum ScanPhase { idle, running, stopping, finished, failed }
 
@@ -171,6 +174,16 @@ class BoardController extends ChangeNotifier {
   String get statusText => Labels.of(_statusKey, args: _statusArgs);
   String get messages => _messages;
   String? get critical => _critical;
+
+  final List<ActivityEntry> _activity = <ActivityEntry>[];
+  String _activityQuery = '';
+  String _lastProgressStage = '';
+
+  /// Counts from the engine answer of the verb that just ran; a verb whose outcome has no
+  /// comparable numbers leaves them null, so the log shows only its status line.
+  int? _operationAffected;
+  int? _operationErrors;
+
   List<ScanRow> get rows => List<ScanRow>.unmodifiable(_rows);
   List<ScanRow> get visibleRows => List<ScanRow>.unmodifiable(_visible);
   String get filter => _filter;
@@ -277,79 +290,6 @@ class BoardController extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addIncluded(Iterable<String> paths) => _addInto(_included, paths);
-
-  void addReference(Iterable<String> paths) => _addInto(_reference, paths);
-
-  void addExcludedPath(Iterable<String> paths) =>
-      _addInto(_excludedPaths, paths);
-
-  void addExcludedItem(Iterable<String> patterns) =>
-      _addInto(_excludedItems, patterns);
-
-  void addAllowedExtension(Iterable<String> extensions) =>
-      _addInto(_allowedExtensions, extensions);
-
-  void addExcludedExtension(Iterable<String> extensions) =>
-      _addInto(_excludedExtensions, extensions);
-
-  void _addInto(List<String> target, Iterable<String> values) {
-    final Iterable<String> fresh = values
-        .map((String value) => value.trim())
-        .where((String value) => value.isNotEmpty);
-    if (fresh.isEmpty) {
-      return;
-    }
-    for (final String value in fresh) {
-      if (!target.contains(value)) {
-        target.add(value);
-      }
-    }
-    notifyListeners();
-  }
-
-  void removeIncluded(int index) => _removeAt(_included, index);
-
-  void removeReference(int index) => _removeAt(_reference, index);
-
-  void removeExcludedPath(int index) => _removeAt(_excludedPaths, index);
-
-  void removeExcludedItem(int index) => _removeAt(_excludedItems, index);
-
-  void removeAllowedExtension(int index) =>
-      _removeAt(_allowedExtensions, index);
-
-  void removeExcludedExtension(int index) =>
-      _removeAt(_excludedExtensions, index);
-
-  void _removeAt(List<String> target, int index) {
-    if (index < 0 || index >= target.length) {
-      return;
-    }
-    target.removeAt(index);
-    notifyListeners();
-  }
-
-  void clearIncluded() => _clearList(_included);
-
-  void clearReference() => _clearList(_reference);
-
-  void clearExcludedPaths() => _clearList(_excludedPaths);
-
-  void clearExcludedItems() => _clearList(_excludedItems);
-
-  void clearAllowedExtensions() => _clearList(_allowedExtensions);
-
-  void clearExcludedExtensions() => _clearList(_excludedExtensions);
-
-  void _clearList(List<String> target) {
-    if (target.isEmpty) {
-      return;
-    }
-    target.clear();
-    notifyListeners();
-  }
-
   void setRecursive(bool value) {
     recursive = value;
     notifyListeners();
@@ -405,6 +345,11 @@ class BoardController extends ChangeNotifier {
     }
     if (_included.isEmpty && _reference.isEmpty) {
       _setStatus('rust_no_included_paths');
+      logActivity(
+        ActivityKind.system,
+        ActivityLevel.error,
+        Labels.of('rust_no_included_paths'),
+      );
       notifyListeners();
       return false;
     }
@@ -413,6 +358,13 @@ class BoardController extends ChangeNotifier {
     _clearResults(keepStatus: true);
     _phase = ScanPhase.running;
     _setStatus('status_scanning');
+    _lastProgressStage = '';
+    logActivity(
+      ActivityKind.scan,
+      ActivityLevel.info,
+      Labels.of('log-scan-started'),
+      progress: 0,
+    );
     _scanSubscription?.cancel();
     _scanSubscription = engine
         .startScan(buildRequest())
@@ -452,6 +404,11 @@ class BoardController extends ChangeNotifier {
     engine.requestStop();
     _phase = ScanPhase.stopping;
     _setStatus('status_stopping');
+    logActivity(
+      ActivityKind.system,
+      ActivityLevel.warning,
+      Labels.of('log-stopping'),
+    );
     notifyListeners();
   }
 
@@ -459,6 +416,7 @@ class BoardController extends ChangeNotifier {
     switch (event) {
       case ScanEventProgress():
         _progress = event.progress;
+        logProgress(event.progress);
       case ScanEventCompleted():
         _finish(event.outcome);
       case ScanEventFailed():
@@ -488,6 +446,12 @@ class BoardController extends ChangeNotifier {
         },
       );
     }
+    logActivity(
+      ActivityKind.scan,
+      outcome.stopped ? ActivityLevel.warning : ActivityLevel.success,
+      statusText,
+      progress: 100,
+    );
     _recomputeVisible();
   }
 
@@ -495,6 +459,7 @@ class BoardController extends ChangeNotifier {
     _phase = ScanPhase.failed;
     _progress = null;
     _critical = error;
+    logActivity(ActivityKind.scan, ActivityLevel.error, error);
     _setStatus('empty-error');
     _recomputeVisible();
   }
