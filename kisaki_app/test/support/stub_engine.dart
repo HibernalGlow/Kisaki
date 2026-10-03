@@ -277,19 +277,25 @@ class StubEngine implements KisakiEngine {
     int size = 1024,
     int group = -1,
     bool start = false,
-  }) => ScanRow(
-    path: path,
-    name: path.substring(path.lastIndexOf('/') + 1),
-    directory: path.substring(0, path.lastIndexOf('/')),
-    cells: <String>['${size}B', '2026-01-02'],
-    sizeBytes: size,
-    modifiedTs: 1700000000,
-    groupIndex: group,
-    groupSize: group < 0 ? 0 : 2,
-    isGroupStart: start,
-    isReference: false,
-    sortKeys: <int>[size, 1700000000],
-  );
+    bool reference = false,
+  }) {
+    final int slash = path.lastIndexOf('/');
+    final int backslash = path.lastIndexOf(r'\');
+    final int cut = slash > backslash ? slash : backslash;
+    return ScanRow(
+      path: path,
+      name: cut < 0 ? path : path.substring(cut + 1),
+      directory: cut < 0 ? '' : path.substring(0, cut),
+      cells: <String>['${size}B', '2026-01-02'],
+      sizeBytes: size,
+      modifiedTs: 1700000000,
+      groupIndex: group,
+      groupSize: group < 0 ? 0 : 2,
+      isGroupStart: start,
+      isReference: reference,
+      sortKeys: <int>[size, 1700000000],
+    );
+  }
 
   static ScanOutcome outcome(
     String tool,
