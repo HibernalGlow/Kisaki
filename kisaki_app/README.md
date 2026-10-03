@@ -39,6 +39,20 @@ flutter run -d macos                  # or: linux, windows
 `Contents/Frameworks` copy inside a packaged `.app` first, then the workspace `target/<profile>`
 directory, so a development run picks up `cargo build` without a reinstall.
 
+## Platform builds and version
+
+The six `CMakeLists.txt` files under `linux/` and `windows/` are tracked, which needed an explicit
+exception in the root `.gitignore` (its blanket `*.txt` rule hid them, so a clone could not build
+either platform). Names are the product's: the Linux executable is `kisaki` with GTK application id
+`com.github.hibernerglow.kisaki`, matching the desktop entry and the AppStream id, the Windows
+executable is `kisaki.exe`, and the macOS bundle is `Kisaki.app`.
+
+`pubspec.yaml` carries the engine's version (`12.0.2+1202`) because build-name becomes
+`CFBundleShortVersionString` on macOS and the file version on Windows. `misc/change_version.py`
+rewrites it along with `rust/Cargo.toml` and the AppStream release entry, so no release number can
+drift on its own. CI does not build the Linux or Windows bundles yet - it only runs the Dart suite and
+the Rust bridge gates.
+
 ## Gates
 
 Every one of these is part of CI (`.github/workflows/kisaki.yml`, jobs `bridge` and `dart`).
