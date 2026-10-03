@@ -57,12 +57,14 @@ jobs:
         with:
           name: linux_kisaki_${{ matrix.ARCHNAME }}
           path: target/release/kisaki
+          if-no-files-found: error
       - name: Upload artifact (pull request profile)
         uses: actions/upload-artifact@v6
         if: github.ref != 'refs/heads/master'
         with:
           name: linux_kisaki_${{ matrix.ARCHNAME }}
           path: target/fastci/kisaki
+          if-no-files-found: error
 
   macos-kisaki:
     runs-on: macos-latest
@@ -79,11 +81,23 @@ jobs:
       - name: Bundle .app
         if: github.ref == 'refs/heads/master'
         run: bash kisaki/packaging/macos_bundle.sh target/release
+      # The build picks its profile from the ref, so the upload has to follow it, and only the release
+      # build produces the .app. A missing path is an error here: upload-artifact only warns by default,
+      # which would leave a green job that published nothing.
       - name: Upload artifact
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v6
         with:
           name: mac_kisaki_aarch64
-          path: target/release/kisaki
+          path: target/release/Kisaki.app
+          if-no-files-found: error
+      - name: Upload artifact (pull request profile)
+        if: github.ref != 'refs/heads/master'
+        uses: actions/upload-artifact@v6
+        with:
+          name: mac_kisaki_aarch64
+          path: target/fastci/kisaki
+          if-no-files-found: error
 
   windows-kisaki:
     runs-on: windows-latest
@@ -101,10 +115,19 @@ jobs:
       - name: Test
         run: cargo test -p kisaki
       - name: Upload artifact
+        if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v6
         with:
           name: windows_kisaki_msvc
           path: target/release/kisaki.exe
+          if-no-files-found: error
+      - name: Upload artifact (pull request profile)
+        if: github.ref != 'refs/heads/master'
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows_kisaki_msvc
+          path: target/fastci/kisaki.exe
+          if-no-files-found: error
 
   # The Flutter frontend reaches czkawka_core only through this crate, so its tests are the
   # contract check for every scanner the board can ask for. ffmpeg and ffprobe are part of the
@@ -241,3 +264,12 @@ jobs:
         run: |
           test -x build/linux/x64/release/bundle/kisaki
           test -f build/linux/x64/release/bundle/libkisaki_bridge.so
+      # The deliverable is the bundle, not the bare executable: only the bundle carries the bridge
+      # library the loader opens by path. The step above already proved both files are in it.
+      - name: Upload artifact
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v6
+        with:
+          name: linux_kisaki_flutter_x86_64
+          path: kisaki_app/build/linux/x64/release/bundle
+          if-no-files-found: error
