@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kisaki_app/engine/models.dart';
 import 'package:kisaki_app/state/selection_model.dart';
+import 'package:kisaki_app/state/selection_rules.dart';
 
 /// Mirrors `Xiranite/packages/nodes/czkawka/src/selection-assistant.test.ts` case for case, with the
 /// same fixture paths, sizes and timestamps, so a divergence shows up here instead of in a board.
