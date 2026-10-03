@@ -1,20 +1,36 @@
 import 'package:flutter/material.dart';
 
-/// Design tokens copied from `kisaki/ui/globals/theme.slint`.
+/// Swiss / International Typographic Style tokens.
 ///
-/// Sizes are logical pixels; the Slint source uses `length` (px) 1:1.
+/// The law this file encodes: a 12-column grid on an 8px base unit, square corners, 1px hairline
+/// rules as the only ornament, hierarchy carried by tone and tracking (never by hue), one accent
+/// colour reserved for state, and a section rhythm that stays airy while the results table stays
+/// dense. Ported from `kisaki/ui/globals/theme.slint`, sizes are logical pixels 1:1.
 class BoardTokens {
   const BoardTokens._();
 
-  static const double rowHeight = 44;
+  /// Spacing scale: the unit, its half, and the section rhythm around panel content.
   static const double gap = 8;
   static const double gapSmall = 4;
   static const double pad = 8;
-  static const double radius = 6;
+  static const double section = 24;
+  static const double gutter = 16;
+
+  /// Swiss surfaces are square. Kept as a token (not deleted) so a corner can only ever be set here.
+  static const double radius = 0;
+  static const double hairline = 1;
+
+  /// Grid: the page is 12 columns; content spans columns instead of using ad-hoc pixel widths.
+  static const int gridColumns = 12;
+
+  /// Body measure limit in characters, so a wide window never produces a full-bleed text line.
+  static const int measureCharacters = 60;
+
+  static const double rowHeight = 44;
   static const double laneHeaderHeight = 32;
   static const double laneCollapsedWidth = 48;
   static const double headerHeight = 48;
-  static const double colSelect = 42;
+  static const double colSelect = 44;
   static const double colGroup = 76;
   static const double colName = 236;
 
@@ -23,6 +39,12 @@ class BoardTokens {
   static const double fsBody = 12;
   static const double fsTitle = 14;
   static const double fsMetric = 15;
+
+  /// Tracking is part of the type system: micro-labels are set loose, figures and metrics tight.
+  static const double trackingCaption = 0.9;
+  static const double trackingLabel = 0.5;
+  static const double trackingBody = 0;
+  static const double trackingMetric = -0.2;
 
   static const double minWindowWidth = 940;
   static const double minWindowHeight = 560;
@@ -50,8 +72,11 @@ class BoardPalette {
   Color get hairline => _d(const Color(0xFF20252D), const Color(0xFFDDE1E7));
 
   Color get fg => _d(const Color(0xFFE6E9EF), const Color(0xFF17191C));
-  Color get fgMuted => _d(const Color(0xFF99A3B2), const Color(0xFF5D6673));
-  Color get fgFaint => _d(const Color(0xFF6A7382), const Color(0xFF8B95A3));
+
+  /// Hierarchy is tone, not hue: secondary and tertiary text are the same ink at lower opacity,
+  /// so a colour-blind or greyscale rendering keeps the same reading order.
+  Color get fgMuted => fg.withValues(alpha: 0.72);
+  Color get fgFaint => fg.withValues(alpha: 0.46);
   Color get fgInverted => const Color(0xFFFFFFFF);
 
   Color get primary => _d(const Color(0xFF4F8CFF), const Color(0xFF2563EB));
@@ -79,16 +104,70 @@ class BoardPalette {
   Color _d(Color darkColor, Color lightColor) => dark ? darkColor : lightColor;
 
   TextTheme get text => TextTheme(
-    displaySmall: _style(BoardTokens.fsMetric, FontWeight.w600, fg),
+    displaySmall: _style(
+      BoardTokens.fsMetric,
+      FontWeight.w600,
+      fg,
+      tracking: BoardTokens.trackingMetric,
+    ),
     titleMedium: _style(BoardTokens.fsTitle, FontWeight.w600, fg),
-    titleSmall: _style(BoardTokens.fsLabel, FontWeight.w600, fgMuted),
-    bodyMedium: _style(BoardTokens.fsBody, FontWeight.w400, fg),
-    bodySmall: _style(BoardTokens.fsLabel, FontWeight.w400, fgMuted),
-    labelSmall: _style(BoardTokens.fsCaption, FontWeight.w600, fgMuted),
+    titleSmall: _style(
+      BoardTokens.fsLabel,
+      FontWeight.w600,
+      fgMuted,
+      tracking: BoardTokens.trackingLabel,
+    ),
+    bodyMedium: _style(
+      BoardTokens.fsBody,
+      FontWeight.w400,
+      fg,
+      tracking: BoardTokens.trackingBody,
+    ),
+    bodySmall: _style(
+      BoardTokens.fsLabel,
+      FontWeight.w400,
+      fgMuted,
+      tracking: BoardTokens.trackingBody,
+    ),
+    labelSmall: _style(
+      BoardTokens.fsCaption,
+      FontWeight.w600,
+      fgMuted,
+      tracking: BoardTokens.trackingCaption,
+    ),
   );
 
-  TextStyle _style(double size, FontWeight weight, Color color) =>
-      TextStyle(fontSize: size, fontWeight: weight, color: color, height: 1.25);
+  /// A metric figure: the display step, set tight, in tabular numerals.
+  TextStyle metricFigure({Color? color}) => TextStyle(
+    fontSize: BoardTokens.fsMetric,
+    fontWeight: FontWeight.w600,
+    letterSpacing: BoardTokens.trackingMetric,
+    color: color ?? fg,
+    height: 1.25,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+
+  /// A table figure: label size in tabular numerals, so a column of sizes or timestamps aligns on
+  /// the digit rather than on the glyph.
+  TextStyle tableFigure({Color? color}) => TextStyle(
+    fontSize: BoardTokens.fsLabel,
+    color: color ?? fg,
+    height: 1.25,
+    fontFeatures: const [FontFeature.tabularFigures()],
+  );
+
+  TextStyle _style(
+    double size,
+    FontWeight weight,
+    Color color, {
+    double tracking = 0,
+  }) => TextStyle(
+    fontSize: size,
+    fontWeight: weight,
+    color: color,
+    height: 1.25,
+    letterSpacing: tracking,
+  );
 }
 
 class BoardTheme extends InheritedWidget {
