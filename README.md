@@ -1,21 +1,23 @@
 <p>
-  <img src="./assets/readme/hero.svg" width="100%" alt="Kisaki - a three-lane Slint desktop frontend for the Czkawka cleaning engine">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Kisaki - a three-lane desktop frontend for the Czkawka cleaning engine">
 </p>
 
 <p align="right">English · <a href="./README_zh.md">简体中文</a></p>
 
 **Kisaki is a new desktop frontend for the [Czkawka](https://github.com/qarmin/czkawka) cleaning
-engine, built with Slint.** This repository is a fork of Czkawka: the scanning engine and every
-other frontend in it are upstream's, and `kisaki/` is what this fork adds.
+engine.** This repository is a fork of Czkawka: the scanning engine and every other frontend in it
+are upstream's, and `kisaki/` and `kisaki_app/` are what this fork adds. They are one product in two
+toolkits - a Slint shell and a Flutter shell - reaching the same engine the same way.
 
 ## What the fork adds
 
-One crate, and sixteen lines outside it.
+Two frontends, and eighteen lines outside them.
 
 | | |
 |:--|:--|
 | `kisaki/` | 4 045 lines of Rust in 16 files, 2 260 lines of Slint in 12 files |
-| Outside `kisaki/` | `+16 -4` in `Cargo.toml` (workspace member), `justfile`, `misc/run_checks.sh`, `misc/change_version.py`, plus new files `Cargo.lock` entries, `.github/workflows/kisaki.yml`, `data/com.github.hibernerglow.kisaki.desktop` and `.metainfo.xml` |
+| `kisaki_app/` | 3 824 lines of Rust in the `kisaki_bridge` crate, 8 508 lines of Dart in 24 files, plus 2 963 lines of tests; generated bindings and `*.freezed.dart` are excluded |
+| Outside the frontends | `+18 -6` across `Cargo.toml` (two workspace members), `justfile`, `misc/run_checks.sh`, `misc/change_version.py`, plus new files `.github/workflows/kisaki.yml`, `data/com.github.hibernerglow.kisaki.desktop` and `.metainfo.xml`, and `Cargo.lock` entries |
 | Boundary | `czkawka_core` is never modified to make a UI feature easier, and upstream crates are never restyled - both would destroy future rebases |
 
 Kisaki does not reuse Krokiet's UI. Its Rust side mirrors Krokiet's *mechanisms* (a worker thread per
@@ -90,6 +92,23 @@ python3 misc/find_unused_callbacks.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
 python3 kisaki/tools/check_grid.py kisaki
 ```
+
+### The Flutter frontend
+
+`kisaki_app/` talks to `czkawka_core` only through the generated `flutter_rust_bridge` surface, so
+the bridge crate is built first and the bindings are regenerated whenever a bridge type changes:
+
+```sh
+cargo build -p kisaki_bridge          # the dylib the Dart loader opens
+flutter_rust_bridge_codegen generate  # lives in ~/.cargo/bin, which is not on PATH by default
+cd kisaki_app && flutter pub run build_runner build   # plain `dart run build_runner` cannot see flutter_test
+flutter test
+```
+
+Run `flutter pub run build_runner build` without `--build-filter`: a filtered run deletes the `.g.dart`
+and `.freezed.dart` files it was not asked to rebuild. The gates for this half are
+`cargo test -p kisaki_bridge`, `cargo clippy -p kisaki_bridge --all-targets -- -D warnings` and
+`flutter analyze`.
 
 ## Safety
 

@@ -1,22 +1,24 @@
 <p>
-  <img src="./assets/readme/hero.svg" width="100%" alt="Kisaki：基于 Slint 的 Czkawka 清理引擎新桌面前端，三泳道面板">
+  <img src="./assets/readme/hero.svg" width="100%" alt="Kisaki：Czkawka 清理引擎的新桌面前端，三泳道面板">
 </p>
 
 <p align="right"><a href="./README.md">English</a> · 简体中文</p>
 
 > 本文为 [README.md](./README.md) 的中文译本，内容以英文原文为准。
 
-**Kisaki 是 [Czkawka](https://github.com/qarmin/czkawka) 清理引擎的一个新桌面前端，用 Slint 写成。**
-本仓库是 Czkawka 的 fork：扫描引擎和其中所有其他前端都属于上游，`kisaki/` 才是这个 fork 加进来的东西。
+**Kisaki 是 [Czkawka](https://github.com/qarmin/czkawka) 清理引擎的一个新桌面前端。**
+本仓库是 Czkawka 的 fork：扫描引擎和其中所有其他前端都属于上游，`kisaki/` 与 `kisaki_app/` 才是这个
+fork 加进来的东西。两者是同一个产品的两套外壳，一套 Slint、一套 Flutter，都以同样的方式接同一个引擎。
 
 ## 这个 fork 加了什么
 
-一个 crate，以及它之外的 16 行。
+两个前端，以及它们之外的 18 行。
 
 | | |
 |:--|:--|
 | `kisaki/` | 16 个文件 4 045 行 Rust，12 个文件 2 260 行 Slint |
-| `kisaki/` 之外 | `+16 -4` 分布在 `Cargo.toml`（workspace 成员）、`justfile`、`misc/run_checks.sh`、`misc/change_version.py`，另有新增的 `Cargo.lock` 条目、`.github/workflows/kisaki.yml`、`data/com.github.hibernerglow.kisaki.desktop` 与同名 `.metainfo.xml` |
+| `kisaki_app/` | `kisaki_bridge` crate 3 824 行 Rust，24 个文件 8 508 行 Dart，另有 2 963 行测试；不含生成的绑定与 `*.freezed.dart` |
+| 两个前端之外 | `+18 -6` 分布在 `Cargo.toml`（两个 workspace 成员）、`justfile`、`misc/run_checks.sh`、`misc/change_version.py`，另有新增文件 `.github/workflows/kisaki.yml`、`data/com.github.hibernerglow.kisaki.desktop` 与同名 `.metainfo.xml`，以及 `Cargo.lock` 条目 |
 | 边界 | 绝不为了让 UI 功能省事而改 `czkawka_core`，也绝不动手重排上游代码风格，因为两者都会毁掉以后的 rebase |
 
 Kisaki 不复用 Krokiet 的 UI。它的 Rust 侧照搬 Krokiet 的*机制*（每次扫描一个工作线程、`crossbeam`
@@ -83,6 +85,23 @@ python3 misc/find_unused_callbacks.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
 python3 kisaki/tools/check_grid.py kisaki
 ```
+
+### Flutter 前端
+
+`kisaki_app/` 只能通过生成的 `flutter_rust_bridge` 接口访问 `czkawka_core`，所以先构建 bridge crate，
+bridge 类型有变化时再重新生成绑定：
+
+```sh
+cargo build -p kisaki_bridge          # Dart 加载器要打开的 dylib
+flutter_rust_bridge_codegen generate  # 它在 ~/.cargo/bin，默认不在 PATH 里
+cd kisaki_app && flutter pub run build_runner build   # 直接用 dart run build_runner 看不到 flutter_test
+flutter test
+```
+
+`flutter pub run build_runner build` 不要加 `--build-filter`：被过滤掉的 `.g.dart` 与
+`.freezed.dart` 会被当成过期文件**删掉**。这一侧的门禁是
+`cargo test -p kisaki_bridge`、`cargo clippy -p kisaki_bridge --all-targets -- -D warnings` 和
+`flutter analyze`。
 
 ## 安全
 
