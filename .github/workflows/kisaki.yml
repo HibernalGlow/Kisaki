@@ -207,9 +207,9 @@ jobs:
 
   # Nothing else in this repository compiles the Flutter frontend's Linux CMake files, and no
   # machine here has a Linux toolchain, so this job is the only place that can prove they build. It
-  # is deliberately a compile check rather than a packaging step: a released bundle would also have
-  # to carry libkisaki_bridge.so where lib/util/rust_lib.dart looks for it, and the candidate list
-  # has no entry for the bundle's lib/ directory yet, so an uploaded bundle would not start.
+  # runs the same bundle script a maintainer would: build the bridge, build the app, then put the
+  # library beside the executable that opens it by path. Nothing is uploaded, because a bundle is
+  # only worth publishing once somebody has started it on a desktop.
   flutter-linux:
     runs-on: ubuntu-22.04
     defaults:
