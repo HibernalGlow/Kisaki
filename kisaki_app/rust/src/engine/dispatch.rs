@@ -9,7 +9,7 @@ use crate::engine::{EngineOutcome, flat, grouped, registry};
 /// honouring `stop`. Grouped and flat scanners share this entry point so the request shape stays
 /// identical for Dart.
 pub fn run(request: &ScanRequest, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
-    let spec = registry::spec(&request.tool).ok_or_else(|| format!("Unknown scanner '{}'", request.tool))?;
+    let spec = registry::view(&request.tool).ok_or_else(|| format!("Unknown scanner '{}'", request.tool))?;
     let store = crate::engine::options::store(request);
 
     if request.included.is_empty() && request.reference.is_empty() {

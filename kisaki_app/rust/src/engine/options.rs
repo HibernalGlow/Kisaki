@@ -251,7 +251,7 @@ mod tests {
 
     #[test]
     fn every_registry_field_id_resolves() {
-        let tools = crate::engine::registry::tools();
+        let tools = crate::engine::registry::views();
         let ids: Vec<&str> = tools.iter().flat_map(|tool| tool.field_ids.iter().map(String::as_str)).collect();
 
         let defs = defs(&ids);

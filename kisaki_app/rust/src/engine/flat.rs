@@ -18,13 +18,14 @@ use czkawka_core::tools::video_optimizer::{
     VideoCropEntry, VideoCropParams, VideoCroppingMechanism, VideoOptimizer, VideoOptimizerMode, VideoOptimizerParameters, VideoTranscodeEntry, VideoTranscodeParams,
 };
 
-use crate::api::types::{FieldPayload, ScanRequest, ToolSpec};
+use crate::api::types::{FieldPayload, ScanRequest};
 use crate::engine::config::apply_common;
+use crate::engine::registry::ToolView;
 use crate::engine::runner::ProgressSender;
 use crate::engine::{EngineOutcome, EngineRow, FieldStore};
 
 /// Scanners whose output is a flat list: empty folders, big files, broken files, bad names, etc.
-pub fn run(spec: &ToolSpec, request: &ScanRequest, store: &FieldStore, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+pub fn run(spec: &ToolView, request: &ScanRequest, store: &FieldStore, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let scan = Scan { request, store, sender, stop };
     match spec.id.as_str() {
         "empty_folders" => Ok(scan.empty_folders()),
@@ -608,7 +609,7 @@ mod tests {
 
     #[test]
     fn every_bad_names_option_resolves_to_a_default() {
-        let tool = crate::engine::registry::tools()
+        let tool = crate::engine::registry::views()
             .into_iter()
             .find(|tool| tool.id == "bad_names")
             .expect("bad_names is registered");
