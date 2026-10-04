@@ -289,29 +289,19 @@ void main() {
 
         final List<String> clipped = clippedFlexes(tester);
         final Object? error = tester.takeException();
-        if (scale > 1.3 && size.width <= 800) {
-          // A measured limit, recorded rather than hidden: at text scale 2.0 in an 800 wide window a
-          // text-only strip button needs 88 of the 86.8 the source panel leaves it. Pinned to exactly
-          // one clip, so a second one cannot join it quietly and the count can only go down.
-          expect(clipped, hasLength(1), reason: 'clips: $clipped');
-          expect(
-            error,
-            isNotNull,
-            reason: 'the framework must report the same clip',
-          );
-        } else {
-          expect(
-            clipped,
-            isEmpty,
-            reason: 'clipped at $size with text scale $scale: $clipped',
-          );
-          expect(
-            error,
-            isNull,
-            reason:
-                'the board must lay out cleanly at $size with text scale $scale',
-          );
-        }
+        // No corner is excused any more: the strip button that needed 88 of the 86.8 the header left
+        // it now flexes, so an 800 wide window at text scale 2.0 clips nothing too.
+        expect(
+          clipped,
+          isEmpty,
+          reason: 'clipped at $size with text scale $scale: $clipped',
+        );
+        expect(
+          error,
+          isNull,
+          reason:
+              'the board must lay out cleanly at $size with text scale $scale',
+        );
       }
     }
   });
