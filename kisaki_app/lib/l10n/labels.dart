@@ -263,6 +263,13 @@ class Labels {
     'exif-result-skipped': 'No tags to remove',
     'exif-result-stripped': 'Rewritten',
     'exif-summary': '{ \$stripped } rewritten, { \$candidates } side files, { \$planned } planned, { \$skipped } without tags',
+    'export-format-title': 'Format',
+    'export-path-title': 'Write to',
+    'export-scope-all': 'All results',
+    'export-scope-count': '{ \$count } rows in this scope',
+    'export-scope-selected': 'Selected rows',
+    'export-scope-title': 'Rows to export',
+    'export-scope-visible': 'Rows in view',
     'field_bext_include_files_without_extension':
         'Include files without extension',
     'field_big_biggest_first': 'Show biggest files first',

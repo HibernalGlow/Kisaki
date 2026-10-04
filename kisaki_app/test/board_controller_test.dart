@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:kisaki_app/engine/models.dart';
 import 'package:kisaki_app/state/board_controller.dart';
+import 'package:kisaki_app/state/export_scope.dart';
 
 import 'support/stub_engine.dart';
 
@@ -538,32 +539,63 @@ void main() {
     },
   );
 
-  test(
-    'export needs results and reports the folder the engine wrote',
-    () async {
-      controller.addIncluded(<String>['/data']);
-      await controller.exportResults('/tmp/out');
-      expect(engine.exports, isEmpty);
-      expect(controller.statusText, 'There are no results to export');
+  test('export answers the scope it was given and reports the folder the engine wrote', () async {
+    controller.addIncluded(<String>['/data']);
+    await controller.exportResults('/tmp/out');
+    expect(engine.exports, isEmpty);
+    expect(controller.statusText, 'There are no results to export');
 
-      controller.startScan();
-      engine.emit(
-        ScanEventCompleted(
-          StubEngine.outcome('duplicate_files', <ScanRow>[
-            StubEngine.row('/data/a', group: 0, start: true),
-          ]),
-        ),
-      );
-      await drain();
-      await controller.exportResults('/tmp/out', format: 'csv');
+    controller.startScan();
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('duplicate_files', <ScanRow>[
+          StubEngine.row('/data/keep.bin', group: 0, start: true),
+          StubEngine.row('/data/other.bin', group: 1, start: true),
+        ]),
+      ),
+    );
+    await drain();
 
-      final ExportRequest request = engine.exports.single;
-      expect(request.format, 'csv');
-      expect(request.grouped, isTrue);
-      expect(request.tool, 'duplicate_files');
-      expect(controller.statusText, 'Results written to /tmp/kisaki');
-    },
-  );
+    // The reference opens on the selection, so nothing picked is nothing to write - and the
+    // export must not quietly fall back to dumping the whole result.
+    expect(controller.exportScope, ExportScope.selected);
+    await controller.exportResults('/tmp/out');
+    expect(engine.exports, isEmpty);
+    expect(controller.statusText, 'There are no results to export');
+
+    controller.toggleSelected(controller.rows[1]);
+    await controller.exportResults('/tmp/out', format: 'csv');
+
+    final ExportRequest request = engine.exports.single;
+    expect(
+      request.rows.map((ScanRow row) => row.path),
+      <String>['/data/other.bin'],
+    );
+    expect(request.format, 'csv');
+    expect(request.grouped, isTrue);
+    expect(request.tool, 'duplicate_files');
+    expect(controller.statusText, 'Results written to /tmp/kisaki');
+
+    // The three scopes answer differently, and the reference keeps `selected` independent of the
+    // filter: a row the reader picked still exports after a filter hides it.
+    controller.setFilter('keep');
+    expect(controller.visibleRows, hasLength(1));
+    controller.setExportScope(ExportScope.visible);
+    expect(controller.exportScopeRows.map((ScanRow row) => row.path), <String>[
+      '/data/keep.bin',
+    ]);
+    controller.setExportScope(ExportScope.selected);
+    expect(controller.exportScopeRows.map((ScanRow row) => row.path), <String>[
+      '/data/other.bin',
+    ]);
+    controller.setExportScope(ExportScope.all);
+    expect(controller.exportScopeRows, hasLength(2));
+    await controller.exportResults('/tmp/all');
+    expect(engine.exports.last.rows.map((ScanRow row) => row.path), <String>[
+      '/data/keep.bin',
+      '/data/other.bin',
+    ]);
+  });
 
   test(
     'lane widths, collapse and reset round-trip through the layout',
