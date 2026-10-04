@@ -196,6 +196,7 @@ jobs:
           python3 misc/find_unused_callbacks.py kisaki
           python3 misc/find_unused_settings_properties.py kisaki
           python3 kisaki/tools/check_grid.py kisaki
+          python3 misc/check_brand_tokens.py
 
   # The board, the rule models and the FFI plumbing are Dart, so they need the Flutter toolchain
   # rather than a Rust target. Flutter is fetched from its own repository instead of a third-party
