@@ -206,6 +206,11 @@ void main() {
     expect(sent.destination, '/data/archive');
     expect(sent.action, MoveAction.move);
     expect(sent.conflict, MoveConflictPolicy.skip);
+    expect(
+      sent.preserveStructure,
+      isFalse,
+      reason: 'the reference defaults both options to off',
+    );
     expect(sent.dryRun, isTrue);
     expect(sent.paths, <String>['/data/bad name.txt']);
     expect(
@@ -259,4 +264,88 @@ void main() {
     expect(engine.moves.single.action, MoveAction.copy);
     expect(engine.moves.single.destination, '/data/keep');
   });
+
+  testWidgets(
+    'the sheet offers the two move options the engine already honours',
+    (WidgetTester tester) async {
+      await pumpFixedBoard(tester, 'bad_names');
+      await selectFirst(tester);
+
+      await tester.ensureVisible(find.byKey(const Key('move-selection')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('move-selection')));
+      await tester.pumpAndSettle();
+      await tester.enterText(
+        find.byKey(const Key('move-destination-field')),
+        '/data/archive',
+      );
+      FocusManager.instance.primaryFocus?.unfocus();
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('move-preserve-structure')),
+          matching: find.byType(Switch),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      await tester.tap(
+        find.descendant(
+          of: find.byKey(const Key('move-conflict')),
+          matching: find.byType(DropdownButtonFormField<MoveConflictPolicy>),
+        ),
+      );
+      await tester.pumpAndSettle();
+      // While the menu is open the only entry with this key is the menu's own: the closed button
+      // paints the selected option's child, not this item.
+      await tester.tap(find.byKey(const Key('move-conflict-option-rename')));
+      await tester.pumpAndSettle();
+
+      await tester.tap(find.byKey(const Key('move-sheet-move')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('confirm-accept')));
+      await tester.pumpAndSettle();
+
+      final MoveRequest sent = engine.moves.single;
+      expect(
+        sent.preserveStructure,
+        isTrue,
+        reason:
+            'the sheet has to reach the trail-mirroring branch of the engine',
+      );
+      expect(
+        sent.conflict,
+        MoveConflictPolicy.rename,
+        reason:
+            'and the free-suffix rename branch rather than the hardcoded skip',
+      );
+
+      expect(
+        controller.selectedCount,
+        1,
+        reason: 'a dry run plans the moves but leaves the selection alone',
+      );
+      await tester.ensureVisible(find.byKey(const Key('move-selection')));
+      await tester.pumpAndSettle();
+      await tester.tap(find.byKey(const Key('move-selection')));
+      await tester.pumpAndSettle();
+
+      expect(
+        tester
+            .widget<ToggleRow>(find.byKey(const Key('move-preserve-structure')))
+            .value,
+        isTrue,
+        reason: 'the reference keeps these on the card state, not in the sheet',
+      );
+      expect(
+        tester
+            .widget<BoardDropdown<MoveConflictPolicy>>(
+              find.byKey(const Key('move-conflict')),
+            )
+            .current,
+        MoveConflictPolicy.rename,
+      );
+    },
+  );
 }

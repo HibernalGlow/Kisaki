@@ -10,8 +10,9 @@ import 'widgets/primitives.dart';
 
 /// The image scanner's folder roll-up, from `czkawka/similar-folders-view.tsx`.
 ///
-/// The reference offers "open" and "reveal" only when the host supplies those callbacks; Kisaki has
-/// no file-manager bridge, so it ships the copy action that works and leaves the two out.
+/// Copy, open and reveal are listed on every row the way the reference lists them: open and reveal
+/// are disabled when the embedding host has no callback, so the reader sees the action and why it is
+/// dark instead of never learning it exists.
 class SimilarFoldersView extends StatelessWidget {
   const SimilarFoldersView({required this.controller, super.key});
 
@@ -123,6 +124,28 @@ class _FolderRow extends StatelessWidget {
             labelKey: 'action-copy-path',
             dense: true,
             onPressed: () => controller.copyText(stat.path),
+          ),
+          const SizedBox(width: BoardTokens.gapSmall),
+          BoardAction(
+            key: Key('folder-open-${stat.path}'),
+            labelKey: 'folders-open',
+            labelArgs: <String, Object>{'path': stat.path},
+            icon: Icons.open_in_new,
+            iconOnly: true,
+            onPressed: controller.canOpenFiles
+                ? () => controller.openPath(stat.path)
+                : null,
+          ),
+          const SizedBox(width: BoardTokens.gapSmall),
+          BoardAction(
+            key: Key('folder-reveal-${stat.path}'),
+            labelKey: 'folders-reveal',
+            labelArgs: <String, Object>{'path': stat.path},
+            icon: Icons.folder_open_outlined,
+            iconOnly: true,
+            onPressed: controller.canRevealFiles
+                ? () => controller.revealPath(stat.path)
+                : null,
           ),
         ],
       ),

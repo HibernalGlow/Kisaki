@@ -341,7 +341,8 @@ class _PlanBlock extends StatelessWidget {
   }
 }
 
-/// The reference asks for a destination and whether to move or copy, then confirms through the same
+/// The reference asks for a destination, whether to move or copy, whether the target folder keeps the
+/// source structure, and what to do when the target already exists, then confirms through the same
 /// dry-run gate as deletion.
 Future<void> showMoveSheet(BuildContext context, BoardController controller) =>
     showDialog<void>(
@@ -367,19 +368,45 @@ class _MoveSheetState extends State<_MoveSheet> {
       title: Text(Labels.of('move-sheet-title')),
       content: SizedBox(
         width: 320,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            MicroHeading(Labels.of('move-destination')),
-            const SizedBox(height: BoardTokens.gapSmall),
-            BoardField(
-              key: const Key('move-destination-field'),
-              labelKey: 'move-destination',
-              value: _destination,
-              onChanged: (String value) => setState(() => _destination = value),
-            ),
-          ],
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              MicroHeading(Labels.of('move-destination')),
+              const SizedBox(height: BoardTokens.gapSmall),
+              BoardField(
+                key: const Key('move-destination-field'),
+                labelKey: 'move-destination',
+                value: _destination,
+                onChanged: (String value) =>
+                    setState(() => _destination = value),
+              ),
+              ToggleRow(
+                key: const Key('move-preserve-structure'),
+                labelKey: 'move-preserve-structure',
+                value: widget.controller.movePreserveStructure,
+                onChanged: (bool value) {
+                  widget.controller.setMovePreserveStructure(value);
+                  setState(() {});
+                },
+              ),
+              MicroHeading(Labels.of('move-conflict')),
+              const SizedBox(height: BoardTokens.gapSmall),
+              BoardDropdown<MoveConflictPolicy>(
+                key: const Key('move-conflict'),
+                labelKey: 'move-conflict',
+                values: MoveConflictPolicy.values,
+                current: widget.controller.moveConflict,
+                label: (MoveConflictPolicy value) =>
+                    Labels.of('move-conflict-${value.name}'),
+                onChanged: (MoveConflictPolicy value) {
+                  widget.controller.setMoveConflict(value);
+                  setState(() {});
+                },
+              ),
+            ],
+          ),
         ),
       ),
       actions: <Widget>[

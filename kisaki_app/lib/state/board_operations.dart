@@ -153,8 +153,8 @@ extension BoardFileOperations on BoardController {
           paths: targets.map((ScanRow row) => row.path).toList(),
           destination: destination,
           action: action,
-          conflict: MoveConflictPolicy.skip,
-          preserveStructure: false,
+          conflict: moveConflict,
+          preserveStructure: movePreserveStructure,
           dryRun: dryRun,
         ),
       );

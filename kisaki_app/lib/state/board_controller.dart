@@ -125,11 +125,8 @@ List<String> reorderLanes(List<String> order, String lane, int targetIndex) {
 /// The table renders [visibleRows]; selection is keyed by path so it survives re-sorting
 /// and filtering, and a UI index never addresses the canonical rows directly.
 class BoardController extends ChangeNotifier {
-  BoardController({
-    required this.engine,
-    this.dark = true,
-    FileHost? fileHost,
-  }) : _fileHost = fileHost ?? desktopFileHost() {
+  BoardController({required this.engine, this.dark = true, FileHost? fileHost})
+    : _fileHost = fileHost ?? desktopFileHost() {
     _tools = engine.listTools();
     _info = engine.engineInfo();
     if (_tools.isNotEmpty) {
@@ -162,6 +159,12 @@ class BoardController extends ChangeNotifier {
   String maxSizeKib = '';
   bool dryRun = true;
   bool moveToTrash = true;
+
+  /// How a move or copy treats the target folder: mirror the source trail or flatten it, and what to
+  /// do when the target already exists. The reference keeps these on the card state, so they outlive
+  /// the sheet rather than resetting on every open.
+  bool movePreserveStructure = false;
+  MoveConflictPolicy moveConflict = MoveConflictPolicy.skip;
 
   ScanPhase _phase = ScanPhase.idle;
   ProgressUpdate? _progress;
@@ -434,6 +437,16 @@ class BoardController extends ChangeNotifier {
 
   void setMoveToTrash(bool value) {
     moveToTrash = value;
+    notifyListeners();
+  }
+
+  void setMovePreserveStructure(bool value) {
+    movePreserveStructure = value;
+    notifyListeners();
+  }
+
+  void setMoveConflict(MoveConflictPolicy value) {
+    moveConflict = value;
     notifyListeners();
   }
 
