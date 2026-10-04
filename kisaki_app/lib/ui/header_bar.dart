@@ -34,24 +34,28 @@ class HeaderBar extends StatelessWidget {
           const SizedBox(width: BoardTokens.gap * 2),
           Flexible(child: _ScannerPicker(controller: controller)),
           const SizedBox(width: BoardTokens.gap),
-          _ScanControl(controller: controller),
+          Flexible(child: _ScanControl(controller: controller)),
           const SizedBox(width: BoardTokens.gap * 2),
           Expanded(child: _ProgressRail(controller: controller)),
           const SizedBox(width: BoardTokens.gap),
-          BoardAction(
-            labelKey: 'action-theme',
-            icon: controller.dark
-                ? Icons.light_mode_outlined
-                : Icons.dark_mode_outlined,
-            dense: true,
-            onPressed: controller.toggleTheme,
+          Flexible(
+            child: BoardAction(
+              labelKey: 'action-theme',
+              icon: controller.dark
+                  ? Icons.light_mode_outlined
+                  : Icons.dark_mode_outlined,
+              dense: true,
+              onPressed: controller.toggleTheme,
+            ),
           ),
           const SizedBox(width: BoardTokens.gapSmall),
-          BoardAction(
-            labelKey: 'action-reset-layout',
-            icon: Icons.restart_alt_rounded,
-            dense: true,
-            onPressed: controller.resetLayout,
+          Flexible(
+            child: BoardAction(
+              labelKey: 'action-reset-layout',
+              icon: Icons.restart_alt_rounded,
+              dense: true,
+              onPressed: controller.resetLayout,
+            ),
           ),
         ],
       ),
