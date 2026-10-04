@@ -7,7 +7,7 @@ import 'analysis_blocks.dart';
 import 'source_panel.dart';
 import 'token_list.dart' show PathPicker;
 
-/// Says what each card holds, so a lane, the docked panel and the float all show the same block.
+/// Says what each card holds, so a lane and the docked panel can show the same block.
 Widget boardCard({
   required BoardController controller,
   required CardId id,
