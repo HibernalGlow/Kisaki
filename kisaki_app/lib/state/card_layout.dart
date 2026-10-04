@@ -5,18 +5,24 @@ import 'package:flutter/foundation.dart';
 /// Which lane a card sits in. The reference calls them panels; the board calls them lanes.
 enum CardPanel { source, analysis }
 
+/// How a lane shows its cards: the reference's cards view stacks them, its panels view tabs them.
+enum CardDisplay { stack, tabs }
+
 /// A block of the board the reader can place, hide, collapse and size.
 enum CardId {
-  sourceSettings('card-title-source-settings'),
-  preview('card-title-preview'),
-  analysis('card-title-analysis'),
-  logs('card-title-logs'),
-  selection('card-title-selection'),
-  operations('card-title-operations');
+  sourceSettings('card-title-source-settings', 'cards-tab-source-settings'),
+  preview('card-title-preview', 'cards-tab-preview'),
+  analysis('card-title-analysis', 'cards-tab-analysis'),
+  logs('card-title-logs', 'cards-tab-logs'),
+  selection('card-title-selection', 'cards-tab-selection'),
+  operations('card-title-operations', 'cards-tab-operations');
 
-  const CardId(this.titleKey);
+  const CardId(this.titleKey, this.tabKey);
 
   final String titleKey;
+
+  /// The short name a tab strip can afford, as the reference keeps one per card.
+  final String tabKey;
 }
 
 @immutable

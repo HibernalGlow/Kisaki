@@ -32,6 +32,14 @@ class CardStack extends StatelessWidget {
         labelKey: 'cards-empty',
       );
     }
+    if (cards.length > 1 && controller.cardDisplay(panel) == CardDisplay.tabs) {
+      return _CardTabs(
+        controller: controller,
+        panel: panel,
+        cards: cards,
+        renderCard: renderCard,
+      );
+    }
     return SingleChildScrollView(
       key: Key('card-stack-${panel.name}'),
       // The lane breathes on the section rhythm, as it did when it held one flat list.
@@ -266,6 +274,86 @@ class CardManagerDialog {
         context: context,
         builder: (BuildContext context) => _CardManager(controller: controller),
       );
+}
+
+/// The switch between the two arrangements a lane can show its blocks in.
+class CardDisplayToggle extends StatelessWidget {
+  const CardDisplayToggle({
+    required this.controller,
+    required this.panel,
+    super.key,
+  });
+
+  final BoardController controller;
+  final CardPanel panel;
+
+  @override
+  Widget build(BuildContext context) {
+    final bool stacked = controller.cardDisplay(panel) == CardDisplay.stack;
+    return BoardAction(
+      key: Key('cards-display-${panel.name}'),
+      labelKey: stacked ? 'cards-display-tabs' : 'cards-display-stack',
+      icon: stacked ? Icons.tab_rounded : Icons.layers_outlined,
+      dense: true,
+      iconOnly: true,
+      onPressed: () => controller.toggleCardDisplay(panel),
+    );
+  }
+}
+
+/// One card at a time, the reference's panels view: a strip over the chosen block.
+class _CardTabs extends StatelessWidget {
+  const _CardTabs({
+    required this.controller,
+    required this.panel,
+    required this.cards,
+    required this.renderCard,
+  });
+
+  final BoardController controller;
+  final CardPanel panel;
+  final List<CardConfig> cards;
+  final CardBodyBuilder renderCard;
+
+  @override
+  Widget build(BuildContext context) {
+    final BoardPalette palette = BoardTheme.of(context);
+    final CardId? active = controller.activeCard(panel);
+    return Padding(
+      padding: const EdgeInsets.all(BoardTokens.section),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              for (final CardConfig card in cards) ...<Widget>[
+                Expanded(
+                  child: BoardAction(
+                    key: Key('card-tab-${card.id.name}'),
+                    labelKey: card.id.tabKey,
+                    dense: true,
+                    tone: card.id == active ? palette.primary : null,
+                    onPressed: () => controller.setActiveCard(panel, card.id),
+                  ),
+                ),
+                if (card != cards.last)
+                  const SizedBox(width: BoardTokens.gapSmall),
+              ],
+            ],
+          ),
+          const SizedBox(height: BoardTokens.gap),
+          Expanded(
+            child: active == null
+                ? const SizedBox.shrink()
+                : SingleChildScrollView(
+                    padding: const EdgeInsets.all(BoardTokens.gap),
+                    child: renderCard(context, active),
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 class _CardManager extends StatelessWidget {
