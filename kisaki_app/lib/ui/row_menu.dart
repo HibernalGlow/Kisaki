@@ -7,9 +7,10 @@ import '../theme/board_theme.dart';
 
 /// Right-click actions for one result row, from `czkawka/result-table.tsx`.
 ///
-/// The reference also offers open, reveal and copy-file, but only when the host supplies those
-/// callbacks; Kisaki has no file-manager bridge yet, so the menu ships the actions that work.
-enum RowAction { selectGroup, clearGroup, copyPath, copyName }
+/// Open and reveal are offered only when the host can do them, exactly as the reference gates those
+/// items on the callbacks it was given. Copy-file stays out: putting file objects on the system
+/// clipboard needs a platform call this build does not make.
+enum RowAction { selectGroup, clearGroup, open, reveal, copyPath, copyName }
 
 Future<void> showRowMenu({
   required BuildContext context,
@@ -42,6 +43,24 @@ Future<void> showRowMenu({
       ),
     );
     entries.add(const PopupMenuDivider());
+  }
+  if (controller.canOpenFiles || controller.canRevealFiles) {
+    entries.add(const PopupMenuDivider());
+  }
+  if (controller.canOpenFiles) {
+    entries.add(
+      _item(RowAction.open, 'row-menu-open', enabled: true, palette: palette),
+    );
+  }
+  if (controller.canRevealFiles) {
+    entries.add(
+      _item(
+        RowAction.reveal,
+        'row-menu-reveal',
+        enabled: true,
+        palette: palette,
+      ),
+    );
   }
   entries.add(
     _item(
@@ -82,6 +101,10 @@ Future<void> showRowMenu({
       controller.setGroupSelected(row.groupIndex, true);
     case RowAction.clearGroup:
       controller.setGroupSelected(row.groupIndex, false);
+    case RowAction.open:
+      await controller.openPath(row.path);
+    case RowAction.reveal:
+      await controller.revealPath(row.path);
     case RowAction.copyPath:
       await controller.copyText(row.path);
     case RowAction.copyName:
