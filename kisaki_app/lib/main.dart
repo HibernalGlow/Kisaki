@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -68,28 +69,44 @@ class KisakiApp extends StatefulWidget {
 }
 
 class _KisakiAppState extends State<KisakiApp> with WidgetsBindingObserver {
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    widget.controller.addListener(_scheduleSave);
   }
 
   @override
   void dispose() {
+    _debounce?.cancel();
+    widget.controller.removeListener(_scheduleSave);
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
+  /// The board notifies per progress tick, so a write is scheduled rather than performed and a burst
+  /// of notifications collapses into one file.
+  void _scheduleSave() {
     final BoardSettingsStore? store = widget.store;
     if (store == null) {
       return;
     }
+    _debounce?.cancel();
+    _debounce = Timer(
+      const Duration(milliseconds: 400),
+      () => store.write(BoardSettings.capture(widget.controller)),
+    );
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.hidden) {
-      store.write(BoardSettings.capture(widget.controller));
+      _debounce?.cancel();
+      widget.store?.write(BoardSettings.capture(widget.controller));
     }
   }
 
