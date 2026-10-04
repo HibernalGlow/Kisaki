@@ -7,10 +7,19 @@ import '../theme/board_theme.dart';
 
 /// Right-click actions for one result row, from `czkawka/result-table.tsx`.
 ///
-/// Open and reveal are offered only when the host can do them, exactly as the reference gates those
-/// items on the callbacks it was given. Copy-file stays out: putting file objects on the system
-/// clipboard needs a platform call this build does not make.
-enum RowAction { selectGroup, clearGroup, open, reveal, copyPath, copyName }
+/// The three host actions - open, reveal and copy the file object - are listed exactly as the
+/// reference lists them: always present, disabled when the embedding host has no callback for them,
+/// and saying why for copy-file the way its tooltip does. A dead item that explains itself beats an
+/// absent one the reader never learns about.
+enum RowAction {
+  selectGroup,
+  clearGroup,
+  copyPath,
+  copyName,
+  copyFiles,
+  open,
+  reveal,
+}
 
 Future<void> showRowMenu({
   required BuildContext context,
@@ -44,24 +53,6 @@ Future<void> showRowMenu({
     );
     entries.add(const PopupMenuDivider());
   }
-  if (controller.canOpenFiles || controller.canRevealFiles) {
-    entries.add(const PopupMenuDivider());
-  }
-  if (controller.canOpenFiles) {
-    entries.add(
-      _item(RowAction.open, 'row-menu-open', enabled: true, palette: palette),
-    );
-  }
-  if (controller.canRevealFiles) {
-    entries.add(
-      _item(
-        RowAction.reveal,
-        'row-menu-reveal',
-        enabled: true,
-        palette: palette,
-      ),
-    );
-  }
   entries.add(
     _item(
       RowAction.copyPath,
@@ -75,6 +66,34 @@ Future<void> showRowMenu({
       RowAction.copyName,
       'row-menu-copy-name',
       enabled: true,
+      palette: palette,
+    ),
+  );
+  entries.add(
+    _item(
+      RowAction.copyFiles,
+      'row-menu-copy-files',
+      enabled: controller.canCopyFiles,
+      disabledReasonKey: controller.canCopyFiles
+          ? null
+          : 'row-menu-copy-files-unsupported',
+      palette: palette,
+    ),
+  );
+  entries.add(const PopupMenuDivider());
+  entries.add(
+    _item(
+      RowAction.open,
+      'row-menu-open',
+      enabled: controller.canOpenFiles,
+      palette: palette,
+    ),
+  );
+  entries.add(
+    _item(
+      RowAction.reveal,
+      'row-menu-reveal',
+      enabled: controller.canRevealFiles,
       palette: palette,
     ),
   );
@@ -109,6 +128,8 @@ Future<void> showRowMenu({
       await controller.copyText(row.path);
     case RowAction.copyName:
       await controller.copyText(row.name);
+    case RowAction.copyFiles:
+      await controller.copyFilesToClipboard(<String>[row.path]);
   }
 }
 
@@ -117,16 +138,22 @@ PopupMenuItem<RowAction> _item(
   String labelKey, {
   required bool enabled,
   required BoardPalette palette,
-}) => PopupMenuItem<RowAction>(
-  key: Key('row-menu-${value.name}'),
-  value: value,
-  enabled: enabled,
-  height: 28,
-  child: Text(
+  String? disabledReasonKey,
+}) {
+  final Text label = Text(
     Labels.of(labelKey),
     style: TextStyle(
       fontSize: BoardTokens.fsLabel,
       color: enabled ? palette.fg : palette.fgFaint,
     ),
-  ),
-);
+  );
+  return PopupMenuItem<RowAction>(
+    key: Key('row-menu-${value.name}'),
+    value: value,
+    enabled: enabled,
+    height: 28,
+    child: disabledReasonKey == null
+        ? label
+        : Tooltip(message: Labels.of(disabledReasonKey), child: label),
+  );
+}
