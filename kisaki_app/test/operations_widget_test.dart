@@ -109,6 +109,8 @@ void main() {
       messages: 'dry run: 1 rename planned',
     );
 
+    await tester.ensureVisible(find.byKey(const Key('fix-names')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('fix-names')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);
@@ -153,6 +155,8 @@ void main() {
       messages: 'renamed 1 path',
     );
 
+    await tester.ensureVisible(find.byKey(const Key('fix-names')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('fix-names')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-accept')));
@@ -182,6 +186,8 @@ void main() {
       messages: 'dry run: 1 move planned',
     );
 
+    await tester.ensureVisible(find.byKey(const Key('move-selection')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('move-selection')));
     await tester.pumpAndSettle();
     await tester.enterText(
@@ -222,6 +228,8 @@ void main() {
     await pumpFixedBoard(tester, 'bad_names');
     await selectFirst(tester);
 
+    await tester.ensureVisible(find.byKey(const Key('move-selection')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('move-selection')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('move-sheet-copy')));
@@ -234,6 +242,8 @@ void main() {
     );
     expect(find.text(Labels.of('status_move_needs_destination')), findsWidgets);
 
+    await tester.ensureVisible(find.byKey(const Key('move-selection')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('move-selection')));
     await tester.pumpAndSettle();
     await tester.enterText(

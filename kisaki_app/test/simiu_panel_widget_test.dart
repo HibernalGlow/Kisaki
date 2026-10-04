@@ -175,6 +175,8 @@ void main() {
     WidgetTester tester,
   ) async {
     await pumpSetsBoard(tester, sets: true);
+    await tester.ensureVisible(find.byKey(const Key('simiu-apply')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('simiu-apply')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);
@@ -197,6 +199,8 @@ void main() {
 
     controller.setDryRun(false);
     controller.setSimiuMode(SimiuMode.link);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('simiu-apply')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('simiu-apply')));
     await tester.pumpAndSettle();
@@ -223,6 +227,8 @@ void main() {
     );
 
     controller.setDryRun(false);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('simiu-apply')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('simiu-apply')));
     await tester.pumpAndSettle();
