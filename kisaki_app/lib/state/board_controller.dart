@@ -16,6 +16,7 @@ import 'group_organize.dart';
 import 'image_comparison.dart';
 import 'row_projection.dart';
 import 'row_selection.dart';
+import 'scan_presets.dart';
 
 import 'selection_model.dart';
 import 'similar_folders.dart';
@@ -32,6 +33,7 @@ part 'board_cursor.dart';
 part 'board_display.dart';
 part 'board_operations.dart';
 part 'board_source_lists.dart';
+part 'board_scan_presets.dart';
 
 enum ScanPhase { idle, running, stopping, finished, failed }
 
@@ -121,6 +123,9 @@ class BoardController extends ChangeNotifier {
   String _filter = '';
   FilterState _filters = FilterState.defaults();
   final List<FilterPreset> _presets = <FilterPreset>[];
+
+  /// Saved scan configurations, held in memory like the reference holds them in its node store.
+  final List<ScanPreset> _scanPresets = <ScanPreset>[];
   FilterResult? _filterResult;
   SelectionConfig _assistant = SelectionConfig.defaults();
   SelectionHistory _history = createSelectionHistory(const <String>[]);
