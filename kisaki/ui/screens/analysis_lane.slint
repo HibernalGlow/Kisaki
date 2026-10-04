@@ -1,6 +1,7 @@
 import { ScrollView } from "std-widgets.slint";
 import { Palette, Theme } from "../globals/theme.slint";
 import { AppState } from "../globals/app_state.slint";
+import { ToolId } from "../globals/common.slint";
 import { Callabler } from "../globals/callabler.slint";
 import { Translations } from "../globals/translations.slint";
 import { ButtonVariant, Capsule, MetricTile, ToggleRow } from "../components/atoms.slint";
@@ -96,6 +97,18 @@ export component AnalysisBody inherits Rectangle {
                     cap_height: 32px;
                     clicked => {
                         Callabler.delete_selected();
+                    }
+                }
+                // The side-file verb only means something for the files the EXIF scan listed.
+                // Only the files the EXIF scan listed can be stripped, so the verb stays disabled
+                // for every other tool rather than disappearing mid-session.
+                Capsule {
+                    text: Translations.action_strip_exif;
+                    variant: ButtonVariant.Neutral;
+                    enabled: AppState.active_tool == ToolId.ExifRemover && AppState.can_delete;
+                    cap_height: 32px;
+                    clicked => {
+                        Callabler.strip_exif();
                     }
                 }
                 Capsule {

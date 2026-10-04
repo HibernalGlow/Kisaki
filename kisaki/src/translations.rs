@@ -82,6 +82,7 @@ fn translate_items(app: &MainWindow) {
     translation.set_action_reset_layout(fli!("action-reset-layout").into());
     translation.set_action_scan(fli!("action-scan").into());
     translation.set_action_stop(fli!("action-stop").into());
+    translation.set_action_strip_exif(fli!("action-strip-exif").into());
     translation.set_action_theme(fli!("action-theme").into());
     translation.set_app_title(fli!("app-title").into());
     translation.set_badge_reference(fli!("badge-reference").into());

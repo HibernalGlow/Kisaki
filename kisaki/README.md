@@ -57,6 +57,7 @@ kisaki/
 └── src/
     ├── main.rs           # bootstrap order, window creation, run loop
     ├── callbacks.rs      # every Callabler registration
+    ├── exif.rs           # strip EXIF into side copies behind the same confirm gate
     ├── scan.rs           # worker thread, common settings, ScanCtx and Outcome
     │   ├── scan_grouped.rs # duplicate / similar images / similar videos / music
     │   └── scan_flat.rs    # the other ten tools
@@ -105,11 +106,15 @@ Turning dry run off is required before anything is written, and the confirmation
 mode is active. Deletion goes through `czkawka_core`'s file operations so that "move to trash" keeps
 working the same way as in every other Czkawka frontend.
 
+Strip EXIF cannot destroy an original at all: it writes `name.czkawka_cleaned_exif.ext` beside each
+file, the spelling the engine itself uses, and under dry run it only reports how many of the selected
+files carry tags.
+
 ## What is not here yet
 
 Thumbnails and image preview, the image comparison dialog, the smart selection assistant, the
-multi-dimensional filter panel (only the text filter is wired), the Simiu set mode, and video
-optimize/EXIF execution dialogs. These are planned page-by-page replacements, not gaps in the scan
+multi-dimensional filter panel (only the text filter is wired), the Simiu set mode, and the video
+optimize execution dialog. These are planned page-by-page replacements, not gaps in the scan
 engine.
 
 ## Translations
