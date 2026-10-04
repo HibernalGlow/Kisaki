@@ -164,7 +164,11 @@ def collect_rust_keys() -> set[str]:
         source = path.read_text(encoding="utf-8")
         keys.update(FLI.findall(source))
         keys.update(REGISTRY.findall(source))
-        keys.update(match for match in FLI.findall(source) if not match.startswith(("tool_", "col_", "field_", "option_", "status_", "plan_", "confirm_", "rust_")))
+        keys.update(
+            match
+            for match in FLI.findall(source)
+            if not match.startswith(("tool_", "col_", "field_", "option_", "status_", "plan_", "confirm_", "rust_"))
+        )
     return keys
 
 
@@ -237,7 +241,9 @@ def main() -> int:
     block = f"{start}\nfn translate_items(app: &MainWindow) {{\n" + "\n".join(body) + f"\n}}\n{end}"
     RUST.write_text(head + block + tail, encoding="utf-8")
 
-    print(f"wrote {FTL}: {len(declared)} global keys + {len(used_extra)} rust keys; translate_items has {len(declared)} setters")
+    print(
+        f"wrote {FTL}: {len(declared)} global keys + {len(used_extra)} rust keys; translate_items has {len(declared)} setters"
+    )
     return 0
 
 
