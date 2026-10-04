@@ -6,7 +6,7 @@ import '../state/card_layout.dart';
 import '../theme/board_theme.dart';
 import 'widgets/primitives.dart';
 
-/// Builds the content of one card, so a lane and the floating panel can show the same block.
+/// Builds the content of one card, so the same block can sit in any of the three lanes.
 typedef CardBodyBuilder = Widget Function(BuildContext context, CardId id);
 
 /// The reader's arrangement of the board's blocks: which lane holds each one, in what order, visible,
