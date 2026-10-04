@@ -81,17 +81,29 @@ Default features are `winit_femtovg` and `winit_software`. Native-library featur
 default, exactly like Krokiet: `heif`, `libraw`, `libavif`, `xdg_portal_trash`. Renderer backends can
 be swapped with `femtovg_wgpu`, `skia_opengl` or `skia_vulkan`.
 
+Off is not harmless. With `heif` out, the engine leaves HEIC out of the extension list a scan
+collects (`czkawka_core/src/common/image.rs`), so a folder of iPhone photos comes back looking clean.
+The caption next to the version says which of the three decoders a binary was built with
+(`heif+ raw- avif-`), and the bridge exposes the same facts through `codec_info()` in
+`kisaki_app/rust/src/api/info.rs` - its Dart binding is still pending, so only the Slint caption shows
+them today.
+
 Requires Rust 1.94.1 or newer (edition 2024).
 
 Before declaring any work on this crate done, run the per-package gates rather than the whole
 workspace:
 
 ```sh
-cargo clippy -p kisaki --all-targets --all-features -- -D warnings
+cargo clippy -p kisaki --all-targets -- -D warnings
 python3 misc/find_unused_callbacks.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
 python3 kisaki/tools/check_grid.py kisaki
 ```
+
+CI adds `--all-features` to that first line, but only in the Linux job: on macOS the same command
+stops inside `skia-bindings`, in its own generated `bindings.rs` (`E0425`, a missing template
+parameter in a type alias it emits), with nothing in this crate involved. Run the
+default-features gate locally and let the Linux job cover the feature union.
 
 ### The Flutter frontend
 
