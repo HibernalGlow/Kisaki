@@ -100,6 +100,14 @@ class SeedEngine implements KisakiEngine {
   );
 
   @override
+  CodecInfo codecInfo() => const CodecInfo(
+    heif: false,
+    libraw: false,
+    libavif: false,
+    diagnostic: 'seed engine: no native decoder is linked in',
+  );
+
+  @override
   bool isScanning() => _scanning;
 
   @override

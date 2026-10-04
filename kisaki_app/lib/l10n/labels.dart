@@ -104,6 +104,9 @@ class Labels {
     'cards-tab-source-settings': 'Scan',
     'cards-hide': 'Hide { \$title }',
     'cards-manage': 'Manage cards',
+    'build-decoders': 'Decoders compiled in',
+    'build-decoders-note': 'A decoder that is absent is skipped silently by the engine',
+    'build-runtime': 'Engine',
     'cards-manager-description':
         'Choose which lane holds each block, and whether it shows.',
     'cards-manager-title': 'Card manager',
