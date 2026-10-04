@@ -1,0 +1,16 @@
+name: swimlane
+description: "A standalone multi-column swimlane strip: ordered resizable lanes with collapse, solo, dwell-to-focus and scroll-to-reveal geometry. Content agnostic."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.13.3
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0

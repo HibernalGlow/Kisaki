@@ -235,6 +235,34 @@ jobs:
         working-directory: kisaki_app
         run: flutter test
 
+  # The swimlane package is content-agnostic and needs neither the bridge nor a native
+  # toolchain, so it gets the cheapest job in the file. It exists because the package is
+  # separately reusable: its geometry is asserted with hard numbers, and a change to a lane
+  # constant that only ever ran on a maintainer's machine would silently move every
+  # assertion in `test/strip_metrics_test.dart`.
+  swimlane:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install Flutter
+        run: |
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Warm up the Dart SDK
+        run: flutter --version
+      - name: Get dependencies
+        working-directory: packages/swimlane
+        run: flutter pub get
+      - name: Analyze
+        working-directory: packages/swimlane
+        run: flutter analyze
+      - name: Test
+        working-directory: packages/swimlane
+        run: flutter test
+
   # Nothing else in this repository compiles the Flutter frontend's Linux CMake files, and no
   # machine here has a Linux toolchain, so this job is the only place that can prove they build. It
   # runs the same bundle script a maintainer would: build the bridge, build the app, then put the
