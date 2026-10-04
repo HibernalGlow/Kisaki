@@ -64,8 +64,12 @@ class _KisakiBoardAppState extends State<KisakiBoardApp> {
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardPalette(dark: widget.controller.dark);
+    // No key here on purpose. A key built from the theme values replaces this element, and with it
+    // the whole `MaterialApp`: every route, dialog and menu in the Navigator's overlay is dropped
+    // mid-use, and an overlay entry that still depends on the old inherited widget is what makes
+    // framework assert `_dependents.isEmpty` on the way out. Rebuilding is enough, because the
+    // memoised palette belongs to the widget instance and `build` makes a new one each time.
     return BoardTheme(
-      key: ValueKey<String>('${palette.dark}-${widget.themeKind.name}'),
       dark: palette.dark,
       kind: widget.themeKind,
       child: MaterialApp(
