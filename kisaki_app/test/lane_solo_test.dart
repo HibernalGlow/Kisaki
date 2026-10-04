@@ -133,25 +133,5 @@ void main() {
       expect(find.byKey(const Key('lane-solo-source')), findsOneWidget);
       expect(Labels.fallbackKeys, isEmpty);
     });
-
-    testWidgets('a floated analysis panel still replaces the soloed lane', (
-      WidgetTester tester,
-    ) async {
-      await pumpScannedBoard(tester);
-      await tester.tap(find.byKey(const Key('floating-analysis-toggle')));
-      await tester.pumpAndSettle();
-      // The docked lane is gone, so its header button is gone with it: the reader asks for solo from
-      // a lane that is still on the board.
-      controller.toggleSoloLane('analysis');
-      await tester.pumpAndSettle();
-
-      expect(
-        find.byKey(const Key('analysis-lane-hidden')),
-        findsOneWidget,
-        reason: 'the numbers are already in the float, solo or not',
-      );
-      expect(find.byKey(const Key('floating-analysis')), findsOneWidget);
-      expect(find.byKey(const Key('lane-R')), findsNothing);
-    });
   });
 }

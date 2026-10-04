@@ -107,20 +107,14 @@ void main() {
     }
 
     Future<void> openLayoutDialog(WidgetTester tester) async {
-      // The layout dialog rides with the analysis blocks, so the float carries its button.
-      await tester.tap(find.byKey(const Key('floating-analysis-toggle')));
-      await tester.pumpAndSettle();
+      // The card manager rides with the analysis blocks, so its button sits on that lane's header.
       await tester.tap(find.byKey(const Key('cards-manage')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('card-manager-dialog')), findsOneWidget);
     }
 
-    /// Putting the board back shows every lane again: while the float is open the docked analysis lane
-    /// stands down, so its place in the order can only be read once the float is closed.
     Future<void> closeLayoutDialog(WidgetTester tester) async {
       await tester.tap(find.byKey(const Key('cards-manager-close')));
-      await tester.pumpAndSettle();
-      await tester.tap(find.byKey(const Key('floating-close')));
       await tester.pumpAndSettle();
     }
 
