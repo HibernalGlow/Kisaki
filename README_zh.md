@@ -75,16 +75,25 @@ just runr kisaki          # fast_release 运行
 `heif`、`libraw`、`libavif`、`xdg_portal_trash`。渲染后端可用 `femtovg_wgpu`、`skia_opengl` 或
 `skia_vulkan` 替换。
 
+关掉不是无害的。少了 `heif`，引擎在收集扫描扩展名时就把 HEIC 排除在外
+（`czkawka_core/src/common/image.rs`），一整目录的 iPhone 照片会被扫成“干净”的。版本号旁边的标题会写出
+这个二进制带了哪几个解码器（`heif+ raw- avif-`）；bridge 用 `kisaki_app/rust/src/api/info.rs` 里的
+`codec_info()` 给出同一份事实，但它的 Dart 绑定还没生成，所以目前只有 Slint 的标题显示得出来。
+
 需要 Rust 1.94.1 或更新版本（edition 2024）。
 
 这个 crate 的任何改动收尾前，请跑按包的门禁，而不是整个 workspace：
 
 ```sh
-cargo clippy -p kisaki --all-targets --all-features -- -D warnings
+cargo clippy -p kisaki --all-targets -- -D warnings
 python3 misc/find_unused_callbacks.py kisaki
 python3 misc/find_unused_fluent_translations.py kisaki
 python3 kisaki/tools/check_grid.py kisaki
 ```
+
+CI 只在 Linux 那个 job 里给第一条命令加上 `--all-features`。在 macOS 上同样的命令会停在
+`skia-bindings` 自己生成的 `bindings.rs`（`E0425`：它生成的一个类型别名少了模板参数），与本 crate 无关。
+本地跑默认 feature 的那条即可，feature 全集由 Linux job 覆盖。
 
 ### Flutter 前端
 
