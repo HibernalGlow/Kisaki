@@ -30,6 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Material's own strings (the text selection toolbar, the copy/paste handles' menu, date
+  # pickers) come from these delegates, so they follow the locale the catalogue loaded for.
+  flutter_localizations:
+    sdk: flutter
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
@@ -58,6 +62,13 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+
+  # Fluent catalogues, one directory per locale. `just unpack_translations` writes Crowdin's output
+  # into these folders, and a locale only ships once its directory is listed here - Flutter fails the
+  # build on a listed directory that does not exist, so the list grows with the catalogues that land.
+  assets:
+    - i18n/en/
+    - i18n/zh-CN/
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in

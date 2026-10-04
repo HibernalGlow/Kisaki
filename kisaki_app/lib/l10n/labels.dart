@@ -1,10 +1,18 @@
 /// Resolves the translation keys the engine hands back (`label_key`, `stage_label_key`).
 ///
-/// The table mirrors `kisaki/i18n/en/kisaki.ftl`. Real locale switching will replace
-/// [Labels.of] with a Fluent-backed lookup; callers only ever see a key.
+/// Lookup order is the loaded catalogue, then the built-in English table, then a title-cased guess
+/// (which [fallbackKeys] records so an unauthored key stays visible to a test). [load] reads
+/// `i18n/<locale>/kisaki_app.ftl` from the bundle, so the shipped catalogues stay on the same Fluent
+/// pipeline as the other frontends in this workspace, and the table below is what keeps the seeded UI
+/// and the widget tests synchronous with no asset round trip.
 library;
 
-import 'package:flutter/foundation.dart' show visibleForTesting;
+import 'dart:ui' show Locale;
+
+import 'package:flutter/foundation.dart' show FlutterError, visibleForTesting;
+import 'package:flutter/services.dart' show rootBundle;
+
+import 'fluent_catalog.dart';
 
 typedef LabelArgs = Map<String, Object>;
 
@@ -16,8 +24,87 @@ class Labels {
   @visibleForTesting
   static final List<String> fallbackKeys = <String>[];
 
+  /// Messages from the catalogue [load] installed. Empty until then, which is what lets the seeded
+  /// UI and every widget test run off the built-in English table.
+  static Map<String, String> _catalog = const <String, String>{};
+
+  /// The locale actually served: the requested tag when its catalogue was in the bundle, else `en`.
+  static String loadedLocaleCode = 'en';
+
+  /// The asset path a locale's catalogue ships under.
+  static String catalogAsset(String localeCode) =>
+      'i18n/$localeCode/kisaki_app.ftl';
+
+  /// Candidate tags for a requested locale, best match first.
+  ///
+  /// Mirrors the three passes `czkawka_core`'s `find_language_idx` uses - exact tag, then language
+  /// subtag - plus the one thing only a directory list can say: this workspace has no bare `zh`, so a
+  /// `zh` request must reach `zh-CN` rather than fall through to English.
+  static List<String> localeCandidates(String requested) {
+    final String tag = requested.trim();
+    if (tag.isEmpty) {
+      return const <String>['en'];
+    }
+    final List<String> out = <String>[tag];
+    final int dash = tag.indexOf('-');
+    if (dash > 0) {
+      out.add(tag.substring(0, dash));
+    }
+    if (out.contains('zh') && !out.contains('zh-CN')) {
+      out.insert(out.indexOf('zh') + 1, 'zh-CN');
+    }
+    if (!out.contains('en')) {
+      out.add('en');
+    }
+    return out;
+  }
+
+  /// The served catalogue as a `Locale`, so the Material delegates agree with the text lookup.
+  static Locale get loadedLocale {
+    final List<String> parts = loadedLocaleCode.split(RegExp('[-_]'));
+    return parts.length > 1
+        ? Locale(parts.first, parts.last.toUpperCase())
+        : Locale(parts.first);
+  }
+
+  /// The tag the platform reports, with `KISAKI_LANG` as the reviewer's override.
+  static String resolveLocaleCode(
+    Map<String, String> environment,
+    String platformLocale,
+  ) {
+    final String forced = (environment['KISAKI_LANG'] ?? '').trim();
+    return forced.isEmpty ? platformLocale : forced;
+  }
+
+  /// Installs the first catalogue that exists in the bundle. Returns the served locale.
+  static Future<String> load(String requestedLocale) async {
+    for (final String code in localeCandidates(requestedLocale)) {
+      if (code == 'en') {
+        // The built-in table *is* English; loading it again would only add a round trip.
+        _catalog = const <String, String>{};
+        loadedLocaleCode = 'en';
+        return loadedLocaleCode;
+      }
+      try {
+        final String source = await rootBundle.loadString(catalogAsset(code));
+        useCatalog(parseFluentCatalog(source, origin: catalogAsset(code)));
+        loadedLocaleCode = code;
+        return loadedLocaleCode;
+      } on FlutterError {
+        continue; // no catalogue for this tag - try the next candidate
+      }
+    }
+    return loadedLocaleCode;
+  }
+
+  /// Replaces the loaded catalogue. Tests use a fixture instead of a bundle asset.
+  @visibleForTesting
+  static void useCatalog(Map<String, String> catalog) {
+    _catalog = Map<String, String>.unmodifiable(catalog);
+  }
+
   static String of(String key, {LabelArgs? args}) {
-    final String? raw = _table[key];
+    final String? raw = _catalog[key] ?? _table[key];
     if (raw == null) {
       fallbackKeys.add(key);
     }
@@ -27,7 +114,11 @@ class Labels {
     }
     var out = text;
     args.forEach((name, value) {
-      out = out.replaceAll('{ \$$name }', '$value');
+      // A translation may close the gap around a placeholder - `{ $count }` and `{$count}` are both
+      // valid Fluent - so the substitution accepts either spelling.
+      out = out
+          .replaceAll('{ \$$name }', '$value')
+          .replaceAll('{\$$name}', '$value');
     });
     return out;
   }
@@ -50,7 +141,8 @@ class Labels {
     return text.toString();
   }
 
-  static bool knows(String key) => _table.containsKey(key);
+  static bool knows(String key) =>
+      _table.containsKey(key) || _catalog.containsKey(key);
 
   /// The authored table, for the test that checks every placeholder can be substituted.
   @visibleForTesting
@@ -105,7 +197,8 @@ class Labels {
     'cards-hide': 'Hide { \$title }',
     'cards-manage': 'Manage cards',
     'build-decoders': 'Decoders compiled in',
-    'build-decoders-note': 'A decoder that is absent is skipped silently by the engine',
+    'build-decoders-note':
+        'A decoder that is absent is skipped silently by the engine',
     'build-runtime': 'Engine',
     'cards-manager-description':
         'Choose which lane holds each block, and whether it shows.',

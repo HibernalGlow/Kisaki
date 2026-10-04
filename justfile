@@ -391,6 +391,7 @@ validate_translations *args: # Available --fix argument, which removes invalid t
     uv run misc/ai_translate/validate_translations.py krokiet/i18n {{args}}
     uv run misc/ai_translate/validate_translations.py cedinia/i18n {{args}}
     uv run misc/ai_translate/validate_translations.py kisaki/i18n {{args}}
+    uv run misc/ai_translate/validate_translations.py kisaki_app/i18n {{args}}
 
 # Crowdin allows to import zip file with structured translations
 pack_translations:
@@ -405,6 +406,7 @@ pack_translations:
         [ -f "krokiet/i18n/$lang_code/krokiet.ftl" ] && cp "krokiet/i18n/$lang_code/krokiet.ftl" "/tmp/czkawka_i18n/i18n/$lang_code/" || true; \
         [ -f "cedinia/i18n/$lang_code/cedinia.ftl" ] && cp "cedinia/i18n/$lang_code/cedinia.ftl" "/tmp/czkawka_i18n/i18n/$lang_code/" || true; \
         [ -f "kisaki/i18n/$lang_code/kisaki.ftl" ] && cp "kisaki/i18n/$lang_code/kisaki.ftl" "/tmp/czkawka_i18n/i18n/$lang_code/" || true; \
+        [ -f "kisaki_app/i18n/$lang_code/kisaki_app.ftl" ] && cp "kisaki_app/i18n/$lang_code/kisaki_app.ftl" "/tmp/czkawka_i18n/i18n/$lang_code/" || true; \
     done
     cd /tmp/czkawka_i18n && zip -r - i18n > "{{justfile_directory()}}/i18n_translations.zip"
     rm -rf /tmp/czkawka_i18n
@@ -421,6 +423,7 @@ unpack_translations path_to_file:
         [ -f "$lang_dir/krokiet.ftl" ] && mkdir -p "krokiet/i18n/$lang_code" && cp "$lang_dir/krokiet.ftl" "krokiet/i18n/$lang_code/" && echo "Copied krokiet.ftl to krokiet/i18n/$lang_code/" || true; \
         [ -f "$lang_dir/cedinia.ftl" ] && mkdir -p "cedinia/i18n/$lang_code" && cp "$lang_dir/cedinia.ftl" "cedinia/i18n/$lang_code/" && echo "Copied cedinia.ftl to cedinia/i18n/$lang_code/" || true; \
         [ -f "$lang_dir/kisaki.ftl" ] && mkdir -p "kisaki/i18n/$lang_code" && cp "$lang_dir/kisaki.ftl" "kisaki/i18n/$lang_code/" && echo "Copied kisaki.ftl to kisaki/i18n/$lang_code/" || true; \
+        [ -f "$lang_dir/kisaki_app.ftl" ] && mkdir -p "kisaki_app/i18n/$lang_code" && cp "$lang_dir/kisaki_app.ftl" "kisaki_app/i18n/$lang_code/" && echo "Copied kisaki_app.ftl to kisaki_app/i18n/$lang_code/" || true; \
     done
     rm -rf /tmp/czkawka_unpack
     @echo "Translations unpacked successfully"

@@ -6,6 +6,7 @@ import 'package:window_manager/window_manager.dart';
 
 import 'engine/kisaki_engine.dart';
 import 'engine/seed_engine.dart';
+import 'l10n/labels.dart';
 import 'state/board_controller.dart';
 import 'ui/board.dart';
 import 'state/board_settings.dart';
@@ -15,6 +16,13 @@ import 'util/rust_lib.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // Text is resolved before the first frame so no widget paints a key it failed to translate.
+  await Labels.load(
+    Labels.resolveLocaleCode(
+      Platform.environment,
+      WidgetsBinding.instance.platformDispatcher.locale.toLanguageTag(),
+    ),
+  );
   await _configureWindow();
   final BoardController controller = BoardController(
     engine: await _resolveEngine(),

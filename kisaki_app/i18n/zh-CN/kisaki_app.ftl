@@ -1,0 +1,90 @@
+# Kisaki Flutter board - Simplified Chinese catalogue.
+# Provisional translation authored for review. This workspace's pipeline owns non-English files:
+# `just pack_translations` sends the English source to Crowdin and `just unpack_translations`
+# overwrites this file with the returned catalogue.
+#
+# Coverage is deliberately partial. Lookup falls back to the built-in English table per message
+# (Labels.of), so an untranslated key shows English rather than nothing - the same behaviour the
+# other frontends get from Fluent's fallback language.
+action-add-dirs = 添加目录
+action-add-files = 添加文件
+action-add-manual = 手动输入路径
+action-clear = 清空列表
+action-close = 关闭
+action-compare = 对比
+action-copy-path = 复制路径
+action-delete = 删除所选
+action-export = 导出结果
+action-fix-names = 修正名称
+action-move = 移动或复制
+action-move-copy = 复制
+action-move-move = 移动
+action-remove-checked = 移除已勾选
+action-reset-columns = 重置列宽
+action-reset-layout = 重置泳道布局
+action-scan = 扫描
+action-select-all = 全选
+action-select-group = 选择整组
+action-stop = 停止
+action-theme = 切换主题
+app-title = Kisaki
+cards-collapsed = 已折叠
+cards-display-stack = 堆叠显示卡片
+cards-display-tabs = 一次只显示一张卡片
+cards-empty = 此泳道没有可见卡片
+cards-tab-analysis = 统计
+cards-tab-logs = 日志
+cards-tab-operations = 处理
+cards-tab-preview = 预览
+cards-tab-selection = 选择
+cards-tab-source-settings = 扫描
+cards-hide = 隐藏{ $title }
+cards-manage = 管理卡片
+cards-manager-description = 选择每个区块归属的泳道，以及是否显示。
+cards-manager-title = 卡片管理
+cards-move-down = 下移{ $title }
+cards-move-up = 上移{ $title }
+cards-panel = 泳道
+cards-panel-analysis = 分析
+cards-panel-source = 来源
+cards-resize = 调整{ $title } 高度
+cards-resize-hint = 拖动调整，双击恢复默认
+cards-restore = 恢复默认布局
+cards-selection-hint = 规则编辑器会在自己的对话框中打开。
+cards-show = 显示{ $title }
+lane-analysis = 分析与处理
+lane-results = 结果
+lane-solo = 单独显示此泳道
+lane-unsolo = 显示全部泳道
+lane-source = 扫描条件
+header-results = 结果分组
+label-dry-run = 试运行
+label-no-options = 此扫描器没有额外选项。
+metric-files = 文件
+metric-groups = 分组
+metric-reclaimable = 可释放
+metric-selected = 已选
+metric-selected-size = 已选大小
+metric-total = 总大小
+result-rescan = 重新扫描
+tab-algorithm = 算法
+tab-paths = 路径
+tool-selector = 扫描器
+filter-filter = 筛选
+filter-title = 筛选结果
+filter-reset = 清除筛选
+preview-title = 预览
+preview-none = 未选择可预览的图片
+group-title = 分组
+col-group = 组
+col-name = 名称
+col-path = 路径
+col-size = 大小
+col-date = 修改时间
+status-idle = 等待扫描
+stage-scanning = 正在扫描
+settings-title = 设置
+confirm-delete-title = 删除文件
+confirm-scan-title = 开始扫描
+action-cancel = 取消
+action-confirm = 确认

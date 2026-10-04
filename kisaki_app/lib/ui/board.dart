@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
@@ -70,6 +71,13 @@ class _KisakiBoardAppState extends State<KisakiBoardApp> {
       child: MaterialApp(
         title: Labels.of('app-title'),
         debugShowCheckedModeBanner: false,
+        locale: Labels.loadedLocale,
+        localizationsDelegates: const <LocalizationsDelegate<Object>>[
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const <Locale>[Locale('en'), Locale('zh', 'CN')],
         theme: boardThemeData(palette),
         home: KisakiBoard(controller: widget.controller, picker: widget.picker),
       ),

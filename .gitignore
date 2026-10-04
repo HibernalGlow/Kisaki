@@ -47,6 +47,9 @@ cedinia/docs
 /pyproject.toml
 uv.lock
 i18n
+# The Flutter frontend's catalogues are new files, so the bare rule above would swallow them.
+!kisaki_app/i18n
+!kisaki_app/i18n/**
 keystore_pass
 DIFFS
 ___*
