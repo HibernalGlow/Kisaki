@@ -15,6 +15,7 @@ import 'lane.dart';
 import 'overlays.dart';
 import 'results_panel.dart';
 import 'token_list.dart' show PathPicker;
+import 'widgets/primitives.dart';
 
 /// Application shell: Swiss flat palette plus the board, driven only by [controller].
 class KisakiBoardApp extends StatefulWidget {
@@ -248,25 +249,87 @@ class _Lanes extends StatelessWidget {
         sourceWidth + resultsWidth + _handleWidth * 2 + BoardTokens.gap * 2;
     final bool fits = reserved + 220 <= available;
 
+    final String? solo = layout.soloLane;
+
+    // Every lane header carries the reference's two lane controls: how its blocks are arranged, and
+    // whether the lane takes the whole board.
+    List<Widget> laneActions(String id, {CardPanel? panel}) => <Widget>[
+      if (panel != null)
+        CardDisplayToggle(controller: controller, panel: panel),
+      BoardAction(
+        key: Key('lane-solo-$id'),
+        labelKey: solo == id ? 'lane-unsolo' : 'lane-solo',
+        icon: solo == id
+            ? Icons.filter_alt_off_rounded
+            : Icons.filter_alt_rounded,
+        dense: true,
+        iconOnly: true,
+        onPressed: () => controller.toggleSoloLane(id),
+      ),
+    ];
+
+    Lane sourceLane({double? width}) => Lane(
+      titleKey: 'lane-source',
+      letter: 'S',
+      collapsed: layout.sourceCollapsed,
+      onToggle: () => controller.toggleLane('source'),
+      actions: laneActions('source', panel: CardPanel.source),
+      width: width,
+      child: CardStack(
+        controller: controller,
+        panel: CardPanel.source,
+        renderCard: (BuildContext context, CardId id) =>
+            boardCard(controller: controller, id: id, picker: picker),
+      ),
+    );
+
+    Lane resultsLane({double? width}) => Lane(
+      titleKey: 'lane-results',
+      letter: 'R',
+      collapsed: layout.resultsCollapsed,
+      onToggle: () => controller.toggleLane('results'),
+      actions: laneActions('results'),
+      width: width,
+      child: ResultsPanel(controller: controller),
+    );
+
+    Lane analysisLane() => Lane(
+      titleKey: 'lane-analysis',
+      letter: 'A',
+      collapsed: layout.analysisCollapsed,
+      onToggle: () => controller.toggleLane('analysis'),
+      actions: laneActions('analysis', panel: CardPanel.analysis),
+      child: CardStack(
+        controller: controller,
+        panel: CardPanel.analysis,
+        renderCard: (BuildContext context, CardId id) =>
+            boardCard(controller: controller, id: id, picker: picker),
+      ),
+    );
+
+    if (solo != null) {
+      // One lane holds the whole board, and the other two leave it entirely.
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Expanded(
+            child: switch (solo) {
+              'source' => sourceLane(),
+              'results' => resultsLane(),
+              _ =>
+                controller.dockedAnalysisVisible
+                    ? analysisLane()
+                    : const SizedBox(key: Key('analysis-lane-hidden')),
+            },
+          ),
+        ],
+      );
+    }
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Lane(
-          titleKey: 'lane-source',
-          letter: 'S',
-          collapsed: layout.sourceCollapsed,
-          onToggle: () => controller.toggleLane('source'),
-          actions: <Widget>[
-            CardDisplayToggle(controller: controller, panel: CardPanel.source),
-          ],
-          width: fits ? sourceWidth : BoardTokens.sourceLaneMin,
-          child: CardStack(
-            controller: controller,
-            panel: CardPanel.source,
-            renderCard: (BuildContext context, CardId id) =>
-                boardCard(controller: controller, id: id, picker: picker),
-          ),
-        ),
+        sourceLane(width: fits ? sourceWidth : BoardTokens.sourceLaneMin),
         if (!layout.sourceCollapsed) ...<Widget>[
           const SizedBox(width: _handleWidth),
           LaneDragHandle(
@@ -278,14 +341,7 @@ class _Lanes extends StatelessWidget {
           ),
           const SizedBox(width: _handleWidth),
         ],
-        Lane(
-          titleKey: 'lane-results',
-          letter: 'R',
-          collapsed: layout.resultsCollapsed,
-          onToggle: () => controller.toggleLane('results'),
-          width: fits ? resultsWidth : BoardTokens.resultsLaneMin,
-          child: ResultsPanel(controller: controller),
-        ),
+        resultsLane(width: fits ? resultsWidth : BoardTokens.resultsLaneMin),
         if (!layout.resultsCollapsed) ...<Widget>[
           const SizedBox(width: _handleWidth),
           LaneDragHandle(
@@ -299,27 +355,7 @@ class _Lanes extends StatelessWidget {
         ],
         Expanded(
           child: controller.dockedAnalysisVisible
-              ? Lane(
-                  titleKey: 'lane-analysis',
-                  letter: 'A',
-                  collapsed: layout.analysisCollapsed,
-                  onToggle: () => controller.toggleLane('analysis'),
-                  actions: <Widget>[
-                    CardDisplayToggle(
-                      controller: controller,
-                      panel: CardPanel.analysis,
-                    ),
-                  ],
-                  child: CardStack(
-                    controller: controller,
-                    panel: CardPanel.analysis,
-                    renderCard: (BuildContext context, CardId id) => boardCard(
-                      controller: controller,
-                      id: id,
-                      picker: picker,
-                    ),
-                  ),
-                )
+              ? analysisLane()
               // The float took the lane, so the freed strip stays empty board rather than a second
               // copy of the same figures.
               : const SizedBox(key: Key('analysis-lane-hidden')),

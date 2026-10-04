@@ -68,12 +68,16 @@ class LaneLayout {
   bool resultsCollapsed = false;
   bool analysisCollapsed = false;
 
+  /// One lane given the whole board, as the reference's solo lane. Null shows all three.
+  String? soloLane;
+
   void reset() {
     sourceWidth = sourceDefault;
     resultsWidth = resultsDefault;
     sourceCollapsed = false;
     resultsCollapsed = false;
     analysisCollapsed = false;
+    soloLane = null;
   }
 }
 
@@ -284,6 +288,27 @@ class BoardController extends ChangeNotifier {
         layout.resultsCollapsed = !layout.resultsCollapsed;
       default:
         layout.analysisCollapsed = !layout.analysisCollapsed;
+    }
+    notifyListeners();
+  }
+
+  /// Give one lane the whole board, or hand the board back by naming the lane that is already solo.
+  void toggleSoloLane(String lane) {
+    if (layout.soloLane == lane) {
+      layout.soloLane = null;
+      notifyListeners();
+      return;
+    }
+    layout.soloLane = lane;
+    // A collapsed solo lane would be a 48 pixel strip with no control left on it, so the lane opens
+    // when it takes the board.
+    switch (lane) {
+      case 'source':
+        layout.sourceCollapsed = false;
+      case 'results':
+        layout.resultsCollapsed = false;
+      default:
+        layout.analysisCollapsed = false;
     }
     notifyListeners();
   }
