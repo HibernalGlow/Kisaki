@@ -323,6 +323,13 @@ class _GroupStrip extends StatelessWidget {
   }
 }
 
+/// The step a result row occupies, widened with the reader's own text scale.
+double _rowHeight(BuildContext context, {required bool wrap}) {
+  final double base = wrap ? BoardTokens.rowHeight + 16 : BoardTokens.rowHeight;
+  final double scale = MediaQuery.textScalerOf(context).scale(1);
+  return base * (scale < 1 ? 1 : scale);
+}
+
 class _ResultRow extends StatelessWidget {
   const _ResultRow({
     required this.controller,
@@ -495,8 +502,10 @@ class _ResultRow extends StatelessWidget {
         position: details.globalPosition,
       ),
       child: Container(
-        // Wrapping is a two-line row, so the row grows by a fixed step instead of jittering.
-        height: wrap ? BoardTokens.rowHeight + 16 : BoardTokens.rowHeight,
+        // Wrapping is a two-line row, so the row grows by a fixed step instead of jittering, and the
+        // step follows the reader's text scale: the height has to stay tight or the stretched cells
+        // collapse, but a fixed 44 clips the directory line when the system text is enlarged.
+        height: _rowHeight(context, wrap: wrap),
         decoration: BoxDecoration(
           color: selected ? palette.selection : Colors.transparent,
           border: Border(bottom: BorderSide(color: palette.hairline)),
