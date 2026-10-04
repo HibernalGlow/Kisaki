@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/floating_panel.dart';
 import '../theme/board_theme.dart';
 import 'analysis_panel.dart';
 import 'filter_panel.dart';
+import 'floating_analysis_panel.dart';
 import 'header_bar.dart';
 import 'lane.dart';
 import 'overlays.dart';
@@ -160,14 +162,41 @@ class _KisakiBoardState extends State<KisakiBoard> {
               child: Padding(
                 padding: const EdgeInsets.all(BoardTokens.gap),
                 child: LayoutBuilder(
-                  builder: (BuildContext context, BoxConstraints constraints) =>
-                      _Lanes(
-                        controller: controller,
-                        picker: widget.picker,
-                        available: constraints.maxWidth.isFinite
-                            ? constraints.maxWidth
-                            : BoardTokens.minWindowWidth,
-                      ),
+                  builder: (BuildContext context, BoxConstraints constraints) {
+                    final double width = constraints.maxWidth.isFinite
+                        ? constraints.maxWidth
+                        : BoardTokens.minWindowWidth;
+                    widget.controller.reportFloatingViewport(
+                      width,
+                      constraints.maxHeight.isFinite
+                          ? constraints.maxHeight
+                          : BoardTokens.minWindowHeight,
+                    );
+                    final FloatingRect rect =
+                        widget.controller.floatingPanel.rect;
+                    return Stack(
+                      children: <Widget>[
+                        _Lanes(
+                          controller: widget.controller,
+                          picker: widget.picker,
+                          available: width,
+                        ),
+                        if (widget.controller.floatingAnalysisOpen)
+                          Positioned(
+                            left: rect.x,
+                            top: rect.y,
+                            width: rect.width,
+                            height: rect.height,
+                            child: FloatingAnalysisPanel(
+                              controller: widget.controller,
+                              body: AnalysisPanel(
+                                controller: widget.controller,
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ),
             ),
@@ -253,13 +282,17 @@ class _Lanes extends StatelessWidget {
           const SizedBox(width: _handleWidth),
         ],
         Expanded(
-          child: Lane(
-            titleKey: 'lane-analysis',
-            letter: 'A',
-            collapsed: layout.analysisCollapsed,
-            onToggle: () => controller.toggleLane('analysis'),
-            child: AnalysisPanel(controller: controller),
-          ),
+          child: controller.dockedAnalysisVisible
+              ? Lane(
+                  titleKey: 'lane-analysis',
+                  letter: 'A',
+                  collapsed: layout.analysisCollapsed,
+                  onToggle: () => controller.toggleLane('analysis'),
+                  child: AnalysisPanel(controller: controller),
+                )
+              // The float took the lane, so the freed strip stays empty board rather than a second
+              // copy of the same figures.
+              : const SizedBox(key: Key('analysis-lane-hidden')),
         ),
       ],
     );
