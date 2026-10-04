@@ -21,6 +21,7 @@ cmds=(
     "python3 misc/find_unused_settings_properties.py cedinia cedinia/ui/globals/app_state.slint"
     "python3 misc/find_unused_settings_properties.py kisaki kisaki/ui/globals/app_state.slint"
     "python3 kisaki/tools/check_grid.py kisaki"
+    "python3 misc/check_brand_tokens.py"
 )
 
 failed=""
