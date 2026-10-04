@@ -171,6 +171,22 @@ void main() {
     }
   });
 
+  testWidgets('the bundle itself serves a catalogue', (
+    WidgetTester tester,
+  ) async {
+    // The tests above read files from disk; this one goes through rootBundle, which is the path the
+    // packaged app takes. A locale directory missing from pubspec's asset list fails here, not only
+    // in the static scan.
+    expect(await Labels.load('zh-CN'), 'zh-CN');
+    expect(Labels.of('lane-source'), '扫描条件');
+    expect(Labels.of('action-delete'), '删除所选');
+    expect(Labels.loadedLocale.toLanguageTag(), 'zh-CN');
+
+    // A tag with no catalogue falls through to English rather than throwing.
+    expect(await Labels.load('xx-ZZ'), 'en');
+    expect(Labels.of('lane-source'), 'Scan conditions');
+  });
+
   test('the shipped Chinese catalogue translates the board chrome', () {
     final Map<String, String> zh = parseFluentCatalog(
       File('i18n/zh-CN/kisaki_app.ftl').readAsStringSync(),
