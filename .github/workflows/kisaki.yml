@@ -231,8 +231,8 @@ jobs:
   # Nothing else in this repository compiles the Flutter frontend's Linux CMake files, and no
   # machine here has a Linux toolchain, so this job is the only place that can prove they build. It
   # runs the same bundle script a maintainer would: build the bridge, build the app, then put the
-  # library beside the executable that opens it by path. Nothing is uploaded, because a bundle is
-  # only worth publishing once somebody has started it on a desktop.
+  # library beside the executable that opens it by path, and publish that bundle on the default
+  # branch once the layout check below has passed.
   flutter-linux:
     runs-on: ubuntu-22.04
     defaults:
@@ -272,4 +272,44 @@ jobs:
         with:
           name: linux_kisaki_flutter_x86_64
           path: kisaki_app/build/linux/x64/release/bundle
+          if-no-files-found: error
+
+  # The Windows counterpart of the job above. It cannot be proven from this workspace: cross
+  # checking the bridge for x86_64-pc-windows-msvc reaches dart-sys, whose build script hands
+  # dart_api_dl.c to the host compiler, so only a Windows runner with MSVC can get past it - measured
+  # here, not assumed. Until this has one green run it is limited to dispatch and the default branch,
+  # so a first-run failure cannot gate anybody else's work.
+  flutter-windows:
+    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master'
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+      - run: rustup default 1.94.1
+      - name: Install Flutter
+        run: |
+          git clone --depth 1 --branch stable https://github.com/flutter/flutter "$RUNNER_TEMP/flutter"
+          echo "$RUNNER_TEMP/flutter/bin" >> "$GITHUB_PATH"
+      - name: Warm up the Dart SDK
+        run: flutter --version
+      - name: Get dependencies
+        working-directory: kisaki_app
+        run: flutter pub get
+      - name: Bundle the app with the bridge
+        run: bash kisaki_app/packaging/windows_bundle.sh release
+      # Same contract as Linux: the loader opens the library by path and tries the executable's own
+      # directory first, which flutter_tools reports as build/windows/x64/runner/Release.
+      - name: Check the bundle layout
+        working-directory: kisaki_app
+        run: |
+          test -f build/windows/x64/runner/Release/kisaki.exe
+          test -f build/windows/x64/runner/Release/kisaki_bridge.dll
+      - name: Upload artifact
+        if: github.ref == 'refs/heads/master'
+        uses: actions/upload-artifact@v6
+        with:
+          name: windows_kisaki_flutter_msvc
+          path: kisaki_app/build/windows/x64/runner/Release
           if-no-files-found: error
