@@ -314,12 +314,27 @@ mod tests {
         let root = scratch("trail");
         let source = write(&root.join("in/a/b"), "deep.txt", "nested");
         let destination = root.join("out");
-        // The rule is relative to the filesystem root, so the leading "/" is dropped and everything
-        // below it is recreated - stated independently of the code under test.
-        let mirrored = source.strip_prefix("/").expect("the fixture is an absolute path");
+        // The rule is "recreate everything below the filesystem root", stated independently of the
+        // code under test. Only POSIX spells that root as "/": the same path begins with a volume
+        // prefix on Windows, so the root part is dropped by component kind rather than by stripping
+        // a slash that is not there.
+        let trail: PathBuf = source
+            .components()
+            .filter_map(|part| match part {
+                Component::Normal(name) => Some(name),
+                _ => None,
+            })
+            .collect();
+        // Control: the fixture really is nested where the test put it, so a lost component cannot
+        // pass by matching a shallower path.
+        assert!(
+            trail.ends_with(Path::new("in").join("a").join("b").join("deep.txt")),
+            "fixture trail is not what the test wrote: {}",
+            trail.display()
+        );
 
         let outcome = apply(&request(std::slice::from_ref(&source), &destination, MoveAction::Move, ConflictPolicy::Skip, true, true)).expect("dry run");
-        assert_eq!(outcome.items[0].to, destination.join(mirrored).to_string_lossy());
+        assert_eq!(outcome.items[0].to, destination.join(trail).to_string_lossy());
 
         fs::remove_dir_all(&root).expect("remove scratch directory");
     }
