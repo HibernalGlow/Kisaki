@@ -16,17 +16,21 @@ class AppPaths {
     String? home,
   }) {
     final String os = operatingSystem ?? Platform.operatingSystem;
+    // Called without arguments by the app, this is where the real home comes in; a test passes one
+    // explicitly so all three platform rules stay checkable on any machine.
+    final String resolvedHome =
+        home ?? Platform.environment['HOME'] ?? '';
     final String? base = switch (os) {
       'windows' => _firstNonEmpty(<String>[
         environment['APPDATA'] ?? '',
-        _windowsFallback(environment['USERPROFILE'], home),
+        _windowsFallback(environment['USERPROFILE'], resolvedHome),
       ]),
       'linux' => _firstNonEmpty(<String>[
         environment['XDG_CONFIG_HOME'] ?? '',
-        _under(home, '.config'),
+        _under(resolvedHome, '.config'),
       ]),
       'macos' => _firstNonEmpty(<String>[
-        _under(home, 'Library/Application Support'),
+        _under(resolvedHome, 'Library/Application Support'),
       ]),
       _ => null,
     };

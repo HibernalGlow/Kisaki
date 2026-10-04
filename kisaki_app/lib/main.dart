@@ -21,7 +21,11 @@ Future<void> main() async {
   );
   final String? directory = AppPaths.settingsDirectory();
   if (directory != null) {
-    (await BoardSettingsStore(directory: directory).read()).applyTo(controller);
+    final BoardSettingsStore store = BoardSettingsStore(directory: directory);
+    (await store.read()).applyTo(controller);
+    // Write once on the way in: the first run then leaves a real file a reader can open and check,
+    // rather than one that only ever appears after a change they may not make in this session.
+    await store.write(BoardSettings.capture(controller));
   }
   runApp(KisakiApp(controller: controller, store: directory == null ? null : BoardSettingsStore(directory: directory)));
 }

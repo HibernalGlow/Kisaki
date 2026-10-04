@@ -67,3 +67,7 @@ temp/
 # git, so the package ships with its only proof left behind.
 !packages/**/test/
 !packages/**/test/**
+
+# ...but a package's own build directory stays out, the same way kisaki_app's does.
+packages/**/.dart_tool/
+packages/**/pubspec.lock
