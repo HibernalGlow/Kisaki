@@ -1,7 +1,8 @@
 # Kisaki - Flutter desktop frontend
 
-Kisaki is a third-party desktop GUI for the [Czkawka](https://github.com/qarmin/czkawka) engine,
-maintained in this fork beside the Slint frontend in `../kisaki`. The scanning work stays in
+Kisaki is a third-party desktop GUI for the [Czkawka](https://github.com/qarmin/czkawka) engine.
+This is the frontend the project ships: the Slint one in `../kisaki` was shelved on 2026-10-04, so new
+UI work belongs here and not there. The scanning work stays in
 `czkawka_core`: this app never re-implements hashing, traversal, dedup or comparison. It renders a
 three-lane board (sources, results, analysis) in a Swiss/International visual language with dark and
 light themes, and it talks to the engine through one Rust crate.
@@ -34,6 +35,10 @@ cd kisaki_app
 flutter pub get
 flutter run -d macos                  # or: linux, windows
 ```
+
+`lib/main.dart` asks the platform window for 1280 x 800 with a minimum of 940 x 560, and the minimum
+comes from `BoardTokens.minWindowWidth/minWindowHeight` - the same numbers the lane layout degrades
+against - so the narrow-window arrangement is reachable by resizing rather than only by a test fixture.
 
 `lib/util/rust_lib.dart` resolves the dylib by trying candidates and keeping the newest: the
 `Contents/Frameworks` copy inside a packaged `.app` first, then the workspace `target/<profile>`
@@ -75,10 +80,12 @@ cleanly on this machine).
 
 `rust/Cargo.toml` therefore forwards the same four optional features the Slint frontend exposes -
 `heif`, `libraw`, `libavif`, `xdg_portal_trash` - so one build flag decides both frontends, and
-`codec_info()` returns the compiled-in set plus the engine's own diagnostic text for the UI to show
-instead of staying silent. That last part is not finished: `codec_info` exists in Rust and in tests,
-but its Dart binding has not been generated yet (run the codegen recipe under "Changing the bridge
-API" when the Dart toolchain is free, then surface it in the about card). Note the CI asymmetry this
+`codec_info()` returns the compiled-in set plus the engine's own diagnostic text. That text is now on
+screen: `flutter_rust_bridge_codegen generate` exposes `codecInfo()` to Dart, `KisakiEngine.codecInfo()`
+carries it across the seam, and the statistics card ends with `heif+ raw- avif-`, the engine's build
+line, and the core version, OS and thread limit. `test/codec_readback_widget_test.dart` flips the three
+flags in the stub engine and asserts the caption changes with them, so the line cannot quietly become a
+string. Note the CI asymmetry this
 exposes: the Linux job builds the Slint crate
 `--features heif,libraw,libavif` while the macOS and Windows jobs build it plain, so today only the
 Linux frontend binary can hash HEIC.
@@ -88,12 +95,12 @@ Linux frontend binary can hash HEIC.
 Every one of these is part of CI (`.github/workflows/kisaki.yml`, jobs `bridge` and `dart`).
 
 ```bash
-cargo test -p kisaki_bridge                                     # 124 tests
-cargo test -p kisaki_bridge --features heif,libraw,libavif       # same 124, native codecs compiled in
+cargo test -p kisaki_bridge                                     # 125 tests
+cargo test -p kisaki_bridge --features heif,libraw,libavif       # same 125, native codecs compiled in
 cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 cargo fmt -p kisaki_bridge -- --check                           # stable, as CI runs it
 flutter analyze
-flutter test                                                      # 361 tests, measured 2026-10-04
+flutter test                                                      # 375 tests, measured 2026-10-04
 ```
 
 `test/bridge_smoke_test.dart` loads the compiled dylib and drives real work through it: scans a temp
