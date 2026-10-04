@@ -56,9 +56,12 @@ drift on its own. `packaging/linux_bundle.sh` builds the Linux bundle and puts
 this workspace has a Linux toolchain, and uploads the finished bundle as artifact
 `linux_kisaki_flutter_x86_64` on the default branch. `packaging/windows_bundle.sh` is the Windows
 counterpart: it copies `kisaki_bridge.dll` into `build/windows/x64/runner/Release`, the directory the
-Flutter tool itself reports as its output. No machine here runs Windows, so that script's guards and
-its profile-to-directory mapping were exercised against a stub toolchain only, and CI does not build
-the Flutter app on Windows yet - the workflow's `windows-latest` job builds the Slint frontend.
+Flutter tool itself reports as its output. Neither script can be proven from this machine - a Windows
+cross check of the bridge gets as far as `blake3` (needs `ml64.exe`; the engine's `blake_pure` feature
+avoids it) and then stops in `dart-sys`, whose build script hands a C file to the host compiler, so
+MSVC is genuinely required. The `flutter-windows` job therefore exists but runs only on `workflow_dispatch`
+and on the default branch: it needs one green run on a real runner before it is safe to gate pull
+requests with, and until then the script's guards are verified only against a stub toolchain.
 
 ## Gates
 
