@@ -3,9 +3,12 @@ import 'package:flutter/services.dart';
 
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/card_layout.dart';
 import '../state/floating_panel.dart';
 import '../theme/board_theme.dart';
 import 'analysis_panel.dart';
+import 'board_blocks.dart';
+import 'card_stack.dart';
 import 'filter_panel.dart';
 import 'floating_analysis_panel.dart';
 import 'header_bar.dart';
@@ -189,8 +192,15 @@ class _KisakiBoardState extends State<KisakiBoard> {
                             height: rect.height,
                             child: FloatingAnalysisPanel(
                               controller: widget.controller,
-                              body: AnalysisPanel(
+                              body: CardStack(
                                 controller: widget.controller,
+                                panel: CardPanel.analysis,
+                                renderCard: (BuildContext context, CardId id) =>
+                                    boardCard(
+                                      controller: widget.controller,
+                                      id: id,
+                                      picker: widget.picker,
+                                    ),
                               ),
                             ),
                           ),

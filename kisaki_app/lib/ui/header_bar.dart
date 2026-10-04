@@ -154,12 +154,16 @@ class _ScanControl extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: <Widget>[
-            Text(
-              Labels.of(running ? 'action-stop' : 'action-scan'),
-              style: TextStyle(
-                fontSize: BoardTokens.fsLabel,
-                fontWeight: FontWeight.w700,
-                color: running ? palette.danger : palette.fgInverted,
+            Flexible(
+              child: Text(
+                Labels.of(running ? 'action-stop' : 'action-scan'),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: BoardTokens.fsLabel,
+                  fontWeight: FontWeight.w700,
+                  color: running ? palette.danger : palette.fgInverted,
+                ),
               ),
             ),
             if (running) ...<Widget>[

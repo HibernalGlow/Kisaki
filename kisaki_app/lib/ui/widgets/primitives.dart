@@ -203,10 +203,12 @@ class BoardAction extends StatelessWidget {
     this.tone,
     this.dense = false,
     this.iconOnly = false,
+    this.labelArgs = const <String, Object>{},
     super.key,
   });
 
   final String labelKey;
+  final Map<String, Object> labelArgs;
   final VoidCallback? onPressed;
   final IconData? icon;
   final Color? tone;
@@ -220,7 +222,7 @@ class BoardAction extends StatelessWidget {
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
     final bool enabled = onPressed != null;
-    final String label = Labels.of(labelKey);
+    final String label = Labels.of(labelKey, args: labelArgs);
     final Widget content = Row(
       mainAxisSize: MainAxisSize.min,
       children: <Widget>[
