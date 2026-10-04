@@ -7,13 +7,22 @@ import 'engine/kisaki_engine.dart';
 import 'engine/seed_engine.dart';
 import 'state/board_controller.dart';
 import 'ui/board.dart';
+import 'state/board_settings.dart';
 import 'theme/board_theme.dart';
+import 'util/app_paths.dart';
 import 'util/rust_lib.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await _configureWindow();
-  runApp(KisakiApp(engine: await _resolveEngine()));
+  final BoardController controller = BoardController(
+    engine: await _resolveEngine(),
+  );
+  final String? directory = AppPaths.settingsDirectory();
+  if (directory != null) {
+    (await BoardSettingsStore(directory: directory).read()).applyTo(controller);
+  }
+  runApp(KisakiApp(controller: controller, store: directory == null ? null : BoardSettingsStore(directory: directory)));
 }
 
 /// One starting geometry on every desktop.
@@ -44,12 +53,47 @@ Future<KisakiEngine> _resolveEngine() async {
   return KisakiRustLib.init();
 }
 
-class KisakiApp extends StatelessWidget {
-  const KisakiApp({required this.engine, super.key});
+/// Hosts the board and writes the arrangement back when the app leaves the foreground.
+///
+/// Saving on every notification would rewrite the file on each progress tick, so the write happens on
+/// the lifecycle points where a reader would expect their layout to be durable.
+class KisakiApp extends StatefulWidget {
+  const KisakiApp({required this.controller, this.store, super.key});
 
-  final KisakiEngine engine;
+  final BoardController controller;
+  final BoardSettingsStore? store;
+
+  @override
+  State<KisakiApp> createState() => _KisakiAppState();
+}
+
+class _KisakiAppState extends State<KisakiApp> with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final BoardSettingsStore? store = widget.store;
+    if (store == null) {
+      return;
+    }
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      store.write(BoardSettings.capture(widget.controller));
+    }
+  }
 
   @override
   Widget build(BuildContext context) =>
-      KisakiBoardApp(controller: BoardController(engine: engine));
+      KisakiBoardApp(controller: widget.controller);
 }
