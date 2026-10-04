@@ -12,6 +12,7 @@ import 'analysis_stats.dart';
 import 'export_scope.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
+import 'floating_panel.dart';
 import 'group_organize.dart';
 import 'image_comparison.dart';
 import 'row_projection.dart';
@@ -31,6 +32,7 @@ part 'board_activity.dart';
 part 'board_analysis.dart';
 part 'board_cursor.dart';
 part 'board_display.dart';
+part 'board_floating_panel.dart';
 part 'board_operations.dart';
 part 'board_source_lists.dart';
 part 'board_scan_presets.dart';
@@ -148,6 +150,12 @@ class BoardController extends ChangeNotifier {
   bool _wrapText = false;
   final Map<String, double> _columnWidths = <String, double>{};
   bool _showThumbnails = true;
+
+  /// The analysis panel floated over the board, kept clamped to the board area it was last measured in.
+  FloatingViewport _floatingViewport = FloatingViewport.of(0, 0);
+  FloatingPanelState _floating = createDefaultFloatingPanel(
+    FloatingViewport.of(0, 0),
+  );
   OrganizeOptions _organize = const OrganizeOptions();
   VideoOptions _video = const VideoOptions();
   OptimizeOutcome? _videoOutcome;
@@ -244,6 +252,7 @@ class BoardController extends ChangeNotifier {
 
   void resetLayout() {
     layout.reset();
+    _floating = createDefaultFloatingPanel(_floatingViewport);
     notifyListeners();
   }
 
