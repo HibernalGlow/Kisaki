@@ -243,7 +243,7 @@ fn scan(request: &OptimizeRequest, params: VideoOptimizerParameters) -> Result<S
             .iter()
             .map(|entry| {
                 (
-                    entry.path.clone(),
+                    fix::resolved(&entry.path),
                     Scanned {
                         size: entry.size,
                         codec: entry.codec.clone(),
@@ -258,7 +258,7 @@ fn scan(request: &OptimizeRequest, params: VideoOptimizerParameters) -> Result<S
             .iter()
             .map(|entry| {
                 (
-                    entry.path.clone(),
+                    fix::resolved(&entry.path),
                     Scanned {
                         size: entry.size,
                         codec: entry.codec.clone(),
