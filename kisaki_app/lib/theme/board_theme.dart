@@ -39,6 +39,10 @@ class BoardTokens {
   static const double cutBlock = 12;
 
   /// The same two roles in the Material theme, where a corner is filleted instead of cut.
+  /// The Material kind seeds its whole scheme from the board's own accent, so the two themes
+  /// agree on brand while M3 derives the container tiers.
+  static const Color md3Seed = Color(0xFFF6540E);
+
   static const double radiusPanel = 16;
   static const double radiusBlock = 28;
   static const double hairline = 1;
@@ -124,10 +128,22 @@ class BoardTokens {
 /// Two rules are taken literally from that contract: a colour change must always be paired with a
 /// text, icon or geometry change, and a glow is feedback, never a permanent background.
 class BoardPalette {
-  const BoardPalette({required this.dark, this.kind = BoardThemeKind.cassette});
+  BoardPalette({required this.dark, this.kind = BoardThemeKind.cassette});
 
   final bool dark;
   final BoardThemeKind kind;
+
+  /// The Material kind reads every colour off a seeded `ColorScheme`, which is what makes it the
+  /// standard design rather than a hand-picked palette with rounded corners. Built once per palette,
+  /// and `BoardTheme` memoises the palette, so a rebuild does not re-run the M3 harmony.
+  late final ColorScheme scheme = ColorScheme.fromSeed(
+    seedColor: BoardTokens.md3Seed,
+    brightness: dark ? Brightness.dark : Brightness.light,
+  );
+
+  bool get _md3 => kind == BoardThemeKind.material;
+  Color _pick({required Color cassette, required Color material}) =>
+      _md3 ? material : cassette;
 
   /// A panel's outline: a 45° chamfer in the cassette theme, a fillet in the Material one. This is
   /// the only place a corner is chosen, which is what lets a second theme vary it without a widget
@@ -151,39 +167,72 @@ class BoardPalette {
         );
 
   /// Two grounds only: the panel the cabin is built from, and the paper laid on top of it.
-  Color get bg => _d(const Color(0xFF15150F), const Color(0xFFE7E2D6));
-  Color get card => _d(const Color(0xFF211F1A), const Color(0xFFFAF7F0));
+  Color get bg => _pick(
+    cassette: _d(const Color(0xFF15150F), const Color(0xFFE7E2D6)),
+    material: scheme.surfaceContainerLow,
+  );
+  Color get card => _pick(
+    cassette: _d(const Color(0xFF211F1A), const Color(0xFFFAF7F0)),
+    material: scheme.surfaceContainer,
+  );
 
-  Color get raised => card;
-  Color get sunken => bg;
-  Color get border => _d(const Color(0xFF45423A), const Color(0xFFCFC8B8));
+  Color get raised =>
+      _pick(cassette: card, material: scheme.surfaceContainerHigh);
+
+  Color get sunken =>
+      _pick(cassette: bg, material: scheme.surfaceContainerHighest);
+  Color get border => _pick(
+    cassette: _d(const Color(0xFF45423A), const Color(0xFFCFC8B8)),
+    material: scheme.outlineVariant,
+  );
   Color get hairline => border;
 
-  Color get fg => _d(const Color(0xFFF4F1E9), const Color(0xFF16150F));
+  Color get fg => _pick(
+    cassette: _d(const Color(0xFFF4F1E9), const Color(0xFF16150F)),
+    material: scheme.onSurface,
+  );
 
   /// Hierarchy is a warm neutral step, so a greyscale rendering keeps the same reading order.
-  Color get fgMuted => _d(const Color(0xFFB4AE9F), const Color(0xFF5C574B));
+  Color get fgMuted => _pick(
+    cassette: _d(const Color(0xFFB4AE9F), const Color(0xFF5C574B)),
+    material: scheme.onSurfaceVariant,
+  );
   Color get fgFaint => _d(const Color(0xFF7E796C), const Color(0xFF8A8474));
-  Color get fgInverted => const Color(0xFF16150F);
+  Color get fgInverted =>
+      _pick(cassette: const Color(0xFF16150F), material: scheme.onPrimary);
 
   /// One accent, and it is the interaction colour: the primary action and the stage in progress.
-  Color get primary => const Color(0xFFF6540E);
+  Color get primary =>
+      _pick(cassette: const Color(0xFFF6540E), material: scheme.primary);
   Color get primarySoft => _d(const Color(0xFFFF7A3C), const Color(0xFFC2400A));
 
   /// Selection is the contract's info cyan, deliberately not the orange: on this board an orange bar
   /// means "this stage is working", and a picked row must never be able to impersonate that. The
   /// bright panel cyan is illegible as text on the polyester ground, so the light theme keeps the hue
   /// and darkens it rather than reusing the indicator value.
-  Color get cyan => _d(const Color(0xFF3FF7FF), const Color(0xFF0B6E75));
-  Color get selection => cyan.withValues(alpha: dark ? 0.22 : 0.16);
-  Color get selectionInk => cyan;
+  Color get cyan => _pick(
+    cassette: _d(const Color(0xFF3FF7FF), const Color(0xFF0B6E75)),
+    material: scheme.secondaryContainer,
+  );
+
+  /// A picked row is a container in the Material kind - M3's own answer to selection - and still
+  /// never the accent.
+  Color get selection => _pick(
+    cassette: cyan.withValues(alpha: dark ? 0.22 : 0.16),
+    material: scheme.secondaryContainer,
+  );
+  Color get selectionInk =>
+      _pick(cassette: cyan, material: scheme.onSecondaryContainer);
 
   Color get hover => _d(const Color(0xFF2B2924), const Color(0xFFEFEAE0));
   Color get pressed => _d(const Color(0xFF0C0C08), const Color(0xFFD8D1C2));
 
   /// Destructive state keeps a tinted treatment rather than a filled block, so a warning never
   /// competes with the one accent.
-  Color get danger => _d(const Color(0xFFFF6B5E), const Color(0xFFB02A1E));
+  Color get danger => _pick(
+    cassette: _d(const Color(0xFFFF6B5E), const Color(0xFFB02A1E)),
+    material: scheme.error,
+  );
   Color get dangerSoft => danger.withValues(alpha: 0.05);
   Color get warn => _d(const Color(0xFFFFD802), const Color(0xFF8A6A00));
   Color get ok => _d(const Color(0xFF46C47C), const Color(0xFF1F6B44));
@@ -204,12 +253,16 @@ class BoardPalette {
 
   /// A Cassette panel sets its identifiers and its figures in a monospace so the digits align on the
   /// column. The board ships no font assets, so the family is whatever the platform already has.
-  String get figureFamily => switch (defaultTargetPlatform) {
-    TargetPlatform.macOS => 'Menlo',
-    TargetPlatform.windows => 'Consolas',
-    TargetPlatform.linux => 'DejaVu Sans Mono',
-    _ => 'monospace',
-  };
+  /// Only the Cassette panel sets its figures in a monospace; the Material kind keeps the theme's own
+  /// family and relies on the tabular feature for column alignment.
+  String? get figureFamily => _md3
+      ? null
+      : switch (defaultTargetPlatform) {
+          TargetPlatform.macOS => 'Menlo',
+          TargetPlatform.windows => 'Consolas',
+          TargetPlatform.linux => 'DejaVu Sans Mono',
+          _ => 'monospace',
+        };
 
   TextTheme get text => TextTheme(
     displaySmall: _style(
@@ -320,17 +373,19 @@ class BoardPalette {
 }
 
 class BoardTheme extends InheritedWidget {
-  const BoardTheme({
+  BoardTheme({
     required this.dark,
     required super.child,
-    this.kind = BoardThemeKind.cassette,
+    this.kind = BoardThemeKind.material,
     super.key,
   });
 
   final bool dark;
   final BoardThemeKind kind;
 
-  BoardPalette get palette => BoardPalette(dark: dark, kind: kind);
+  /// Memoised because the Material palette builds a `ColorScheme` from a seed, and every widget in the
+  /// board asks for the palette on every build.
+  late final BoardPalette palette = BoardPalette(dark: dark, kind: kind);
 
   static BoardPalette of(BuildContext context) {
     final BoardTheme? theme = context
@@ -346,7 +401,45 @@ class BoardTheme extends InheritedWidget {
 /// Flat shell: hairlines and the two grounds carry separation, so elevation stays 0 and no
 /// control gets a corner. SBB's own geometry (44 touch height, 1px border outside, label above
 /// a field with a single bottom rule) is what these themes encode.
-ThemeData boardThemeData(BoardPalette palette) {
+ThemeData boardThemeData(BoardPalette palette) =>
+    palette.kind == BoardThemeKind.material
+    ? _materialTheme(palette)
+    : _cassetteTheme(palette);
+
+/// The standard Material 3 shell: `ThemeData.from` derives shapes, state layers, elevation and
+/// typography from the seeded scheme, so those are the framework's answers rather than ours. What is
+/// overridden here is density - the touch strip, the row padding and the hairline the table needs -
+/// plus the type scale, which M3's own roles are too large for a file listing to carry.
+ThemeData _materialTheme(BoardPalette palette) {
+  final ThemeData base = ThemeData.from(colorScheme: palette.scheme);
+  return base.copyWith(
+    scaffoldBackgroundColor: palette.bg,
+    canvasColor: palette.bg,
+    textTheme: palette.text,
+    dividerTheme: DividerThemeData(
+      color: palette.hairline,
+      thickness: BoardTokens.hairline,
+      space: BoardTokens.hairline,
+    ),
+    listTileTheme: base.listTileTheme.copyWith(
+      minVerticalPadding: 10,
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: BoardTokens.gutter,
+      ),
+    ),
+    inputDecorationTheme: base.inputDecorationTheme.copyWith(
+      isDense: true,
+      filled: true,
+      fillColor: palette.sunken,
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      linearTrackColor: palette.hairline,
+      color: palette.primary,
+    ),
+  );
+}
+
+ThemeData _cassetteTheme(BoardPalette palette) {
   final TextTheme text = palette.text;
   return ThemeData(
     useMaterial3: true,

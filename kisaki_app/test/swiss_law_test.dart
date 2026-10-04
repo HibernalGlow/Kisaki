@@ -50,7 +50,11 @@ void main() {
     await tester.pumpWidget(
       BoardTheme(
         dark: dark,
-        child: KisakiBoardApp(controller: controller),
+        kind: BoardThemeKind.cassette,
+        child: KisakiBoardApp(
+          controller: controller,
+          themeKind: BoardThemeKind.cassette,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -175,8 +179,8 @@ void main() {
 
   /// A theme axis that nothing reads is a field, not a theme: the kind must change the corner.
   test('the theme kind decides whether a corner is cut or filleted', () {
-    const BoardPalette cassette = BoardPalette(dark: false);
-    const BoardPalette material = BoardPalette(
+    final BoardPalette cassette = BoardPalette(dark: false);
+    final BoardPalette material = BoardPalette(
       dark: false,
       kind: BoardThemeKind.material,
     );
@@ -361,7 +365,14 @@ void main() {
     addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
 
     await tester.pumpWidget(
-      BoardTheme(dark: true, child: KisakiBoardApp(controller: controller)),
+      BoardTheme(
+        dark: true,
+        kind: BoardThemeKind.cassette,
+        child: KisakiBoardApp(
+          controller: controller,
+          themeKind: BoardThemeKind.cassette,
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
@@ -510,7 +521,14 @@ void main() {
         ),
       );
       await tester.pumpWidget(
-        BoardTheme(dark: true, child: KisakiBoardApp(controller: controller)),
+        BoardTheme(
+          dark: true,
+          kind: BoardThemeKind.cassette,
+          child: KisakiBoardApp(
+            controller: controller,
+            themeKind: BoardThemeKind.cassette,
+          ),
+        ),
       );
       await tester.pumpAndSettle();
 
@@ -587,7 +605,14 @@ void main() {
           ),
         );
         await tester.pumpWidget(
-          BoardTheme(dark: true, child: KisakiBoardApp(controller: controller)),
+          BoardTheme(
+            dark: true,
+            kind: BoardThemeKind.cassette,
+            child: KisakiBoardApp(
+              controller: controller,
+              themeKind: BoardThemeKind.cassette,
+            ),
+          ),
         );
         await tester.pumpAndSettle();
         for (int index = 0; index < 12; index++) {
@@ -674,6 +699,7 @@ void main() {
     await tester.pumpWidget(
       BoardTheme(
         dark: true,
+        kind: BoardThemeKind.cassette,
         child: Directionality(
           textDirection: TextDirection.ltr,
           child: SizedBox(

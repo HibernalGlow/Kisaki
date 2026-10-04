@@ -21,7 +21,7 @@ class KisakiBoardApp extends StatefulWidget {
   const KisakiBoardApp({
     required this.controller,
     this.picker,
-    this.themeKind = BoardThemeKind.cassette,
+    this.themeKind = BoardThemeKind.material,
     super.key,
   });
 
