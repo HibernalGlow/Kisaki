@@ -24,6 +24,9 @@ export component MainWindow inherits Window {
     min-height: 560px;
 
     in-out property <string> version_string: "12.0.2";
+    // Written by build_info.rs: " (heif+ raw- avif-)". Empty until the first read, so the caption
+    // never shows a half-line.
+    in-out property <string> build_flags: "";
     in-out property <bool> focus_search: false;
 
     // Keyboard shortcuts are handled by lane_focus, so the window hands the focus
@@ -245,7 +248,7 @@ export component MainWindow inherits Window {
                 }
 
                 Text {
-                    text: "Kisaki \{root.version_string}";
+                    text: "Kisaki \{root.version_string}\{root.build_flags}";
                     color: Palette.fg_faint;
                     font-size: Theme.fs_caption;
                     vertical-alignment: bottom;
