@@ -527,12 +527,18 @@ int? _boundary(int? value, SizeUnit? unit) =>
     value == null ? null : value * (unit ?? SizeUnit.b).multiplier;
 
 String _extensionOf(String path) {
-  final String name = path
+  // Engine rows carry the host separator, and a directory may contain a dot of its own, so the
+  // extension is read off the last segment only.
+  final List<String> parts = path
+      .replaceAll(r'\', '/')
       .split('/')
       .where((String part) => part.isNotEmpty)
-      .last;
-  final int dot = name.lastIndexOf('.');
-  return dot > 0 ? name.substring(dot + 1).toLowerCase() : '';
+      .toList();
+  if (parts.isEmpty) {
+    return '';
+  }
+  final int dot = parts.last.lastIndexOf('.');
+  return dot > 0 ? parts.last.substring(dot + 1).toLowerCase() : '';
 }
 
 String _normalizeExtension(String value) {
