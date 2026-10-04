@@ -16,8 +16,10 @@ cmds=(
     "python3 misc/find_unused_callbacks.py cedinia cedinia/ui/globals/app_state.slint"
     "python3 misc/find_unused_callbacks.py kisaki"
     "python3 misc/find_unused_settings_properties.py krokiet"
-    "python3 misc/find_unused_settings_properties.py cedinia"
-    "python3 misc/find_unused_settings_properties.py kisaki"
+    # Neither cedinia nor kisaki has a file named settings.slint, so the glob in the checker finds
+    # nothing; both keep their properties in a differently named global and have to be pointed at it.
+    "python3 misc/find_unused_settings_properties.py cedinia cedinia/ui/globals/app_state.slint"
+    "python3 misc/find_unused_settings_properties.py kisaki kisaki/ui/globals/app_state.slint"
     "python3 kisaki/tools/check_grid.py kisaki"
 )
 

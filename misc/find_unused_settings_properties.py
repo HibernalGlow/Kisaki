@@ -67,21 +67,30 @@ def main() -> None:
     project_root = script_dir.parent
 
     if len(sys.argv) < 2:
-        print("Usage: python find_unused_settings_properties.py <folder>")
+        print("Usage: python find_unused_settings_properties.py <folder> [settings file]")
         print("  Example: python find_unused_settings_properties.py krokiet")
         print("  Example: python find_unused_settings_properties.py cedinia")
+        print("  Example: python find_unused_settings_properties.py kisaki kisaki/ui/globals/app_state.slint")
         sys.exit(1)
 
     folder = sys.argv[1]
-    candidates = list((project_root / folder / "ui").rglob("settings.slint"))
-    if not candidates:
-        print(f"Error: settings.slint not found under {project_root / folder / 'ui'}")
-        return
-    settings_file = candidates[0]
+    if len(sys.argv) > 2:
+        # A project whose persisted settings live in a differently named global, which the glob below
+        # cannot find. Same escape hatch find_unused_callbacks.py already takes for cedinia.
+        settings_file = Path(sys.argv[2])
+        if not settings_file.is_file():
+            print(f"Error: settings file {settings_file} does not exist")
+            sys.exit(1)
+    else:
+        candidates = list((project_root / folder / "ui").rglob("settings.slint"))
+        if not candidates:
+            print(f"Error: settings.slint not found under {project_root / folder / 'ui'}")
+            sys.exit(1)
+        settings_file = candidates[0]
 
     print(f"Reading properties from: {settings_file}")
     properties = extract_settings_properties(settings_file)
-    print(f"Found {len(properties)} properties in settings.slint\n")
+    print(f"Found {len(properties)} properties in {settings_file.name}\n")
 
     print("Finding Rust files...")
     rust_files = find_rust_files(project_root, folder)
