@@ -63,7 +63,9 @@ class AnalysisSummaryBlock extends StatelessWidget {
               child: MetricTile(
                 labelKey: 'metric-selected',
                 value: '${controller.selectedCount}',
-                accent: controller.selectedCount > 0 ? palette.primary : null,
+                accent: controller.selectedCount > 0
+                    ? palette.selectionInk
+                    : null,
               ),
             ),
             SwissCell(
