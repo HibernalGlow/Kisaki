@@ -28,6 +28,7 @@ class TokenListEditor extends StatefulWidget {
     this.onManualEntry,
     this.label,
     this.kind = TokenKind.path,
+    this.trailingFor,
     super.key,
   });
 
@@ -39,6 +40,10 @@ class TokenListEditor extends StatefulWidget {
   final VoidCallback? onManualEntry;
   final String? label;
   final TokenKind kind;
+
+  /// One control per row, rendered before the remove cross: the included list uses it for the
+  /// reference star the reference puts on every path.
+  final Widget Function(int index)? trailingFor;
 
   @override
   State<TokenListEditor> createState() => _TokenListEditorState();
@@ -94,6 +99,7 @@ class _TokenListEditorState extends State<TokenListEditor> {
               itemBuilder: (BuildContext context, int index) {
                 final String entry = widget.entries[index];
                 final String? problemKey = tokenProblemKey(widget.kind, entry);
+                final Widget? trailing = widget.trailingFor?.call(index);
                 final Text entryLabel = Text(
                   entry,
                   key: Key('token-entry-$entry'),
@@ -115,6 +121,10 @@ class _TokenListEditorState extends State<TokenListEditor> {
                               child: entryLabel,
                             ),
                     ),
+                    if (trailing != null) ...<Widget>[
+                      trailing,
+                      const SizedBox(width: BoardTokens.gapSmall),
+                    ],
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 13),
                       visualDensity: VisualDensity.compact,
