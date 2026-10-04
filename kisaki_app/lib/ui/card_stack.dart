@@ -89,7 +89,7 @@ class _LayoutCard extends StatelessWidget {
       height: card.collapsed ? null : card.height,
       decoration: ShapeDecoration(
         color: palette.card,
-        shape: BoardShape.panel(palette.border),
+        shape: palette.panelShape(palette.border),
       ),
       clipBehavior: Clip.hardEdge,
       child: Column(

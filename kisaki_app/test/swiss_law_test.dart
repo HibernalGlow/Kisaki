@@ -173,6 +173,36 @@ void main() {
     );
   });
 
+  /// A theme axis that nothing reads is a field, not a theme: the kind must change the corner.
+  test('the theme kind decides whether a corner is cut or filleted', () {
+    const BoardPalette cassette = BoardPalette(dark: false);
+    const BoardPalette material = BoardPalette(
+      dark: false,
+      kind: BoardThemeKind.material,
+    );
+
+    expect(
+      cassette.kind,
+      BoardThemeKind.cassette,
+      reason: 'cassette is the default',
+    );
+    expect(
+      cassette.panelShape(cassette.hairline),
+      isA<BeveledRectangleBorder>(),
+    );
+    expect(
+      material.panelShape(material.hairline),
+      isA<RoundedRectangleBorder>(),
+    );
+
+    // Positive control: the two kinds must disagree on size, not merely on type.
+    expect(
+      _corner(material.panelShape(material.hairline)),
+      BoardTokens.radiusPanel,
+    );
+    expect(_corner(cassette.blockShape(cassette.border)), BoardTokens.cutBlock);
+  });
+
   /// Chamfers may only be cut through the theme: a widget that invents its own corner is the same
   /// defect as one that invents its own colour.
   test('only the theme cuts a corner', () {
@@ -294,10 +324,7 @@ void main() {
 
     List<Color> emphasised() => tester
         .widgetList<Text>(
-          find.descendant(
-            of: find.byKey(rowKey),
-            matching: find.byType(Text),
-          ),
+          find.descendant(of: find.byKey(rowKey), matching: find.byType(Text)),
         )
         .where((text) => text.style?.fontWeight == BoardTokens.weightEmphasis)
         .map((text) => text.style!.color!)
@@ -308,9 +335,7 @@ void main() {
     expect(emphasised(), contains(palette.fg));
 
     controller.toggleSelected(
-      controller.rows.firstWhere(
-        (ScanRow row) => row.path == '/data/beta.bin',
-      ),
+      controller.rows.firstWhere((ScanRow row) => row.path == '/data/beta.bin'),
     );
     await tester.pumpAndSettle();
 
@@ -818,3 +843,12 @@ List<String> _libLinesMatching(
 
 String _hex(Color color) =>
     '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';
+
+/// A shape's corner size, whichever kind of corner it is.
+double _corner(OutlinedBorder shape) => switch (shape) {
+  RoundedRectangleBorder() =>
+    shape.borderRadius.resolve(TextDirection.ltr).topLeft.x,
+  BeveledRectangleBorder() =>
+    shape.borderRadius.resolve(TextDirection.ltr).topLeft.x,
+  _ => 0,
+};

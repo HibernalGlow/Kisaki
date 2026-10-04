@@ -46,7 +46,7 @@ class Lane extends StatelessWidget {
           width: BoardTokens.laneCollapsedWidth,
           decoration: ShapeDecoration(
             color: palette.card,
-            shape: BoardShape.panel(palette.hairline),
+            shape: palette.panelShape(palette.hairline),
           ),
           alignment: Alignment.topCenter,
           padding: const EdgeInsets.only(top: BoardTokens.gap),
@@ -67,7 +67,7 @@ class Lane extends StatelessWidget {
       width: width,
       decoration: ShapeDecoration(
         color: palette.card,
-        shape: BoardShape.panel(palette.hairline),
+        shape: palette.panelShape(palette.hairline),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
