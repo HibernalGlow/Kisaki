@@ -453,3 +453,14 @@ pub struct EngineInfo {
     pub os: String,
     pub thread_limit: i32,
 }
+
+/// Which codecs the engine was built with. A missing one is not an error: the engine drops those
+/// files from the scan before anything can complain about them, so a frontend cannot tell an empty
+/// library apart from an unsupported format without asking.
+#[derive(Debug, Clone, PartialEq)]
+pub struct CodecInfo {
+    pub heif_build: bool,
+    pub libraw_build: bool,
+    pub libavif_build: bool,
+    pub diagnostic: String,
+}
