@@ -132,6 +132,8 @@ void main() {
       await tester.pumpAndSettle();
       expect(controller.selectedCount, 1);
 
+      await tester.ensureVisible(find.byKey(const Key('delete-selected')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('delete-selected')));
       await tester.pumpAndSettle();
       expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);
@@ -155,6 +157,8 @@ void main() {
     await seedGroupedResults(tester);
 
     controller.toggleSelected(controller.rows.first);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('delete-selected')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('delete-selected')));
     await tester.pumpAndSettle();

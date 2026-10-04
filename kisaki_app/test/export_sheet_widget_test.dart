@@ -45,6 +45,8 @@ void main() {
   Future<void> openSheet(WidgetTester tester) async {
     await tester.ensureVisible(find.byKey(const Key('export-results')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('export-results')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('export-results')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('export-dialog')), findsOneWidget);

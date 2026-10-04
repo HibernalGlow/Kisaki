@@ -24,8 +24,8 @@ class AnalysisSummaryBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
-    return ListView(
-      padding: EdgeInsets.zero,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         SwissGrid(
           children: <SwissCell>[
@@ -95,8 +95,8 @@ class PreviewBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: EdgeInsets.zero,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         ToggleRow(
           labelKey: 'preview-panel-pin',
@@ -128,8 +128,8 @@ class SelectionBlock extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
-    return ListView(
-      padding: EdgeInsets.zero,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         Text(
           Labels.of('cards-selection-hint'),
@@ -161,8 +161,8 @@ class OperationsBlock extends StatelessWidget {
     final BoardPalette palette = BoardTheme.of(context);
     final String tool = controller.tool?.id ?? '';
     final bool canRename = tool == 'bad_names' || tool == 'bad_extensions';
-    return ListView(
-      padding: EdgeInsets.zero,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         if (controller.supportsGroupOrganize) ...<Widget>[
           OrganizeCard(controller: controller, key: const Key('organize-card')),

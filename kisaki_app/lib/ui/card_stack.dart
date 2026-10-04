@@ -32,20 +32,27 @@ class CardStack extends StatelessWidget {
         labelKey: 'cards-empty',
       );
     }
-    return ListView(
-      padding: EdgeInsets.zero,
-      children: <Widget>[
-        for (int index = 0; index < cards.length; index += 1) ...<Widget>[
-          if (index > 0) const SizedBox(height: BoardTokens.gap),
-          _LayoutCard(
-            controller: controller,
-            card: cards[index],
-            first: index == 0,
-            last: index == cards.length - 1,
-            renderCard: renderCard,
-          ),
+    return SingleChildScrollView(
+      key: Key('card-stack-${panel.name}'),
+      // The lane breathes on the section rhythm, as it did when it held one flat list.
+      padding: const EdgeInsets.all(BoardTokens.section),
+      // Every card is built, not only the ones on screen: the reference paints the whole stack, and a
+      // lazily built list would leave a reader's own blocks missing above and below the fold.
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          for (int index = 0; index < cards.length; index += 1) ...<Widget>[
+            if (index > 0) const SizedBox(height: BoardTokens.gap),
+            _LayoutCard(
+              controller: controller,
+              card: cards[index],
+              first: index == 0,
+              last: index == cards.length - 1,
+              renderCard: renderCard,
+            ),
+          ],
         ],
-      ],
+      ),
     );
   }
 }
@@ -91,10 +98,16 @@ class _LayoutCard extends StatelessWidget {
           ),
           if (!card.collapsed) ...<Widget>[
             Expanded(
-              child: Padding(
-                padding: const EdgeInsets.all(BoardTokens.gap),
-                child: renderCard(context, card.id),
-              ),
+              child: cardDefinition(card.id).fillViewport
+                  ? Padding(
+                      padding: const EdgeInsets.all(BoardTokens.gap),
+                      child: renderCard(context, card.id),
+                    )
+                  : SingleChildScrollView(
+                      // The reference's card body scrolls whatever the block holds.
+                      padding: const EdgeInsets.all(BoardTokens.gap),
+                      child: renderCard(context, card.id),
+                    ),
             ),
             _HeightRail(
               palette: palette,

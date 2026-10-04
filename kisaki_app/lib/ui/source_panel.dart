@@ -336,31 +336,37 @@ class _AlgorithmTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<FieldDef> fields = controller.fields;
-    return ListView(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(BoardTokens.pad),
-      children: <Widget>[
-        if (controller.supportsSimiuSets) ...<Widget>[
-          SimiuFields(controller: controller),
-          const SizedBox(height: BoardTokens.section),
-        ],
-        if (fields.isEmpty && !controller.supportsSimiuSets)
-          const EmptyState(labelKey: 'label-no-options')
-        else
-          for (int index = 0; index < fields.length; index++) ...<Widget>[
-            if (index > 0) const SizedBox(height: BoardTokens.gap),
-            FieldControl(
-              key: ValueKey<String>(
-                '${controller.tool?.id}-${fields[index].id}',
-              ),
-              def: fields[index],
-              value: controller.valueOf(fields[index].id),
-              onChanged: (FieldPayload payload) =>
-                  controller.setFieldValue(fields[index].id, payload),
-            ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          if (controller.supportsSimiuSets) ...<Widget>[
+            SimiuFields(controller: controller),
+            const SizedBox(height: BoardTokens.section),
           ],
-        const SizedBox(height: BoardTokens.section),
-        ScanPresetCard(controller: controller, key: const Key('scan-presets')),
-      ],
+          if (fields.isEmpty && !controller.supportsSimiuSets)
+            const EmptyState(labelKey: 'label-no-options')
+          else
+            for (int index = 0; index < fields.length; index++) ...<Widget>[
+              if (index > 0) const SizedBox(height: BoardTokens.gap),
+              FieldControl(
+                key: ValueKey<String>(
+                  '${controller.tool?.id}-${fields[index].id}',
+                ),
+                def: fields[index],
+                value: controller.valueOf(fields[index].id),
+                onChanged: (FieldPayload payload) =>
+                    controller.setFieldValue(fields[index].id, payload),
+              ),
+            ],
+          const SizedBox(height: BoardTokens.section),
+          ScanPresetCard(
+            controller: controller,
+            key: const Key('scan-presets'),
+          ),
+        ],
+      ),
     );
   }
 }

@@ -164,11 +164,8 @@ void main() {
     expect(BoardTokens.gapSmall, BoardTokens.gap / 2);
     expect(BoardTokens.gridColumns, 12);
 
-    final ListView lane = tester.widget<ListView>(
-      find.ancestor(
-        of: find.byType(MetricTile).first,
-        matching: find.byType(ListView),
-      ),
+    final SingleChildScrollView lane = tester.widget<SingleChildScrollView>(
+      find.byKey(const Key('card-stack-analysis')),
     );
     final EdgeInsets padding = lane.padding! as EdgeInsets;
     expect(padding.top, BoardTokens.section);

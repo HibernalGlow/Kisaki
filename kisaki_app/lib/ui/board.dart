@@ -6,7 +6,6 @@ import '../state/board_controller.dart';
 import '../state/card_layout.dart';
 import '../state/floating_panel.dart';
 import '../theme/board_theme.dart';
-import 'analysis_panel.dart';
 import 'board_blocks.dart';
 import 'card_stack.dart';
 import 'filter_panel.dart';
@@ -15,7 +14,6 @@ import 'header_bar.dart';
 import 'lane.dart';
 import 'overlays.dart';
 import 'results_panel.dart';
-import 'source_panel.dart';
 import 'token_list.dart' show PathPicker;
 
 /// Application shell: Swiss flat palette plus the board, driven only by [controller].
@@ -259,7 +257,12 @@ class _Lanes extends StatelessWidget {
           collapsed: layout.sourceCollapsed,
           onToggle: () => controller.toggleLane('source'),
           width: fits ? sourceWidth : BoardTokens.sourceLaneMin,
-          child: SourcePanel(controller: controller, picker: picker),
+          child: CardStack(
+            controller: controller,
+            panel: CardPanel.source,
+            renderCard: (BuildContext context, CardId id) =>
+                boardCard(controller: controller, id: id, picker: picker),
+          ),
         ),
         if (!layout.sourceCollapsed) ...<Widget>[
           const SizedBox(width: _handleWidth),
@@ -298,7 +301,15 @@ class _Lanes extends StatelessWidget {
                   letter: 'A',
                   collapsed: layout.analysisCollapsed,
                   onToggle: () => controller.toggleLane('analysis'),
-                  child: AnalysisPanel(controller: controller),
+                  child: CardStack(
+                    controller: controller,
+                    panel: CardPanel.analysis,
+                    renderCard: (BuildContext context, CardId id) => boardCard(
+                      controller: controller,
+                      id: id,
+                      picker: picker,
+                    ),
+                  ),
                 )
               // The float took the lane, so the freed strip stays empty board rather than a second
               // copy of the same figures.
