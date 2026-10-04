@@ -1,23 +1,34 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 /// Swiss / International Typographic Style tokens.
 ///
-/// The law this file encodes: a 12-column grid on an 8px base unit, square corners, 1px hairline
-/// rules as the only ornament, hierarchy carried by tone and tracking (never by hue), one accent
-/// colour reserved for state, and a section rhythm that stays airy while the results table stays
-/// dense. Ported from `kisaki/ui/globals/theme.slint`, sizes are logical pixels 1:1.
+/// Measured against two references rather than invented:
+/// - SBB's Flutter design system (`sbb_typography.dart`, `sbb_spacing.dart`, the list-item and
+///   divider themes) for the type scale and its line heights, `letterSpacing 0`, the 44px touch
+///   height, 1px flush separators, elevation 0 everywhere, and a two-weight system.
+/// - The Swiss-Minimalist composition for the rest: square corners, hairline and structural rules
+///   as the only ornament, one accent colour, uppercase micro-labels set loose and figures set
+///   tight, and hierarchy carried by tone instead of hue.
+///
+/// Deviations from SBB are deliberate and named at the site: their pill buttons and 16px content
+/// boxes are brand geometry, and this board keeps `radius = 0`.
 class BoardTokens {
   const BoardTokens._();
 
-  /// Spacing scale: the unit, its half, and the section rhythm around panel content.
+  /// Spacing scale - SBB's `xxSmall/xSmall/small/medium/large/xLarge` (4/8/12/16/24/32).
   static const double gap = 8;
   static const double gapSmall = 4;
   static const double pad = 8;
   static const double section = 24;
   static const double gutter = 16;
 
-  /// Swiss surfaces are square. Kept as a token (not deleted) so a corner can only ever be set here.
+  /// Swiss surfaces carry no round corner, but a Cassette panel is cut, not filleted: every corner
+  /// is a 45° chamfer. The two sizes are the extracted Arknights token contract's `cut-sm` and
+  /// `cut-md` (6 and 12), and its rule is one cut treatment per component.
   static const double radius = 0;
+  static const double cutPanel = 6;
+  static const double cutBlock = 12;
   static const double hairline = 1;
 
   /// Grid: the page is 12 columns; content spans columns instead of using ad-hoc pixel widths.
@@ -26,10 +37,48 @@ class BoardTokens {
   /// Body measure limit in characters, so a wide window never produces a full-bleed text line.
   static const int measureCharacters = 60;
 
-  static const double rowHeight = 44;
-  static const double laneHeaderHeight = 32;
-  static const double laneCollapsedWidth = 48;
-  static const double headerHeight = 48;
+  /// The type scale is SBB's seven steps with SBB's line heights, one ratio per step.
+  /// Body text sits at 16 because this is a desktop application, not because 16 is a nice number.
+  static const double fsCaption = 10;
+  static const double lhCaption = 12;
+  static const double fsMicro = 12;
+  static const double lhMicro = 16;
+  static const double fsLabel = 14;
+  static const double lhLabel = 20;
+  static const double fsBody = 16;
+  static const double lhBody = 20;
+  static const double fsTitle = 18;
+  static const double lhTitle = 24;
+  static const double fsHeadline = 24;
+  static const double lhHeadline = 32;
+  static const double fsDisplay = 30;
+  static const double lhDisplay = 32;
+
+  /// SBB sets `letterSpacing: 0` everywhere; the only two exceptions are the Swiss label devices,
+  /// which are tracking-based *by definition*: an uppercase step label is set loose (.08em/.2em)
+  /// and a large figure block is set tight (-.02em).
+  static const double trackingMicro = 0.8;
+  static const double trackingStep = 2.0;
+  static const double trackingDisplay = -0.5;
+
+  /// Two weights only, like SBB's light/bold pair. Nothing in this app may use w500/w600/w800:
+  /// the intermediate weights are what makes a Material skin look designed.
+  static const FontWeight weightText = FontWeight.w400;
+  static const FontWeight weightEmphasis = FontWeight.w700;
+
+  // SBB's touch heights: a tab and a single-line row are 44, the app header is 56. The results row
+  // is a two-line item (name over directory), so it gets the 44 minimum plus the second line -
+  // SBB's own list rows grow the same way rather than shrinking the type.
+  static const double rowHeight = 52;
+  static const double laneHeaderHeight = 44;
+  static const double laneCollapsedWidth = 44;
+  static const double headerHeight = 56;
+
+  /// The active step's rule: a structural bar, not an underline - the composition reference draws
+  /// its section number with a 32x4 accent rule.
+  static const double stepRuleWidth = 32;
+  static const double stepRuleThickness = 4;
+
   static const double colSelect = 44;
   static const double colGroup = 76;
   static const double colName = 236;
@@ -38,18 +87,6 @@ class BoardTokens {
   static const double fieldWidth = 152;
   static const double modeWidth = 132;
   static const double directionWidth = 104;
-
-  static const double fsCaption = 10;
-  static const double fsLabel = 11;
-  static const double fsBody = 12;
-  static const double fsTitle = 14;
-  static const double fsMetric = 15;
-
-  /// Tracking is part of the type system: micro-labels are set loose, figures and metrics tight.
-  static const double trackingCaption = 0.9;
-  static const double trackingLabel = 0.5;
-  static const double trackingBody = 0;
-  static const double trackingMetric = -0.2;
 
   static const double minWindowWidth = 940;
   static const double minWindowHeight = 560;
@@ -62,115 +99,189 @@ class BoardTokens {
   static const double resultsLaneMax = 520;
 }
 
-/// Every surface colour derives from the single [dark] flag, so one toggle restyles the board.
+/// The skin is 孤星 / Cassette Futurism on the SBB bones.
+///
+/// Documented about the event, and only this: the ground is **a white with a polyester tint**, the
+/// accent is **a high-brightness orange reserved for mechanical interaction**, the geometry is
+/// **plane plus curve**, and Hypergryph's own project manager names **Dieter Rams and "less is
+/// better"** as the influence. Nobody publishes its hex values, so every number below is a
+/// calibration against those four stated properties plus the functional hues of the extracted
+/// Arknights token contract (`#F6540E` orange, `#3FF7FF` cyan, `#FFD802` yellow, `#46C47C` green,
+/// `#9C9C9C` grey) - they are ours to defend, not quotes from the source.
+///
+/// Two rules are taken literally from that contract: a colour change must always be paired with a
+/// text, icon or geometry change, and a glow is feedback, never a permanent background.
 class BoardPalette {
   const BoardPalette({required this.dark});
 
   final bool dark;
 
-  Color get bg => _d(const Color(0xFF0E1013), const Color(0xFFF4F5F7));
-  Color get card => _d(const Color(0xFF171A20), const Color(0xFFFFFFFF));
-  Color get raised => _d(const Color(0xFF1D212A), const Color(0xFFEEF0F4));
-  Color get sunken => _d(const Color(0xFF12151A), const Color(0xFFE8EBEF));
-  Color get border => _d(const Color(0xFF262B34), const Color(0xFFD5D9E0));
-  Color get borderSoft => _d(const Color(0xFF1E232A), const Color(0xFFE3E6EB));
-  Color get hairline => _d(const Color(0xFF20252D), const Color(0xFFDDE1E7));
+  /// Two grounds only: the panel the cabin is built from, and the paper laid on top of it.
+  Color get bg => _d(const Color(0xFF15150F), const Color(0xFFE7E2D6));
+  Color get card => _d(const Color(0xFF211F1A), const Color(0xFFFAF7F0));
 
-  Color get fg => _d(const Color(0xFFE6E9EF), const Color(0xFF17191C));
+  Color get raised => card;
+  Color get sunken => bg;
+  Color get border => _d(const Color(0xFF45423A), const Color(0xFFCFC8B8));
+  Color get borderSoft => _d(const Color(0xFF302E28), const Color(0xFFE2DCD0));
+  Color get hairline => border;
 
-  /// Hierarchy is tone, not hue: secondary and tertiary text are the same ink at lower opacity,
-  /// so a colour-blind or greyscale rendering keeps the same reading order.
-  Color get fgMuted => fg.withValues(alpha: 0.72);
-  Color get fgFaint => fg.withValues(alpha: 0.46);
-  Color get fgInverted => const Color(0xFFFFFFFF);
+  Color get fg => _d(const Color(0xFFF4F1E9), const Color(0xFF16150F));
 
-  Color get primary => _d(const Color(0xFF4F8CFF), const Color(0xFF2563EB));
-  Color get primarySoft => _d(const Color(0xFF1B2B45), const Color(0xFFDBEAFE));
-  Color get selection => _d(const Color(0xFF1D2F4D), const Color(0xFFDBEAFE));
-  Color get hover => _d(const Color(0xFF222834), const Color(0xFFECEEF2));
-  Color get pressed => _d(const Color(0xFF2A3140), const Color(0xFFE0E4EA));
+  /// Hierarchy is a warm neutral step, so a greyscale rendering keeps the same reading order.
+  Color get fgMuted => _d(const Color(0xFFB4AE9F), const Color(0xFF5C574B));
+  Color get fgFaint => _d(const Color(0xFF7E796C), const Color(0xFF8A8474));
+  Color get fgInverted => const Color(0xFF16150F);
 
-  Color get danger => _d(const Color(0xFFF2555A), const Color(0xFFD92D2F));
-  Color get dangerSoft => _d(const Color(0xFF2C181B), const Color(0xFFFDE8E8));
-  Color get warn => _d(const Color(0xFFF0A92E), const Color(0xFFB45309));
-  Color get ok => _d(const Color(0xFF3FB950), const Color(0xFF15803D));
+  /// One accent, and it is the interaction colour: the primary action and the stage in progress.
+  Color get primary => const Color(0xFFF6540E);
+  Color get primarySoft => _d(const Color(0xFFFF7A3C), const Color(0xFFC2400A));
+
+  /// Selection is the contract's info cyan, deliberately not the orange: on this board an orange bar
+  /// means "this stage is working", and a picked row must never be able to impersonate that. The
+  /// bright panel cyan is illegible as text on the polyester ground, so the light theme keeps the hue
+  /// and darkens it rather than reusing the indicator value.
+  Color get cyan => _d(const Color(0xFF3FF7FF), const Color(0xFF0B6E75));
+  Color get selection => cyan.withValues(alpha: dark ? 0.22 : 0.16);
+  Color get selectionInk => cyan;
+
+  Color get hover => _d(const Color(0xFF2B2924), const Color(0xFFEFEAE0));
+  Color get pressed => _d(const Color(0xFF0C0C08), const Color(0xFFD8D1C2));
+
+  /// Destructive state keeps a tinted treatment rather than a filled block, so a warning never
+  /// competes with the one accent.
+  Color get danger => _d(const Color(0xFFFF6B5E), const Color(0xFFB02A1E));
+  Color get dangerSoft => danger.withValues(alpha: 0.05);
+  Color get warn => _d(const Color(0xFFFFD802), const Color(0xFF8A6A00));
+  Color get ok => _d(const Color(0xFF46C47C), const Color(0xFF1F6B44));
 
   Color get scrim => Color(0x00000000).withValues(alpha: dark ? 0.6 : 0.4);
 
-  /// Group identity is the `chart_*` cycle plus a printed group number, never colour alone.
+  /// Group identity is this cycle plus a printed group number, never colour alone - and the cycle is
+  /// the panel's own lamp colours, not a chart library palette.
   Color chartByIndex(int index) => const <Color>[
-    Color(0xFF4F8CFF),
-    Color(0xFF3FB950),
-    Color(0xFFF0A92E),
-    Color(0xFFA855F7),
-    Color(0xFF06B6D4),
+    Color(0xFFF6540E),
+    Color(0xFF3FF7FF),
+    Color(0xFFFFD802),
+    Color(0xFF46C47C),
+    Color(0xFF9C9C9C),
   ][index % 5];
 
   Color _d(Color darkColor, Color lightColor) => dark ? darkColor : lightColor;
 
+  /// A Cassette panel sets its identifiers and its figures in a monospace so the digits align on the
+  /// column. The board ships no font assets, so the family is whatever the platform already has.
+  String get figureFamily => switch (defaultTargetPlatform) {
+    TargetPlatform.macOS => 'Menlo',
+    TargetPlatform.windows => 'Consolas',
+    TargetPlatform.linux => 'DejaVu Sans Mono',
+    _ => 'monospace',
+  };
+
   TextTheme get text => TextTheme(
     displaySmall: _style(
-      BoardTokens.fsMetric,
-      FontWeight.w600,
+      BoardTokens.fsDisplay,
+      BoardTokens.lhDisplay,
+      BoardTokens.weightEmphasis,
       fg,
-      tracking: BoardTokens.trackingMetric,
+      tracking: BoardTokens.trackingDisplay,
     ),
-    titleMedium: _style(BoardTokens.fsTitle, FontWeight.w600, fg),
-    titleSmall: _style(
-      BoardTokens.fsLabel,
-      FontWeight.w600,
-      fgMuted,
-      tracking: BoardTokens.trackingLabel,
+    headlineSmall: _style(
+      BoardTokens.fsHeadline,
+      BoardTokens.lhHeadline,
+      BoardTokens.weightEmphasis,
+      fg,
+      tracking: BoardTokens.trackingDisplay,
+    ),
+    titleMedium: _style(
+      BoardTokens.fsTitle,
+      BoardTokens.lhTitle,
+      BoardTokens.weightText,
+      fg,
+    ),
+    titleSmall: microLabel(),
+    bodyLarge: _style(
+      BoardTokens.fsBody,
+      BoardTokens.lhBody,
+      BoardTokens.weightText,
+      fg,
     ),
     bodyMedium: _style(
-      BoardTokens.fsBody,
-      FontWeight.w400,
+      BoardTokens.fsLabel,
+      BoardTokens.lhLabel,
+      BoardTokens.weightText,
       fg,
-      tracking: BoardTokens.trackingBody,
     ),
     bodySmall: _style(
       BoardTokens.fsLabel,
-      FontWeight.w400,
+      BoardTokens.lhLabel,
+      BoardTokens.weightText,
       fgMuted,
-      tracking: BoardTokens.trackingBody,
     ),
+    labelMedium: microLabel(),
     labelSmall: _style(
       BoardTokens.fsCaption,
-      FontWeight.w600,
+      BoardTokens.lhCaption,
+      BoardTokens.weightText,
       fgMuted,
-      tracking: BoardTokens.trackingCaption,
     ),
   );
 
-  /// A metric figure: the display step, set tight, in tabular numerals.
-  TextStyle metricFigure({Color? color}) => TextStyle(
-    fontSize: BoardTokens.fsMetric,
-    fontWeight: FontWeight.w600,
-    letterSpacing: BoardTokens.trackingMetric,
-    color: color ?? fg,
-    height: 1.25,
-    fontFeatures: const [FontFeature.tabularFigures()],
+  /// The uppercase label device: micro type, set loose, in ink one step down. Every section
+  /// heading, column caption and step label in the board is set with this, so a screen cannot
+  /// invent its own micro style.
+  TextStyle microLabel({Color? color}) => TextStyle(
+    fontSize: BoardTokens.fsCaption,
+    height: BoardTokens.lhCaption / BoardTokens.fsCaption,
+    fontWeight: BoardTokens.weightEmphasis,
+    letterSpacing: BoardTokens.trackingMicro,
+    color: color ?? fgMuted,
   );
 
-  /// A table figure: label size in tabular numerals, so a column of sizes or timestamps aligns on
-  /// the digit rather than on the glyph.
-  TextStyle tableFigure({Color? color}) => TextStyle(
-    fontSize: BoardTokens.fsLabel,
+  /// A metric figure: the headline step, set tight, in tabular numerals.
+  TextStyle metricFigure({Color? color}) => TextStyle(
+    fontSize: BoardTokens.fsHeadline,
+    height: BoardTokens.lhHeadline / BoardTokens.fsHeadline,
+    fontWeight: BoardTokens.weightEmphasis,
+    letterSpacing: BoardTokens.trackingDisplay,
     color: color ?? fg,
-    height: 1.25,
-    fontFeatures: const [FontFeature.tabularFigures()],
+    fontFamily: figureFamily,
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
+
+  /// A table figure: one step below the row text, in tabular numerals, so a column of sizes or
+  /// timestamps aligns on the digit rather than on the glyph and the table stays denser than prose.
+  TextStyle tableFigure({Color? color}) => TextStyle(
+    fontSize: BoardTokens.fsMicro,
+    height: BoardTokens.lhMicro / BoardTokens.fsMicro,
+    fontWeight: BoardTokens.weightText,
+    color: color ?? fg,
+    fontFamily: figureFamily,
+    fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+  );
+
+  /// The stage marker: a panel identifier, so it is set in the same monospace as the figures and one
+  /// step looser than a caption. It is the only tracking in the board that reaches 0.2em.
+  TextStyle stepLabel({Color? color}) => TextStyle(
+    fontSize: BoardTokens.fsCaption,
+    height: BoardTokens.lhCaption / BoardTokens.fsCaption,
+    fontWeight: BoardTokens.weightEmphasis,
+    letterSpacing: BoardTokens.trackingStep,
+    color: color ?? fgMuted,
+    fontFamily: figureFamily,
   );
 
   TextStyle _style(
     double size,
+    double lineHeight,
     FontWeight weight,
     Color color, {
     double tracking = 0,
   }) => TextStyle(
     fontSize: size,
+    height: lineHeight / size,
     fontWeight: weight,
     color: color,
-    height: 1.25,
     letterSpacing: tracking,
   );
 }
@@ -192,7 +303,28 @@ class BoardTheme extends InheritedWidget {
   bool updateShouldNotify(BoardTheme oldWidget) => oldWidget.dark != dark;
 }
 
-/// Flat Material shell: hairlines and background steps carry separation, so elevation stays 0.
+/// The only sanctioned non-square corner in this app: a 45° chamfer, cut from the two token sizes.
+///
+/// Nothing may be filleted, so `RoundedRectangleBorder` is not used at all, and a component gets one
+/// cut treatment at most - the small chips, badges and tap areas stay rectangular.
+class BoardShape {
+  const BoardShape._();
+
+  /// An `OutlinedBorder`, so the same chamfer serves a panel, a button and a dialog.
+  static OutlinedBorder panel(Color rule) => BeveledRectangleBorder(
+    borderRadius: BorderRadius.circular(BoardTokens.cutPanel),
+    side: BorderSide(color: rule),
+  );
+
+  static OutlinedBorder block(Color rule) => BeveledRectangleBorder(
+    borderRadius: BorderRadius.circular(BoardTokens.cutBlock),
+    side: BorderSide(color: rule),
+  );
+}
+
+/// Flat shell: hairlines and the two grounds carry separation, so elevation stays 0 and no
+/// control gets a corner. SBB's own geometry (44 touch height, 1px border outside, label above
+/// a field with a single bottom rule) is what these themes encode.
 ThemeData boardThemeData(BoardPalette palette) {
   final TextTheme text = palette.text;
   return ThemeData(
@@ -201,11 +333,28 @@ ThemeData boardThemeData(BoardPalette palette) {
     scaffoldBackgroundColor: palette.bg,
     canvasColor: palette.bg,
     textTheme: text,
-    colorScheme: ColorScheme.fromSeed(
-      seedColor: palette.primary,
+    // Built, not seeded: ColorScheme.fromSeed derives a tonal palette whose secondary and tertiary
+    // steps are muddy purples off a red seed, and any M3 widget left un-overridden would wear them.
+    colorScheme: ColorScheme(
       brightness: palette.dark ? Brightness.dark : Brightness.light,
-      surface: palette.card,
+      primary: palette.primary,
+      onPrimary: palette.fgInverted,
+      primaryContainer: palette.primarySoft,
+      onPrimaryContainer: palette.fgInverted,
+      secondary: palette.fgMuted,
+      onSecondary: palette.bg,
       error: palette.danger,
+      onError: palette.fgInverted,
+      surface: palette.card,
+      onSurface: palette.fg,
+      onSurfaceVariant: palette.fgMuted,
+      surfaceContainerHighest: palette.sunken,
+      outline: palette.border,
+      outlineVariant: palette.hairline,
+      scrim: palette.scrim,
+      // Elevation is 0 board-wide, so the M3 tint must be a no-op rather than a grey the palette
+      // never named.
+      surfaceTint: palette.card,
     ),
     splashFactory: NoSplash.splashFactory,
     highlightColor: palette.pressed,
@@ -214,21 +363,35 @@ ThemeData boardThemeData(BoardPalette palette) {
       foregroundColor: palette.fg,
       elevation: 0,
       scrolledUnderElevation: 0,
+      centerTitle: false,
       titleTextStyle: text.titleMedium,
     ),
     cardTheme: CardThemeData(
       color: palette.card,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: palette.hairline),
-        borderRadius: BorderRadius.circular(BoardTokens.radius),
-      ),
+      shape: BoardShape.panel(palette.hairline),
     ),
     dividerTheme: DividerThemeData(
       color: palette.hairline,
-      thickness: 1,
-      space: 1,
+      thickness: BoardTokens.hairline,
+      space: BoardTokens.hairline,
+    ),
+    listTileTheme: const ListTileThemeData(
+      // SBB's list row: 44 tall, 16 horizontal, title and subtitle on a 4px gap, and no icon
+      // background to lift it off the ground.
+      minVerticalPadding: 10,
+      contentPadding: EdgeInsets.symmetric(horizontal: BoardTokens.gutter),
+      titleTextStyle: TextStyle(
+        fontSize: BoardTokens.fsBody,
+        height: BoardTokens.lhBody / BoardTokens.fsBody,
+        fontWeight: BoardTokens.weightText,
+      ),
+      subtitleTextStyle: TextStyle(
+        fontSize: BoardTokens.fsLabel,
+        height: BoardTokens.lhLabel / BoardTokens.fsLabel,
+        fontWeight: BoardTokens.weightText,
+      ),
     ),
     checkboxTheme: CheckboxThemeData(
       fillColor: WidgetStateProperty.resolveWith(
@@ -238,6 +401,13 @@ ThemeData boardThemeData(BoardPalette palette) {
       ),
       side: BorderSide(color: palette.border),
       shape: const RoundedRectangleBorder(),
+    ),
+    radioTheme: RadioThemeData(
+      fillColor: WidgetStateProperty.resolveWith(
+        (states) => states.contains(WidgetState.selected)
+            ? palette.primary
+            : palette.fgMuted,
+      ),
     ),
     switchTheme: SwitchThemeData(
       thumbColor: WidgetStateProperty.resolveWith(
@@ -256,26 +426,50 @@ ThemeData boardThemeData(BoardPalette palette) {
       style: TextButton.styleFrom(
         foregroundColor: palette.fg,
         backgroundColor: palette.raised,
-        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gap),
-        shape: RoundedRectangleBorder(
-          side: BorderSide(color: palette.border),
-          borderRadius: BorderRadius.circular(BoardTokens.radius),
-        ),
+        fixedSize: const Size.fromHeight(BoardTokens.rowHeight),
+        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gutter),
+        textStyle: text.bodyMedium,
+        shape: BoardShape.panel(palette.border),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
       style: OutlinedButton.styleFrom(
         foregroundColor: palette.fg,
         side: BorderSide(color: palette.border),
-        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gap),
+        fixedSize: const Size.fromHeight(BoardTokens.rowHeight),
+        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gutter),
+        textStyle: text.bodyMedium,
+      ),
+    ),
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: palette.primary,
+        foregroundColor: palette.fgInverted,
+        fixedSize: const Size.fromHeight(BoardTokens.rowHeight),
+        padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gutter),
+        textStyle: text.bodyMedium,
+      ),
+    ),
+    iconButtonTheme: IconButtonThemeData(
+      style: IconButton.styleFrom(
+        // SBB's icon button is a 44 square with the glyph at 24 and no corner.
+        fixedSize: const Size.square(BoardTokens.rowHeight),
+        padding: EdgeInsets.zero,
+        iconSize: 24,
+        shape: const RoundedRectangleBorder(),
       ),
     ),
     inputDecorationTheme: InputDecorationTheme(
       isDense: true,
       filled: true,
       fillColor: palette.sunken,
-      hintStyle: text.bodySmall?.copyWith(color: palette.fgFaint),
+      hintStyle: text.bodyMedium?.copyWith(color: palette.fgFaint),
       labelStyle: text.bodySmall,
+      floatingLabelStyle: palette.microLabel(),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: BoardTokens.gap,
+        vertical: 10,
+      ),
       border: OutlineInputBorder(
         borderSide: BorderSide(color: palette.border),
         borderRadius: BorderRadius.circular(BoardTokens.radius),
@@ -289,12 +483,17 @@ ThemeData boardThemeData(BoardPalette palette) {
         borderRadius: BorderRadius.circular(BoardTokens.radius),
       ),
     ),
+    sliderTheme: const SliderThemeData(trackHeight: 4).copyWith(
+      activeTrackColor: palette.primary,
+      thumbColor: palette.fg,
+      inactiveTrackColor: palette.hairline,
+    ),
     tabBarTheme: TabBarThemeData(
       labelColor: palette.fg,
       unselectedLabelColor: palette.fgMuted,
       indicatorSize: TabBarIndicatorSize.tab,
-      dividerColor: Colors.transparent,
-      labelStyle: text.titleSmall,
+      dividerColor: palette.hairline,
+      labelStyle: text.titleSmall?.copyWith(color: palette.fg),
       unselectedLabelStyle: text.titleSmall,
     ),
     tooltipTheme: TooltipThemeData(
@@ -306,19 +505,27 @@ ThemeData boardThemeData(BoardPalette palette) {
     ),
     popupMenuTheme: PopupMenuThemeData(
       color: palette.card,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: palette.border),
-        borderRadius: BorderRadius.circular(BoardTokens.radius),
-      ),
       textStyle: text.bodyMedium,
+      shape: BoardShape.block(palette.border),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: palette.card,
       elevation: 0,
-      shape: RoundedRectangleBorder(
-        side: BorderSide(color: palette.border),
-        borderRadius: BorderRadius.circular(BoardTokens.radius),
-      ),
+      titleTextStyle: text.titleMedium,
+      contentTextStyle: text.bodyMedium,
+      shape: BoardShape.block(palette.border),
+    ),
+    bottomSheetTheme: BottomSheetThemeData(
+      backgroundColor: palette.card,
+      surfaceTintColor: Colors.transparent,
+      elevation: 0,
+      modalElevation: 0,
+      shape: BoardShape.block(palette.border),
+    ),
+    progressIndicatorTheme: ProgressIndicatorThemeData(
+      linearTrackColor: palette.hairline,
+      color: palette.primary,
+      linearMinHeight: 4,
     ),
     textSelectionTheme: TextSelectionThemeData(cursorColor: palette.primary),
   );

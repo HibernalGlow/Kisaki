@@ -106,7 +106,7 @@ class AnalysisStatsCard extends StatelessWidget {
               key: const Key('codec-caption'),
               style: TextStyle(
                 fontSize: BoardTokens.fsBody,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: codec != null && !codec.heif
                     ? palette.warn
                     : palette.fg,
