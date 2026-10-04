@@ -116,7 +116,6 @@ void main() {
         palette.fgMuted,
         palette.fgFaint,
         palette.hairline,
-        palette.borderSoft,
         palette.card,
         palette.bg,
       ]) {
@@ -279,6 +278,49 @@ void main() {
       );
       expect(palette.selection.a, lessThan(1), reason: 'dark=$dark');
     }
+  });
+
+  /// The law only means something if the board actually paints it: a picked row is the reader's
+  /// selection, so it wears the selection colour, and the accent stays reserved for the app's own
+  /// interaction - the primary action and the stage in progress.
+  testWidgets('a picked row wears the selection colour, not the accent', (
+    WidgetTester tester,
+  ) async {
+    await pumpBoard(tester);
+    final BoardPalette palette = BoardTheme.of(
+      tester.element(find.byType(KisakiBoard)),
+    );
+    const Key rowKey = Key('result-row-/data/beta.bin');
+
+    List<Color> emphasised() => tester
+        .widgetList<Text>(
+          find.descendant(
+            of: find.byKey(rowKey),
+            matching: find.byType(Text),
+          ),
+        )
+        .where((text) => text.style?.fontWeight == BoardTokens.weightEmphasis)
+        .map((text) => text.style!.color!)
+        .toList();
+
+    // Positive control: before anything is picked the name is plain ink, so a green run cannot come
+    // from the row never painting a colour at all.
+    expect(emphasised(), contains(palette.fg));
+
+    controller.toggleSelected(
+      controller.rows.firstWhere(
+        (ScanRow row) => row.path == '/data/beta.bin',
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final List<Color> picked = emphasised();
+    expect(picked, contains(palette.selectionInk));
+    expect(
+      picked,
+      isNot(contains(palette.primary)),
+      reason: 'orange means the live stage or the primary action, never a picked row',
+    );
   });
 
   /// The one functional addition of this pass: the board says which stage is in progress, and it
@@ -497,10 +539,7 @@ void main() {
     for (final Size size in <Size>[
       const Size(1440, 900),
       const Size(1024, 768),
-      const Size(
-        BoardTokens.minWindowWidth,
-        BoardTokens.minWindowHeight,
-      ),
+      const Size(BoardTokens.minWindowWidth, BoardTokens.minWindowHeight),
     ]) {
       for (final double scale in <double>[1.0, 1.3, 2.0]) {
         tester.view.physicalSize = size;

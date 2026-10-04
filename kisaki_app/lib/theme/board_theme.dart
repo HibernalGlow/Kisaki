@@ -123,7 +123,6 @@ class BoardPalette {
   Color get raised => card;
   Color get sunken => bg;
   Color get border => _d(const Color(0xFF45423A), const Color(0xFFCFC8B8));
-  Color get borderSoft => _d(const Color(0xFF302E28), const Color(0xFFE2DCD0));
   Color get hairline => border;
 
   Color get fg => _d(const Color(0xFFF4F1E9), const Color(0xFF16150F));

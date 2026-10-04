@@ -167,7 +167,7 @@ class _RowsState extends State<_Rows> {
                   key: const Key('selection-box'),
                   decoration: BoxDecoration(
                     color: palette.selection,
-                    border: Border.all(color: palette.primary),
+                    border: Border.all(color: palette.selectionInk),
                   ),
                   child: const SizedBox.expand(),
                 ),
@@ -310,7 +310,7 @@ class _GroupStrip extends StatelessWidget {
             key: Key('group-toggle-${row.groupIndex}'),
             labelKey: 'action-select-group',
             dense: true,
-            tone: allSelected ? palette.primary : null,
+            tone: allSelected ? palette.selectionInk : null,
             onPressed: () => controller.toggleGroup(row.groupIndex),
           ),
         ],
@@ -407,7 +407,7 @@ class _ResultRow extends StatelessWidget {
                             fontSize: BoardTokens.fsBody,
                             height: BoardTokens.lhBody / BoardTokens.fsBody,
                             fontWeight: FontWeight.w700,
-                            color: selected ? palette.primary : palette.fg,
+                            color: selected ? palette.selectionInk : palette.fg,
                           ),
                         ),
                       )
@@ -431,7 +431,7 @@ class _ResultRow extends StatelessWidget {
                                           BoardTokens.fsBody,
                                       fontWeight: FontWeight.w700,
                                       color: selected
-                                          ? palette.primary
+                                          ? palette.selectionInk
                                           : palette.fg,
                                     ),
                                   ),
