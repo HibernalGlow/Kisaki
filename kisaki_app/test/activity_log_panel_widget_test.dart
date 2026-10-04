@@ -244,6 +244,8 @@ void main() {
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('row-select-/data/one.jpg')));
       await tester.pumpAndSettle();
+      await tester.ensureVisible(find.byKey(const Key('delete-selected')));
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('delete-selected')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const Key('confirm-accept')));
@@ -283,6 +285,8 @@ void main() {
     await tester.tap(find.byKey(const Key('row-select-/data/one.jpg')));
     await tester.pumpAndSettle();
     await tester.ensureVisible(find.byKey(const Key('delete-selected')));
+    await tester.ensureVisible(find.byKey(const Key('delete-selected')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('delete-selected')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('confirm-accept')));

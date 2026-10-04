@@ -142,6 +142,8 @@ void main() {
   ) async {
     await pumpExifBoard(tester, 'exif_remover');
     await selectFirst(tester);
+    await tester.ensureVisible(find.byKey(const Key('exif-clean')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('exif-clean')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);
@@ -166,6 +168,8 @@ void main() {
     await toggleOverride(tester);
     expect(controller.exifOverrideFile, isTrue);
 
+    await tester.ensureVisible(find.byKey(const Key('exif-clean')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('exif-clean')));
     await tester.pumpAndSettle();
     await acceptConfirm(tester);
@@ -180,6 +184,8 @@ void main() {
     await pumpExifBoard(tester, 'exif_remover');
     await selectFirst(tester);
     controller.setDryRun(false);
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('exif-clean')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('exif-clean')));
     await tester.pumpAndSettle();

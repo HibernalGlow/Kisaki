@@ -235,6 +235,8 @@ void main() {
     await pumpImageBoard(tester);
     await tester.tap(find.byKey(const Key('row-select-D:/photos/a.jpg')));
     await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const Key('organize-action')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('organize-action')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('confirm-dialog')), findsOneWidget);

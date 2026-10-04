@@ -27,6 +27,7 @@ class CardDefinition {
     required this.defaultHeight,
     required this.minHeight,
     required this.maxHeight,
+    this.fillViewport = false,
   });
 
   final CardId id;
@@ -36,6 +37,10 @@ class CardDefinition {
   final double defaultHeight;
   final double minHeight;
   final double maxHeight;
+
+  /// A card whose content carries its own scrolling - the tabbed scan settings - needs the card body
+  /// as its viewport instead of being handed to a scroll view of its own.
+  final bool fillViewport;
 }
 
 const List<CardDefinition> cardRegistry = <CardDefinition>[
@@ -45,6 +50,7 @@ const List<CardDefinition> cardRegistry = <CardDefinition>[
     defaultHeight: 520,
     minHeight: 220,
     maxHeight: 900,
+    fillViewport: true,
   ),
   CardDefinition(
     id: CardId.preview,
