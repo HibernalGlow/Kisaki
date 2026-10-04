@@ -68,6 +68,8 @@ temp/
 !packages/**/test/
 !packages/**/test/**
 
-# ...but a package's own build directory stays out, the same way kisaki_app's does.
+# ...but a package's own build output stays out, the same way kisaki_app's does (its own
+# .gitignore holds `/build/`; a package under this repo has none).
 packages/**/.dart_tool/
+packages/**/build/
 packages/**/pubspec.lock
