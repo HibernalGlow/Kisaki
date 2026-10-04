@@ -54,6 +54,7 @@ class _BlockSpec {
     required this.removeAt,
     required this.clear,
     this.kind = TokenKind.path,
+    this.trailingFor,
   });
 
   final String labelKey;
@@ -63,6 +64,7 @@ class _BlockSpec {
   final void Function(int) removeAt;
   final VoidCallback clear;
   final TokenKind kind;
+  final Widget Function(int index)? trailingFor;
 }
 
 class _PathsTab extends StatelessWidget {
@@ -201,6 +203,18 @@ class _IncludedBlock extends StatelessWidget {
         add: controller.addIncluded,
         removeAt: controller.removeIncluded,
         clear: controller.clearIncluded,
+        trailingFor: (int index) {
+          final List<String> paths = controller.included;
+          final String path = paths[index];
+          final bool starred = controller.isIncludedReference(path);
+          return BoardAction(
+            key: Key('reference-$path'),
+            labelKey: starred ? 'reference-unstar' : 'reference-star',
+            icon: starred ? Icons.star_rounded : Icons.star_outline_rounded,
+            iconOnly: true,
+            onPressed: () => controller.toggleIncludedReference(path),
+          );
+        },
       ),
       footer: Wrap(
         spacing: BoardTokens.gapSmall,
@@ -215,6 +229,18 @@ class _IncludedBlock extends StatelessWidget {
             labelKey: 'action-add-files',
             dense: true,
             onPressed: () => onPick(PathRequest.file),
+          ),
+          BoardAction(
+            key: const Key('reference-set-all'),
+            labelKey: controller.everyIncludedIsReference
+                ? 'reference-unmark-all'
+                : 'reference-mark-all',
+            dense: true,
+            onPressed: controller.included.isEmpty
+                ? null
+                : () => controller.setAllIncludedReferences(
+                    !controller.everyIncludedIsReference,
+                  ),
           ),
         ],
       ),
@@ -262,6 +288,7 @@ class _Block extends StatelessWidget {
         TokenListEditor(
           label: Labels.of(block.labelKey),
           kind: block.kind,
+          trailingFor: block.trailingFor,
           entries: block.entries(),
           placeholder: block.placeholder,
           onAdd: (String value) => block.add(<String>[value]),
