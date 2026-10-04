@@ -485,7 +485,6 @@ class Labels {
     'lane-unsolo': 'Show every lane',
     'row-menu-open': 'Open with default app',
     'row-menu-reveal': 'Reveal in file manager',
-    'status_open_failed': 'Could not open { \$path }: { \$error }',
     'status_opened': 'Opening { \$path }',
     'status_reveal_failed': 'Could not reveal { \$path }: { \$error }',
     'status_revealed': 'Revealing { \$path }',

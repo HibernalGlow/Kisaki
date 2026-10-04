@@ -102,7 +102,7 @@ void main() {
 
       expect(
         controller.statusText,
-        'Could not open /data/one.jpg: No application knows how to open it',
+        'Cannot open /data/one.jpg: No application knows how to open it',
       );
       expect(
         controller.activityLog.last.level,
