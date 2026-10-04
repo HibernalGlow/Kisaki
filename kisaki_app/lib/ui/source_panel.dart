@@ -5,6 +5,7 @@ import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../theme/board_theme.dart';
 import 'simiu_panel.dart';
+import 'scan_preset_card.dart';
 import 'token_list.dart';
 import 'widgets/primitives.dart';
 
@@ -335,9 +336,6 @@ class _AlgorithmTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<FieldDef> fields = controller.fields;
-    if (fields.isEmpty && !controller.supportsSimiuSets) {
-      return const EmptyState(labelKey: 'label-no-options');
-    }
     return ListView(
       padding: const EdgeInsets.all(BoardTokens.pad),
       children: <Widget>[
@@ -345,16 +343,23 @@ class _AlgorithmTab extends StatelessWidget {
           SimiuFields(controller: controller),
           const SizedBox(height: BoardTokens.section),
         ],
-        for (int index = 0; index < fields.length; index++) ...<Widget>[
-          if (index > 0) const SizedBox(height: BoardTokens.gap),
-          FieldControl(
-            key: ValueKey<String>('${controller.tool?.id}-${fields[index].id}'),
-            def: fields[index],
-            value: controller.valueOf(fields[index].id),
-            onChanged: (FieldPayload payload) =>
-                controller.setFieldValue(fields[index].id, payload),
-          ),
-        ],
+        if (fields.isEmpty && !controller.supportsSimiuSets)
+          const EmptyState(labelKey: 'label-no-options')
+        else
+          for (int index = 0; index < fields.length; index++) ...<Widget>[
+            if (index > 0) const SizedBox(height: BoardTokens.gap),
+            FieldControl(
+              key: ValueKey<String>(
+                '${controller.tool?.id}-${fields[index].id}',
+              ),
+              def: fields[index],
+              value: controller.valueOf(fields[index].id),
+              onChanged: (FieldPayload payload) =>
+                  controller.setFieldValue(fields[index].id, payload),
+            ),
+          ],
+        const SizedBox(height: BoardTokens.section),
+        ScanPresetCard(controller: controller, key: const Key('scan-presets')),
       ],
     );
   }
