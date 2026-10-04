@@ -4,12 +4,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:kisaki_app/engine/models.dart';
 import 'package:kisaki_app/l10n/labels.dart';
 import 'package:kisaki_app/state/board_controller.dart';
+import 'package:kisaki_app/state/file_host.dart';
 import 'package:kisaki_app/ui/board.dart';
+import 'package:kisaki_app/ui/widgets/primitives.dart';
 
 import 'support/stub_engine.dart';
 
 /// The image scanner's folder roll-up: the switch only exists where the reference shows it, the
-/// header search narrows it, and the copy action has a readback.
+/// header search narrows it, the copy action has a readback, and open and reveal stay listed but
+/// dark when the host cannot do them.
 void main() {
   const ColumnDef modifiedColumn = ColumnDef(
     key: 'modified',
@@ -52,10 +55,17 @@ void main() {
 
   setUp(() {
     engine = StubEngine(tools: tools);
-    controller = BoardController(engine: engine);
   });
 
-  Future<void> pumpScanned(WidgetTester tester, String tool) async {
+  Future<void> pumpScanned(
+    WidgetTester tester,
+    String tool, {
+    FileHost? fileHost,
+  }) async {
+    controller = BoardController(
+      engine: engine,
+      fileHost: fileHost ?? desktopFileHost(),
+    );
     tester.view.physicalSize = const Size(1600, 1000);
     tester.view.devicePixelRatio = 1;
     tester.platformDispatcher.textScaleFactorTestValue = 1;
@@ -192,6 +202,66 @@ void main() {
         ),
       ),
       findsWidgets,
+    );
+  });
+
+  testWidgets('a folder row hands its own path to the host', (
+    WidgetTester tester,
+  ) async {
+    final List<String> opened = <String>[];
+    final List<String> revealed = <String>[];
+    await pumpScanned(
+      tester,
+      'similar_images',
+      fileHost: FileHost(
+        open: (String path) async => opened.add(path),
+        reveal: (String path) async => revealed.add(path),
+      ),
+    );
+    await tester.tap(find.byKey(const Key('view-folders')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('folder-open-/data/photos')));
+    await tester.pumpAndSettle();
+    expect(opened, <String>['/data/photos']);
+    expect(controller.statusText, 'Opening /data/photos');
+
+    await tester.tap(find.byKey(const Key('folder-reveal-/data/archive')));
+    await tester.pumpAndSettle();
+    expect(
+      revealed,
+      <String>['/data/archive'],
+      reason: 'the roll-up opens the folder, not one of the pictures inside it',
+    );
+  });
+
+  testWidgets('a host with no file manager still lists both actions, dark', (
+    WidgetTester tester,
+  ) async {
+    await pumpScanned(tester, 'similar_images', fileHost: FileHost.unsupported);
+    await tester.tap(find.byKey(const Key('view-folders')));
+    await tester.pumpAndSettle();
+
+    for (final String key in <String>[
+      'folder-open-/data/photos',
+      'folder-reveal-/data/photos',
+    ]) {
+      final BoardAction action = tester.widget(find.byKey(Key(key)));
+      expect(
+        action.onPressed,
+        isNull,
+        reason:
+            '$key is disabled rather than hidden, the way the reference does it',
+      );
+    }
+    expect(
+      tester
+          .widget<BoardAction>(
+            find.byKey(const Key('folder-copy-/data/photos')),
+          )
+          .onPressed,
+      isNotNull,
+      reason: 'copy has a readback that does not need the host',
     );
   });
 }
