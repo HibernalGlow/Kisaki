@@ -36,7 +36,13 @@ extension BoardSourceLists on BoardController {
     publish();
   }
 
-  void removeIncluded(int index) => _removeAt(_included, index);
+  void removeIncluded(int index) {
+    if (index < 0 || index >= _included.length) {
+      return;
+    }
+    _reference.remove(_included.removeAt(index));
+    publish();
+  }
 
   void removeReference(int index) => _removeAt(_reference, index);
 
@@ -58,9 +64,41 @@ extension BoardSourceLists on BoardController {
     publish();
   }
 
-  void clearIncluded() => _clearList(_included);
+  void clearIncluded() {
+    if (_included.isEmpty && _reference.isEmpty) {
+      return;
+    }
+    _included.clear();
+    _reference.clear();
+    publish();
+  }
 
   void clearReference() => _clearList(_reference);
+
+  bool isIncludedReference(String path) => _reference.contains(path);
+
+  bool get everyIncludedIsReference =>
+      _included.isNotEmpty && _included.every(isIncludedReference);
+
+  void toggleIncludedReference(String path) {
+    if (!_included.contains(path)) {
+      return;
+    }
+    if (_reference.contains(path)) {
+      _reference.remove(path);
+    } else {
+      _reference.add(path);
+    }
+    publish();
+  }
+
+  /// "Set all as reference" and its inverse, straight off the paths list header.
+  void setAllIncludedReferences(bool on) {
+    _reference
+      ..clear()
+      ..addAll(on ? _included : const <String>[]);
+    publish();
+  }
 
   void clearExcludedPaths() => _clearList(_excludedPaths);
 
