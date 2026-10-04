@@ -161,6 +161,10 @@ class BoardController extends ChangeNotifier {
 
   /// Which lane every block sits in, in what order, and how tall it is.
   CardLayout _cards = createDefaultCardLayout();
+
+  /// How each lane shows its blocks - stacked or one at a time - and which one a lane has open.
+  final Map<CardPanel, CardDisplay> _cardDisplays = <CardPanel, CardDisplay>{};
+  final Map<CardPanel, CardId> _activeCards = <CardPanel, CardId>{};
   OrganizeOptions _organize = const OrganizeOptions();
   VideoOptions _video = const VideoOptions();
   OptimizeOutcome? _videoOutcome;
