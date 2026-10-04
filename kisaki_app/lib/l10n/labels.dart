@@ -481,6 +481,8 @@ class Labels {
     'folders-images': '{ \$count } images',
     'folders-summary': 'Rolled up by image count, size and groups touched',
     'folders-title': 'Similar folders',
+    'lane-solo': 'Show this lane alone',
+    'lane-unsolo': 'Show every lane',
     'header-results': 'Result groups',
     'hint-dry-run':
         'Delete and export only produce a plan while dry run is on.',
