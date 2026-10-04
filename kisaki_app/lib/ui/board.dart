@@ -18,10 +18,19 @@ import 'widgets/primitives.dart';
 
 /// Application shell: Swiss flat palette plus the board, driven only by [controller].
 class KisakiBoardApp extends StatefulWidget {
-  const KisakiBoardApp({required this.controller, this.picker, super.key});
+  const KisakiBoardApp({
+    required this.controller,
+    this.picker,
+    this.themeKind = BoardThemeKind.cassette,
+    super.key,
+  });
 
   final BoardController controller;
   final PathPicker? picker;
+
+  /// Which visual system the board is dressed in. It is a constructor seam rather than controller
+  /// state because the theme is not something the reader toggles mid-scan.
+  final BoardThemeKind themeKind;
 
   @override
   State<KisakiBoardApp> createState() => _KisakiBoardAppState();
@@ -55,8 +64,9 @@ class _KisakiBoardAppState extends State<KisakiBoardApp> {
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardPalette(dark: widget.controller.dark);
     return BoardTheme(
-      key: ValueKey<bool>(palette.dark),
+      key: ValueKey<String>('${palette.dark}-${widget.themeKind.name}'),
       dark: palette.dark,
+      kind: widget.themeKind,
       child: MaterialApp(
         title: Labels.of('app-title'),
         debugShowCheckedModeBanner: false,

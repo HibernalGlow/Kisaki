@@ -331,7 +331,7 @@ class _ToolMenu extends StatelessWidget {
             color: palette.card,
             elevation: 0,
             // A menu is a container surface, so it carries the same chamfer as a dialog.
-            shape: BoardShape.block(palette.border),
+            shape: palette.blockShape(palette.border),
             clipBehavior: Clip.antiAlias,
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 460),

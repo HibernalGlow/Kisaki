@@ -84,7 +84,7 @@ class _ScannerPicker extends StatelessWidget {
         ),
         decoration: ShapeDecoration(
           color: palette.raised,
-          shape: BoardShape.panel(palette.border),
+          shape: palette.panelShape(palette.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -132,7 +132,7 @@ class _ScanControl extends StatelessWidget {
         ),
         decoration: ShapeDecoration(
           color: running ? palette.dangerSoft : palette.primary,
-          shape: BoardShape.panel(running ? palette.danger : palette.primary),
+          shape: palette.panelShape(running ? palette.danger : palette.primary),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

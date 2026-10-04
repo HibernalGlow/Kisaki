@@ -77,7 +77,7 @@ class FlatCard extends StatelessWidget {
     return Container(
       decoration: ShapeDecoration(
         color: filled ? palette.sunken : palette.card,
-        shape: BoardShape.panel(palette.hairline),
+        shape: palette.panelShape(palette.hairline),
       ),
       padding: padding ?? const EdgeInsets.all(BoardTokens.pad),
       child: child,

@@ -13,6 +13,14 @@ import 'package:flutter/material.dart';
 ///
 /// Deviations from SBB are deliberate and named at the site: their pill buttons and 16px content
 /// boxes are brand geometry, and this board keeps `radius = 0`.
+/// Which visual system the board is dressed in.
+///
+/// `cassette` is the Swiss-typography skeleton with the Lone Trail skin: chamfered corners, hairline
+/// rules, no elevation. `material` is the standard Material 3 reading of the same board: seeded
+/// `ColorScheme`, `surfaceContainer` tiers for separation, rounded corners, and elevation kept for
+/// overlays only.
+enum BoardThemeKind { cassette, material }
+
 class BoardTokens {
   const BoardTokens._();
 
@@ -29,6 +37,10 @@ class BoardTokens {
   static const double radius = 0;
   static const double cutPanel = 6;
   static const double cutBlock = 12;
+
+  /// The same two roles in the Material theme, where a corner is filleted instead of cut.
+  static const double radiusPanel = 16;
+  static const double radiusBlock = 28;
   static const double hairline = 1;
 
   /// Grid: the page is 12 columns; content spans columns instead of using ad-hoc pixel widths.
@@ -112,9 +124,31 @@ class BoardTokens {
 /// Two rules are taken literally from that contract: a colour change must always be paired with a
 /// text, icon or geometry change, and a glow is feedback, never a permanent background.
 class BoardPalette {
-  const BoardPalette({required this.dark});
+  const BoardPalette({required this.dark, this.kind = BoardThemeKind.cassette});
 
   final bool dark;
+  final BoardThemeKind kind;
+
+  /// A panel's outline: a 45° chamfer in the cassette theme, a fillet in the Material one. This is
+  /// the only place a corner is chosen, which is what lets a second theme vary it without a widget
+  /// ever naming a radius (Rossi keeps the same single seam, behind a `ThemeShapeScope`).
+  OutlinedBorder panelShape(Color rule) =>
+      _bevel(rule, BoardTokens.cutPanel, BoardTokens.radiusPanel);
+
+  /// A lifted block - dialog, menu, sheet - which the Material theme rounds harder than a panel.
+  OutlinedBorder blockShape(Color rule) =>
+      _bevel(rule, BoardTokens.cutBlock, BoardTokens.radiusBlock);
+
+  OutlinedBorder _bevel(Color rule, double cut, double radius) =>
+      kind == BoardThemeKind.cassette
+      ? BeveledRectangleBorder(
+          borderRadius: BorderRadius.circular(cut),
+          side: BorderSide(color: rule),
+        )
+      : RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(radius),
+          side: BorderSide(color: rule),
+        );
 
   /// Two grounds only: the panel the cabin is built from, and the paper laid on top of it.
   Color get bg => _d(const Color(0xFF15150F), const Color(0xFFE7E2D6));
@@ -286,11 +320,17 @@ class BoardPalette {
 }
 
 class BoardTheme extends InheritedWidget {
-  const BoardTheme({required this.dark, required super.child, super.key});
+  const BoardTheme({
+    required this.dark,
+    required super.child,
+    this.kind = BoardThemeKind.cassette,
+    super.key,
+  });
 
   final bool dark;
+  final BoardThemeKind kind;
 
-  BoardPalette get palette => BoardPalette(dark: dark);
+  BoardPalette get palette => BoardPalette(dark: dark, kind: kind);
 
   static BoardPalette of(BuildContext context) {
     final BoardTheme? theme = context
@@ -299,26 +339,8 @@ class BoardTheme extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(BoardTheme oldWidget) => oldWidget.dark != dark;
-}
-
-/// The only sanctioned non-square corner in this app: a 45° chamfer, cut from the two token sizes.
-///
-/// Nothing may be filleted, so `RoundedRectangleBorder` is not used at all, and a component gets one
-/// cut treatment at most - the small chips, badges and tap areas stay rectangular.
-class BoardShape {
-  const BoardShape._();
-
-  /// An `OutlinedBorder`, so the same chamfer serves a panel, a button and a dialog.
-  static OutlinedBorder panel(Color rule) => BeveledRectangleBorder(
-    borderRadius: BorderRadius.circular(BoardTokens.cutPanel),
-    side: BorderSide(color: rule),
-  );
-
-  static OutlinedBorder block(Color rule) => BeveledRectangleBorder(
-    borderRadius: BorderRadius.circular(BoardTokens.cutBlock),
-    side: BorderSide(color: rule),
-  );
+  bool updateShouldNotify(BoardTheme oldWidget) =>
+      oldWidget.dark != dark || oldWidget.kind != kind;
 }
 
 /// Flat shell: hairlines and the two grounds carry separation, so elevation stays 0 and no
@@ -369,7 +391,7 @@ ThemeData boardThemeData(BoardPalette palette) {
       color: palette.card,
       elevation: 0,
       margin: EdgeInsets.zero,
-      shape: BoardShape.panel(palette.hairline),
+      shape: palette.panelShape(palette.hairline),
     ),
     dividerTheme: DividerThemeData(
       color: palette.hairline,
@@ -428,7 +450,7 @@ ThemeData boardThemeData(BoardPalette palette) {
         fixedSize: const Size.fromHeight(BoardTokens.rowHeight),
         padding: const EdgeInsets.symmetric(horizontal: BoardTokens.gutter),
         textStyle: text.bodyMedium,
-        shape: BoardShape.panel(palette.border),
+        shape: palette.panelShape(palette.border),
       ),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
@@ -505,21 +527,21 @@ ThemeData boardThemeData(BoardPalette palette) {
     popupMenuTheme: PopupMenuThemeData(
       color: palette.card,
       textStyle: text.bodyMedium,
-      shape: BoardShape.block(palette.border),
+      shape: palette.blockShape(palette.border),
     ),
     dialogTheme: DialogThemeData(
       backgroundColor: palette.card,
       elevation: 0,
       titleTextStyle: text.titleMedium,
       contentTextStyle: text.bodyMedium,
-      shape: BoardShape.block(palette.border),
+      shape: palette.blockShape(palette.border),
     ),
     bottomSheetTheme: BottomSheetThemeData(
       backgroundColor: palette.card,
       surfaceTintColor: Colors.transparent,
       elevation: 0,
       modalElevation: 0,
-      shape: BoardShape.block(palette.border),
+      shape: palette.blockShape(palette.border),
     ),
     progressIndicatorTheme: ProgressIndicatorThemeData(
       linearTrackColor: palette.hairline,
