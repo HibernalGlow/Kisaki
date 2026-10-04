@@ -256,6 +256,9 @@ class _Lanes extends StatelessWidget {
           letter: 'S',
           collapsed: layout.sourceCollapsed,
           onToggle: () => controller.toggleLane('source'),
+          actions: <Widget>[
+            CardDisplayToggle(controller: controller, panel: CardPanel.source),
+          ],
           width: fits ? sourceWidth : BoardTokens.sourceLaneMin,
           child: CardStack(
             controller: controller,
@@ -301,6 +304,12 @@ class _Lanes extends StatelessWidget {
                   letter: 'A',
                   collapsed: layout.analysisCollapsed,
                   onToggle: () => controller.toggleLane('analysis'),
+                  actions: <Widget>[
+                    CardDisplayToggle(
+                      controller: controller,
+                      panel: CardPanel.analysis,
+                    ),
+                  ],
                   child: CardStack(
                     controller: controller,
                     panel: CardPanel.analysis,

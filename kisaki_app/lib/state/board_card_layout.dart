@@ -39,6 +39,40 @@ extension BoardCardLayout on BoardController {
     _patchCards(createDefaultCardLayout());
   }
 
+  /// Stacked cards or one card per tab, the reference's two arrangements of the same blocks.
+  CardDisplay cardDisplay(CardPanel panel) =>
+      _cardDisplays[panel] ?? CardDisplay.stack;
+
+  void toggleCardDisplay(CardPanel panel) {
+    _cardDisplays[panel] = cardDisplay(panel) == CardDisplay.stack
+        ? CardDisplay.tabs
+        : CardDisplay.stack;
+    publish();
+  }
+
+  /// The open tab, or the first visible card when the remembered one was hidden or moved away.
+  CardId? activeCard(CardPanel panel) {
+    final List<CardConfig> visible = cardsIn(panel);
+    if (visible.isEmpty) {
+      return null;
+    }
+    final CardId? stored = _activeCards[panel];
+    if (stored != null && visible.any((CardConfig card) => card.id == stored)) {
+      return stored;
+    }
+    return visible.first.id;
+  }
+
+  void setActiveCard(CardPanel panel, CardId id) {
+    // Compared against the card that is actually open, so clicking the tab already showing the block
+    // does not repaint the board.
+    if (activeCard(panel) == id) {
+      return;
+    }
+    _activeCards[panel] = id;
+    publish();
+  }
+
   void _patchCards(CardLayout next) {
     if (next == _cards) {
       return;
