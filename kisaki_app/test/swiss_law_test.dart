@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
@@ -12,9 +13,11 @@ import 'package:kisaki_app/ui/widgets/primitives.dart';
 
 import 'support/stub_engine.dart';
 
-/// The Swiss law is a contract, not a mood: square corners, zero elevation, one-pixel rules,
-/// hierarchy by tone instead of hue, figures in tabular numerals, content on a 12-column grid.
-/// Each of those is asserted here so a later commit cannot quietly drift back to a Material skin.
+/// The board's visual law is a contract, not a mood: chamfered or square corners and no fillet,
+/// zero elevation and no cast shadow, one-pixel rules, a warm neutral type ramp, one accent kept
+/// off the selected rows, figures in tabular monospace, content on a 12-column grid, and exactly one
+/// lane lit as the stage in progress. Each is asserted here so a later commit cannot quietly drift
+/// back to a Material skin.
 void main() {
   late StubEngine engine;
   late BoardController controller;
@@ -53,7 +56,7 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('no surface is rounded - Swiss corners are square', (
+  testWidgets('no surface is filleted - a corner is a chamfer or it is square', (
     WidgetTester tester,
   ) async {
     await pumpBoard(tester);
@@ -65,7 +68,8 @@ void main() {
     expect(
       rounded,
       isEmpty,
-      reason: 'BoardTokens.radius must stay 0 everywhere in the board',
+      reason:
+          'the only non-square corner is BoardShape\'s chamfer, never a radius: $rounded',
     );
   });
 
@@ -94,19 +98,261 @@ void main() {
     },
   );
 
-  testWidgets('hierarchy is tone, not hue', (WidgetTester tester) async {
+  testWidgets('hierarchy is a warm neutral step, not a tinted grey', (
+    WidgetTester tester,
+  ) async {
     for (final bool dark in <bool>[true, false]) {
       final BoardPalette palette = BoardPalette(dark: dark);
 
-      expect(palette.fgMuted.r, palette.fg.r, reason: 'dark=$dark');
-      expect(palette.fgMuted.g, palette.fg.g);
-      expect(palette.fgMuted.b, palette.fg.b);
-      expect(palette.fgMuted.a, closeTo(0.72, 0.001));
+      // The panel greys carry a polyester cast, so the law is no longer "zero chroma" but "low
+      // chroma": a step may be warm, and may not be a coloured grey pretending to be a hierarchy.
+      double chroma(Color color) {
+        final List<double> channels = <double>[color.r, color.g, color.b];
+        return (channels.reduce(max) - channels.reduce(min)) / 255;
+      }
 
-      expect(palette.fgFaint.r, palette.fg.r);
-      expect(palette.fgFaint.g, palette.fg.g);
-      expect(palette.fgFaint.b, palette.fg.b);
-      expect(palette.fgFaint.a, closeTo(0.46, 0.001));
+      for (final Color grey in <Color>[
+        palette.fg,
+        palette.fgMuted,
+        palette.fgFaint,
+        palette.hairline,
+        palette.borderSoft,
+        palette.card,
+        palette.bg,
+      ]) {
+        expect(
+          chroma(grey),
+          lessThan(0.12),
+          reason:
+              'dark=$dark ${_hex(grey)} is a coloured grey, not a neutral step',
+        );
+      }
+
+      // The ground is warm: polyester white reads with more red than blue, and that is the one
+      // colour claim the event actually documents.
+      expect(palette.card.r, greaterThan(palette.card.b));
+      expect(palette.bg.r, greaterThan(palette.bg.b));
+
+      // Each step sits closer to the ground than the one above it.
+      final double ground = palette.bg.r;
+      double distance(Color color) => (color.r - ground).abs();
+      expect(distance(palette.fg), greaterThan(distance(palette.fgMuted)));
+      expect(distance(palette.fgMuted), greaterThan(distance(palette.fgFaint)));
+      expect(
+        distance(palette.fgFaint),
+        greaterThan(0),
+        reason: 'a step equal to the ground would be invisible, not quiet',
+      );
+    }
+  });
+
+  test('the panel grounds are two, and the accent is orange', () {
+    for (final bool dark in <bool>[true, false]) {
+      final BoardPalette palette = BoardPalette(dark: dark);
+      // Two grounds only: a field is inset by returning to the page ground, not by a third grey.
+      expect(palette.raised, palette.card);
+      expect(palette.sunken, palette.bg);
+      expect(palette.primary, const Color(0xFFF6540E));
+    }
+    // Positive control: a cool grey would have failed the warmth claim above.
+    expect(const Color(0xFF686878).r > const Color(0xFF686878).b, isFalse);
+  });
+
+  /// A glow is feedback, never a surface: the extracted Arknights contract forbids a permanent
+  /// shadow, and elevation is already pinned at zero by the other gate.
+  test('nothing casts a shadow', () {
+    final RegExp banned = RegExp(r'BoxShadow\(|boxShadow:|elevation:\s*[1-9]');
+    final List<String> offenders = _libLinesMatching(banned);
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'separation comes from rules and grounds: $offenders',
+    );
+    expect(
+      banned.hasMatch('const List<BoxShadow> s = [BoxShadow(color: c)];'),
+      isTrue,
+    );
+  });
+
+  /// Chamfers may only be cut through the theme: a widget that invents its own corner is the same
+  /// defect as one that invents its own colour.
+  test('only the theme cuts a corner', () {
+    final List<String> offenders = _libLinesMatching(
+      RegExp(r'BeveledRectangleBorder'),
+      skip: <String>{'lib/theme/board_theme.dart'},
+    );
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'use BoardShape.panel / BoardShape.block: $offenders',
+    );
+    expect(
+      RegExp(r'BeveledRectangleBorder')
+          .hasMatch('shape: BeveledRectangleBorder(borderRadius: r),'),
+      isTrue,
+    );
+  });
+
+  test('the type scale is SBB seven steps with SBB line heights', () {
+    expect(
+      <double>[
+        BoardTokens.fsCaption,
+        BoardTokens.fsMicro,
+        BoardTokens.fsLabel,
+        BoardTokens.fsBody,
+        BoardTokens.fsTitle,
+        BoardTokens.fsHeadline,
+        BoardTokens.fsDisplay,
+      ],
+      <double>[10, 12, 14, 16, 18, 24, 30],
+      reason: 'sbb_typography.dart sizes are 10/12/14/16/18/24/30',
+    );
+    expect(
+      <double>[
+        BoardTokens.lhCaption,
+        BoardTokens.lhMicro,
+        BoardTokens.lhLabel,
+        BoardTokens.lhBody,
+        BoardTokens.lhTitle,
+        BoardTokens.lhHeadline,
+        BoardTokens.lhDisplay,
+      ],
+      <double>[12, 16, 20, 20, 24, 32, 32],
+      reason: 'sbb_typography.dart line heights are 12/16/20/20/24/32/32',
+    );
+  });
+
+  test('SBB touch heights carry the board', () {
+    // 44 is SBB's minimum for a single-line row and 56 is its small header. The results row carries
+    // a second line (name over directory), so it may only ever be taller than that minimum - never
+    // squeezed back under it by shrinking the type.
+    expect(BoardTokens.laneHeaderHeight, 44);
+    expect(BoardTokens.headerHeight, 56);
+    expect(BoardTokens.rowHeight, greaterThanOrEqualTo(44));
+    expect(
+      BoardTokens.rowHeight % BoardTokens.gapSmall,
+      0,
+      reason: 'row height stays on the 4px step',
+    );
+  });
+
+  /// SBB sets `letterSpacing` nowhere, and the two Swiss label devices are the only places this
+  /// board tracks text - so tracking may only be written in the token file.
+  test('tracking lives in the theme, not in a widget', () {
+    final List<String> offenders = _libLinesMatching(
+      RegExp(r'letterSpacing'),
+      skip: <String>{'lib/theme/board_theme.dart'},
+    );
+    expect(
+      offenders,
+      isEmpty,
+      reason:
+          'use BoardTokens.trackingMicro / trackingStep via palette.microLabel: $offenders',
+    );
+    // Positive control: the sweep is blind if it cannot see the offence it forbids.
+    expect(
+      RegExp(r'letterSpacing').hasMatch('style: TextStyle(letterSpacing: 0.7)'),
+      isTrue,
+    );
+  });
+
+  test('two weights only - the Material intermediates are banned', () {
+    final RegExp banned = RegExp(
+      r'FontWeight\.w(?:100|200|300|500|600|800|900)',
+    );
+    final List<String> offenders = _libLinesMatching(banned);
+    expect(
+      offenders,
+      isEmpty,
+      reason: 'hierarchy is w400 text against w700 emphasis: $offenders',
+    );
+    expect(banned.hasMatch('fontWeight: FontWeight.w600,'), isTrue);
+  });
+
+  testWidgets('selection is never the accent', (WidgetTester tester) async {
+    for (final bool dark in <bool>[true, false]) {
+      final BoardPalette palette = BoardPalette(dark: dark);
+      expect(
+        palette.selectionInk.toARGB32() & 0xFFFFFF,
+        isNot(palette.primary.toARGB32() & 0xFFFFFF),
+        reason: 'a picked row must not read as the primary action or as the live step',
+      );
+      expect(palette.selection.a, lessThan(1), reason: 'dark=$dark');
+    }
+  });
+
+  /// The one functional addition of this pass: the board says which stage is in progress, and it
+  /// says it from state - never more than one lane may carry the rule.
+  testWidgets('exactly one lane carries the step rule, and state decides which', (
+    WidgetTester tester,
+  ) async {
+    tester.view.physicalSize = const Size(1440, 900);
+    tester.view.devicePixelRatio = 1;
+    tester.platformDispatcher.textScaleFactorTestValue = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(tester.platformDispatcher.clearTextScaleFactorTestValue);
+
+    await tester.pumpWidget(
+      BoardTheme(dark: true, child: KisakiBoardApp(controller: controller)),
+    );
+    await tester.pumpAndSettle();
+
+    List<String> litLanes() {
+      final BoardPalette palette = BoardTheme.of(
+        tester.element(find.byType(KisakiBoard)),
+      );
+      return <String>['S', 'R', 'A']
+          .where(
+            (letter) =>
+                tester
+                    .widget<ColoredBox>(find.byKey(Key('lane-rule-$letter')))
+                    .color ==
+                palette.primary,
+          )
+          .toList();
+    }
+
+    // Nothing scanned yet: the reader is still naming folders.
+    expect(litLanes(), <String>[
+      'S',
+    ], reason: 'source is the step before a scan exists');
+
+    controller.addIncluded(<String>['/data']);
+    controller.startScan();
+    engine.emit(
+      ScanEventCompleted(
+        StubEngine.outcome('duplicate_files', <ScanRow>[
+          StubEngine.row('/data/alpha.bin', group: 0, start: true),
+          StubEngine.row('/data/beta.bin', group: 0),
+        ]),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(litLanes(), <String>[
+      'R',
+    ], reason: 'results holds the work once rows exist');
+
+    controller.toggleSelected(
+      controller.rows.firstWhere((ScanRow row) => row.path == '/data/beta.bin'),
+    );
+    await tester.pumpAndSettle();
+    expect(litLanes(), <String>[
+      'A',
+    ], reason: 'analysis takes over on a selection');
+
+    // The numbers are printed on every lane, live or not, so the order stays readable.
+    for (final (String letter, String number) in <(String, String)>[
+      ('S', '01'),
+      ('R', '02'),
+      ('A', '03'),
+    ]) {
+      expect(
+        tester.widget<Text>(find.byKey(Key('lane-step-$letter'))).data,
+        number,
+        reason:
+            'lane $letter must print its step number whether or not it is live',
+      );
     }
   });
 
@@ -244,10 +490,17 @@ void main() {
   testWidgets('a narrow window or large text clips nothing', (
     WidgetTester tester,
   ) async {
+    // The sweep stops at the floor the app itself enforces: `main.dart` pins the window to
+    // `BoardTokens.minWindowWidth x minWindowHeight` through `windowManager.setMinimumSize`, so a
+    // 800 x 600 window is one the platform will not hand the board. Testing at the floor keeps the
+    // claim honest - below it, this gate would only measure an unreachable state.
     for (final Size size in <Size>[
       const Size(1440, 900),
       const Size(1024, 768),
-      const Size(800, 600),
+      const Size(
+        BoardTokens.minWindowWidth,
+        BoardTokens.minWindowHeight,
+      ),
     ]) {
       for (final double scale in <double>[1.0, 1.3, 2.0]) {
         tester.view.physicalSize = size;
@@ -336,6 +589,21 @@ void main() {
     );
   });
 
+  /// A hard-coded colour reaches only the theme it was written in, so the palette file is the one
+  /// place a hex value may appear.
+  test('no widget file names a colour', () {
+    final List<String> offenders = _libLinesMatching(
+      RegExp(r'Color\(0x'),
+      skip: <String>{'lib/theme/board_theme.dart'},
+    );
+    expect(offenders, isEmpty, reason: 'take it from BoardPalette: $offenders');
+    expect(
+      RegExp(r'Color\(0x').hasMatch('const c = Color(0xFFEB0000);'),
+      isTrue,
+      reason: 'the sweep must see a literal it forbids',
+    );
+  });
+
   testWidgets('grid spans wrap instead of overflowing twelve columns', (
     WidgetTester tester,
   ) async {
@@ -396,24 +664,54 @@ List<String> clippedFlexes(WidgetTester tester) {
     if (used > limit + 0.5) {
       final StringBuffer trail = StringBuffer();
       RenderObject? walk = object;
-      for (int depth = 0; depth < 6 && walk != null; depth++) {
+      String? nearestKey;
+      for (int depth = 0; depth < 14 && walk != null; depth++) {
         final Object? creator = walk.debugCreator;
         if (creator is DebugCreator) {
           trail.write(' ${creator.element.widget.runtimeType}');
+          // The closest keyed widget names the site, which a render-object trail never does.
+          final Key? key = creator.element.widget.key;
+          nearestKey ??= key == null ? null : '$key';
         }
         walk = walk.parent;
+      }
+      if (nearestKey != null) {
+        trail.write('  keyedBy=$nearestKey');
       }
       final List<String> kids = <String>[];
       object.visitChildren((RenderObject child) {
         if (child is RenderBox) {
+          final Object? childCreator = child.debugCreator;
           kids.add(
-            '${child.runtimeType} ${horizontal ? child.size.width : child.size.height}',
+            '${childCreator is DebugCreator ? childCreator.element.widget.runtimeType : child.runtimeType}'
+            ' ${horizontal ? child.size.width : child.size.height}',
           );
         }
       });
+      // The flex that starved this one: its sibling heights say who ate the lane.
+      final StringBuffer parent = StringBuffer();
+      RenderObject? up = object.parent;
+      int hops = 0;
+      while (up != null && hops < 3) {
+        if (up is RenderFlex) {
+          final List<String> sib = <String>[];
+          up.visitChildren((RenderObject child) {
+            if (child is RenderBox) {
+              final Object? c = child.debugCreator;
+              final String name = c is DebugCreator
+                  ? '${c.element.widget.runtimeType}'
+                  : '${child.runtimeType}';
+              sib.add('$name ${child.size.height.toStringAsFixed(0)}');
+            }
+          });
+          parent.write(' flex$hops=[$sib]');
+          hops++;
+        }
+        up = up.parent;
+      }
       found.add(
         '${horizontal ? "row" : "column"} needs ${used.toStringAsFixed(1)} of '
-        '${limit.toStringAsFixed(1)} at$trail children=$kids',
+        '${limit.toStringAsFixed(1)} at$trail children=$kids$parent',
       );
     }
   }
@@ -439,6 +737,12 @@ List<Radius> _radiiIn(WidgetTester tester) {
   for (final Widget widget in tester.allWidgets) {
     if (widget is DecoratedBox && widget.decoration is BoxDecoration) {
       add((widget.decoration as BoxDecoration).borderRadius);
+    } else if (widget is DecoratedBox && widget.decoration is ShapeDecoration) {
+      // A chamfered panel paints through ShapeDecoration, and only a radius inside it is an offence.
+      final ShapeBorder shape = (widget.decoration as ShapeDecoration).shape;
+      if (shape is RoundedRectangleBorder) {
+        add(shape.borderRadius);
+      }
     } else if (widget is Material && widget.shape is RoundedRectangleBorder) {
       add((widget.shape as RoundedRectangleBorder).borderRadius);
     } else if (widget is Card && widget.shape is RoundedRectangleBorder) {
@@ -451,3 +755,27 @@ List<Radius> _radiiIn(WidgetTester tester) {
 
   return found;
 }
+
+/// Every `file:line` in `lib/` whose text matches [pattern], except the files the law allows.
+List<String> _libLinesMatching(
+  RegExp pattern, {
+  Set<String> skip = const <String>{},
+}) {
+  final List<String> found = <String>[];
+  for (final File file in Directory(
+    'lib',
+  ).listSync(recursive: true).whereType<File>()) {
+    if (!file.path.endsWith('.dart') || skip.contains(file.path)) {
+      continue;
+    }
+    for (final (int index, String line) in file.readAsLinesSync().indexed) {
+      if (pattern.hasMatch(line)) {
+        found.add('${file.path}:${index + 1} ${line.trim()}');
+      }
+    }
+  }
+  return found;
+}
+
+String _hex(Color color) =>
+    '#${(color.toARGB32() & 0xFFFFFF).toRadixString(16).padLeft(6, '0')}';

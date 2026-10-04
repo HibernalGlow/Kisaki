@@ -31,7 +31,14 @@ class ResultsPanel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        _ResultsHeader(controller: controller),
+        // The header strip wraps its controls onto more runs as the text grows, and an uncapped Wrap
+        // measured 438 tall in a narrow lane - it ate the table down to 3 pixels. So the strip is the
+        // child that gives way first, and it scrolls its own overflow instead of spending the rows.
+        Flexible(
+          child: SingleChildScrollView(
+            child: _ResultsHeader(controller: controller),
+          ),
+        ),
         _ScanNotice(controller: controller),
         if (controller.supportsFolderView) ...<Widget>[
           FoldersViewSwitch(controller: controller),

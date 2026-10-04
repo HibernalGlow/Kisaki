@@ -514,7 +514,7 @@ class _ChoiceField extends StatelessWidget {
                   Labels.of(option),
                   style: TextStyle(
                     fontSize: BoardTokens.fsLabel,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: active ? palette.fgInverted : palette.fg,
                   ),
                 ),

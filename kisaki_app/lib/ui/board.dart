@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/board_step.dart';
 import '../state/card_layout.dart';
 import '../theme/board_theme.dart';
 import 'board_blocks.dart';
@@ -217,6 +218,10 @@ class _Lanes extends StatelessWidget {
 
     final String? solo = layout.soloLane;
 
+    // Derived per build: exactly one lane carries the accent rule, and which one it is comes from
+    // the scan state rather than from anything the layout stores.
+    final BoardStep step = currentBoardStep(controller);
+
     // Every lane header carries the reference's two lane controls: how its blocks are arranged, and
     // whether the lane takes the whole board.
     List<Widget> laneActions(String id, {CardPanel? panel}) => <Widget>[
@@ -246,6 +251,8 @@ class _Lanes extends StatelessWidget {
     Lane sourceLane({double? width}) => Lane(
       titleKey: 'lane-source',
       letter: 'S',
+      step: BoardStep.source.number,
+      active: step == BoardStep.source,
       collapsed: layout.sourceCollapsed,
       onToggle: () => controller.toggleLane('source'),
       actions: laneActions('source', panel: CardPanel.source),
@@ -261,6 +268,8 @@ class _Lanes extends StatelessWidget {
     Lane resultsLane({double? width}) => Lane(
       titleKey: 'lane-results',
       letter: 'R',
+      step: BoardStep.results.number,
+      active: step == BoardStep.results,
       collapsed: layout.resultsCollapsed,
       onToggle: () => controller.toggleLane('results'),
       actions: laneActions('results'),
@@ -271,6 +280,8 @@ class _Lanes extends StatelessWidget {
     Lane analysisLane({double? width}) => Lane(
       titleKey: 'lane-analysis',
       letter: 'A',
+      step: BoardStep.analysis.number,
+      active: step == BoardStep.analysis,
       collapsed: layout.analysisCollapsed,
       onToggle: () => controller.toggleLane('analysis'),
       actions: laneActions('analysis', panel: CardPanel.analysis),
