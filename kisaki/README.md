@@ -80,6 +80,24 @@ Duplicate files, empty folders, big files, empty files, temporary files, similar
 videos, same music, invalid symlinks, broken files, bad extensions, bad names, EXIF remover and
 video optimizer.
 
+## On disk
+
+`main()` registers the engine's folders before anything else: `set_config_cache_path("Czkawka", "Kisaki")`.
+The first argument names the **cache** folder, the second the **config** one, so on macOS the settings
+land in `~/Library/Application Support/pl.Qarmin.Kisaki/kisaki_settings.json` while scan caches and the
+thumbnail store land in `~/Library/Caches/pl.Qarmin.Czkawka`, next to the log file - `kisaki.log`, which
+`czkawka_core/src/common/logger.rs:41` puts in the cache folder under the app name given to `setup_logger`.
+Both folders were read back here after real runs: the config one holds `kisaki_settings.json`, the cache
+one holds `kisaki.log`, `video_thumbnails/` and a `cache_duplicates_*_120.bin`.
+
+That asymmetry is Krokiet's own (`krokiet/src/main.rs` passes `("Czkawka", "Krokiet")`): caches are shared
+by the whole Czkawka family so a scan already done by any frontend can be reused, while each frontend keeps
+its own settings. Sharing stays safe because the cache format version is part of the file name
+(`cache_duplicates_{algo}_{VERSION}.bin`, `czkawka_core/src/tools/duplicate/core.rs:706`), so a reader only
+ever opens files whose name carries the version its own core writes. `CZKAWKA_CONFIG_PATH` and
+`CZKAWKA_CACHE_PATH` override either folder. The Flutter bridge registers the same pair in its
+`#[frb(init)]`, so both Kisaki frontends use these two folders.
+
 ## Safety
 
 Delete and export default to **dry run**, which only produces a per-item plan and touches no files.
