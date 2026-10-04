@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../l10n/labels.dart';
+import '../state/token_rules.dart';
 import '../theme/board_theme.dart';
 import 'widgets/primitives.dart';
 
@@ -14,6 +15,9 @@ typedef PathPicker = Future<List<String>> Function(
 
 /// One editable string list: existing entries carry a remove control, the field at the
 /// bottom appends, and the header actions cover bulk paste and clear.
+///
+/// Entries the engine cannot use are marked rather than dropped, and an excluded-rule list gets the
+/// `$TRASH` preset in one click - both from the reference's token editor.
 class TokenListEditor extends StatefulWidget {
   const TokenListEditor({
     required this.entries,
@@ -23,6 +27,7 @@ class TokenListEditor extends StatefulWidget {
     required this.placeholder,
     this.onManualEntry,
     this.label,
+    this.kind = TokenKind.path,
     super.key,
   });
 
@@ -33,6 +38,7 @@ class TokenListEditor extends StatefulWidget {
   final String placeholder;
   final VoidCallback? onManualEntry;
   final String? label;
+  final TokenKind kind;
 
   @override
   State<TokenListEditor> createState() => _TokenListEditorState();
@@ -87,18 +93,27 @@ class _TokenListEditorState extends State<TokenListEditor> {
               itemCount: widget.entries.length,
               itemBuilder: (BuildContext context, int index) {
                 final String entry = widget.entries[index];
+                final String? problemKey = tokenProblemKey(widget.kind, entry);
+                final Text entryLabel = Text(
+                  entry,
+                  key: Key('token-entry-$entry'),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    fontSize: BoardTokens.fsLabel,
+                    color: problemKey == null ? palette.fg : palette.danger,
+                  ),
+                );
                 return Row(
                   children: <Widget>[
                     Expanded(
-                      child: Text(
-                        entry,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: BoardTokens.fsLabel,
-                          color: palette.fg,
-                        ),
-                      ),
+                      child: problemKey == null
+                          ? entryLabel
+                          : Tooltip(
+                              key: Key('token-problem-$entry'),
+                              message: Labels.of(problemKey),
+                              child: entryLabel,
+                            ),
                     ),
                     IconButton(
                       icon: const Icon(Icons.close_rounded, size: 13),
@@ -139,6 +154,20 @@ class _TokenListEditorState extends State<TokenListEditor> {
                 onPressed: _submit,
               ),
             ),
+            if (widget.kind == TokenKind.rule) ...<Widget>[
+              const SizedBox(width: BoardTokens.gapSmall),
+              Flexible(
+                child: BoardAction(
+                  key: Key('token-trash-${widget.label ?? widget.placeholder}'),
+                  labelKey: 'token-add-trash',
+                  icon: Icons.delete_outline_rounded,
+                  iconOnly: true,
+                  onPressed: widget.entries.contains(trashRule)
+                      ? null
+                      : () => widget.onAdd(trashRule),
+                ),
+              ),
+            ],
             if (widget.onManualEntry != null) ...<Widget>[
               const SizedBox(width: BoardTokens.gapSmall),
               Flexible(

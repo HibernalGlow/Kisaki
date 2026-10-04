@@ -575,6 +575,10 @@ class Labels {
     'row-menu-copy-name': 'Copy the file name',
     'row-menu-copy-path': 'Copy the full path',
     'row-menu-select-group': 'Select the whole group',
+    'token-add-trash': r'Add the $TRASH rule',
+    'token-bad-extension': 'An extension is written without a dot or a space',
+    'token-bad-rule':
+        r'A rule needs a * wildcard, or the DEFAULT or $TRASH preset',
     'preset-action-apply': 'Apply',
     'preset-action-delete': 'Delete',
     'preset-action-export': 'Copy as text',

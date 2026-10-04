@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/token_rules.dart';
 import '../theme/board_theme.dart';
 import 'simiu_panel.dart';
 import 'scan_preset_card.dart';
@@ -52,6 +53,7 @@ class _BlockSpec {
     required this.add,
     required this.removeAt,
     required this.clear,
+    this.kind = TokenKind.path,
   });
 
   final String labelKey;
@@ -60,6 +62,7 @@ class _BlockSpec {
   final void Function(Iterable<String>) add;
   final void Function(int) removeAt;
   final VoidCallback clear;
+  final TokenKind kind;
 }
 
 class _PathsTab extends StatelessWidget {
@@ -96,6 +99,7 @@ class _PathsTab extends StatelessWidget {
       _BlockSpec(
         labelKey: 'label-excluded-items',
         placeholder: '*/.git/*',
+        kind: TokenKind.rule,
         entries: () => controller.excludedItems,
         add: controller.addExcludedItem,
         removeAt: controller.removeExcludedItem,
@@ -104,6 +108,7 @@ class _PathsTab extends StatelessWidget {
       _BlockSpec(
         labelKey: 'label-allowed-ext',
         placeholder: 'jpg',
+        kind: TokenKind.extension,
         entries: () => controller.allowedExtensions,
         add: controller.addAllowedExtension,
         removeAt: controller.removeAllowedExtension,
@@ -112,6 +117,7 @@ class _PathsTab extends StatelessWidget {
       _BlockSpec(
         labelKey: 'label-excluded-ext',
         placeholder: 'tmp',
+        kind: TokenKind.extension,
         entries: () => controller.excludedExtensions,
         add: controller.addExcludedExtension,
         removeAt: controller.removeExcludedExtension,
@@ -255,6 +261,7 @@ class _Block extends StatelessWidget {
       children: <Widget>[
         TokenListEditor(
           label: Labels.of(block.labelKey),
+          kind: block.kind,
           entries: block.entries(),
           placeholder: block.placeholder,
           onAdd: (String value) => block.add(<String>[value]),
@@ -641,6 +648,7 @@ class _TokenFieldState extends State<_TokenField> {
       children: <Widget>[
         TokenListEditor(
           label: Labels.of(widget.def.labelKey),
+          kind: TokenKind.extension,
           entries: _local,
           placeholder: 'jpg',
           onAdd: (String token) {
