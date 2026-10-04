@@ -63,6 +63,26 @@ MSVC is genuinely required. The `flutter-windows` job therefore exists but runs 
 and on the default branch: it needs one green run on a real runner before it is safe to gate pull
 requests with, and until then the script's guards are verified only against a stub toolchain.
 
+## Codec support
+
+The bridge builds against `czkawka_core` with **no** native codec features by default, and that is not
+a harmless omission: with `heif` off, `check_if_can_display_image` (core `common/image.rs:271`) leaves
+HEIC out of the allowed extension list, so a scan of an iPhone photo folder simply sees fewer files -
+no error, no row, no message. Measured here, both directions: `cargo test -p kisaki_bridge` passes the
+equivalence test with `heif_build == check_if_can_display_image("photo.HEIC")`, and the same test
+passes under `cargo test -p kisaki_bridge --features heif` (124 tests either way, libheif compiling
+cleanly on this machine).
+
+`rust/Cargo.toml` therefore forwards the same four optional features the Slint frontend exposes -
+`heif`, `libraw`, `libavif`, `xdg_portal_trash` - so one build flag decides both frontends, and
+`codec_info()` returns the compiled-in set plus the engine's own diagnostic text for the UI to show
+instead of staying silent. That last part is not finished: `codec_info` exists in Rust and in tests,
+but its Dart binding has not been generated yet (run the codegen recipe under "Changing the bridge
+API" when the Dart toolchain is free, then surface it in the about card). Note the CI asymmetry this
+exposes: the Linux job builds the Slint crate
+`--features heif,libraw,libavif` while the macOS and Windows jobs build it plain, so today only the
+Linux frontend binary can hash HEIC.
+
 ## Gates
 
 Every one of these is part of CI (`.github/workflows/kisaki.yml`, jobs `bridge` and `dart`).
