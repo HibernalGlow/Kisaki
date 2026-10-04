@@ -167,3 +167,10 @@ binding those pngs is swallowed by the root `.gitignore` rule for json files). `
 launches with the system generic icon on all three platforms. Adding Kisaki art later means an appiconset
 plus its descriptor, the setting restored, and an `app_icon.ico`.
 
+Brand text is checked rather than assumed. `flutter create` does not substitute the `APP_NAME` literal it
+writes into `macos/Runner/Base.lproj/MainMenu.xib` - generating a fresh project with this toolchain leaves
+all six occurrences in place - so the application menu and its About, Hide and Quit items would ship that
+token. `misc/check_brand_tokens.py` greps the app's tracked text files for it and for `com.example`, and
+runs under `just fix` and in CI. The compiled nib is readable without launching anything: `ibtool --compile
+out.nib MainMenu.xib` then `strings out.nib` lists `About Kisaki`, `Hide Kisaki`, `Quit Kisaki`.
+
