@@ -9,6 +9,7 @@ import '../l10n/labels.dart';
 import '../util/format.dart';
 import 'activity_log.dart';
 import 'analysis_stats.dart';
+import 'export_scope.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
 import 'group_organize.dart';
@@ -132,6 +133,9 @@ class BoardController extends ChangeNotifier {
   bool _folderView = false;
   final SimiuModel _simiu = SimiuModel();
   String _selectionAnchor = '';
+
+  /// Which row set the export card writes. The reference opens on the selection, not the result.
+  ExportScope _exportScope = ExportScope.selected;
 
   /// Index into [_visible]: the row the keyboard works on. -1 means the table has no cursor yet.
   int _cursor = -1;

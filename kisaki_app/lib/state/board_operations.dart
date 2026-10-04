@@ -238,8 +238,27 @@ extension BoardFileOperations on BoardController {
     }
   }
 
+  /// The scope the export card is set to, and the rows it resolves to right now.
+  ExportScope get exportScope => _exportScope;
+
+  List<ScanRow> get exportScopeRows => rowsForScope(
+    scope: _exportScope,
+    all: _rows,
+    visible: _visible,
+    selected: _selected,
+  );
+
+  void setExportScope(ExportScope scope) {
+    if (_exportScope == scope) {
+      return;
+    }
+    _exportScope = scope;
+    publish();
+  }
+
   Future<void> exportResults(String path, {String format = 'json'}) async {
-    if (_rows.isEmpty) {
+    final List<ScanRow> scope = exportScopeRows;
+    if (scope.isEmpty) {
       _setStatus('status_nothing_to_export');
       publish();
       return;
@@ -250,7 +269,7 @@ extension BoardFileOperations on BoardController {
       final String folder = await engine.exportResults(
         ExportRequest(
           tool: _tool?.id ?? '',
-          rows: _rows,
+          rows: scope,
           path: path,
           format: format,
           grouped: _tool?.grouped ?? false,

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
+import '../state/export_scope.dart';
 import '../theme/board_theme.dart';
 import 'widgets/primitives.dart';
 
@@ -142,103 +143,170 @@ class KisakiOverlays {
     BuildContext context,
     BoardController controller,
   ) async {
-    final TextEditingController path = TextEditingController();
-    String format = 'json';
+    final ({String path, String format})? choice =
+        await showDialog<({String path, String format})>(
+          context: context,
+          builder: (BuildContext context) =>
+              _ExportDialog(controller: controller),
+        );
+    if (choice != null) {
+      await controller.exportResults(choice.path, format: choice.format);
+    }
+  }
+}
+
+/// The export sheet. It owns its text field on purpose: the route is still animating away after a
+/// pop, and a field disposed by the caller is then read by a widget that no longer exists.
+class _ExportDialog extends StatefulWidget {
+  const _ExportDialog({required this.controller});
+
+  final BoardController controller;
+
+  @override
+  State<_ExportDialog> createState() => _ExportDialogState();
+}
+
+class _ExportDialogState extends State<_ExportDialog> {
+  static const List<String> _formats = <String>['json', 'csv'];
+
+  final TextEditingController _path = TextEditingController();
+  String _format = 'json';
+
+  @override
+  void initState() {
+    super.initState();
+    _path.addListener(_onPathChanged);
+  }
+
+  void _onPathChanged() => setState(() {});
+
+  @override
+  void dispose() {
+    _path.removeListener(_onPathChanged);
+    _path.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
-    final bool? confirmed = await showDialog<bool>(
-      context: context,
-      builder: (BuildContext dialogContext) => StatefulBuilder(
-        builder: (BuildContext context, StateSetter setDialogState) =>
-            AlertDialog(
-              key: const Key('export-dialog'),
-              title: Text(
-                Labels.of('action-export'),
-                style: TextStyle(
-                  fontSize: BoardTokens.fsTitle,
-                  fontWeight: FontWeight.w700,
-                  color: palette.fg,
+    return AnimatedBuilder(
+      animation: widget.controller,
+      builder: (BuildContext context, Widget? _) {
+        final int scopeRows = widget.controller.exportScopeRows.length;
+        return AlertDialog(
+          key: const Key('export-dialog'),
+          title: Text(
+            Labels.of('action-export'),
+            style: TextStyle(
+              fontSize: BoardTokens.fsTitle,
+              fontWeight: FontWeight.w700,
+              color: palette.fg,
+            ),
+          ),
+          content: SizedBox(
+            width: 420,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                MicroHeading(Labels.of('export-scope-title')),
+                const SizedBox(height: BoardTokens.gapSmall),
+                BoardDropdown<ExportScope>(
+                  key: const Key('export-scope'),
+                  labelKey: 'export-scope-title',
+                  values: ExportScope.values,
+                  current: widget.controller.exportScope,
+                  label: (ExportScope scope) => Labels.of(scope.labelKey),
+                  onChanged: widget.controller.setExportScope,
                 ),
-              ),
-              content: SizedBox(
-                width: 420,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: <Widget>[
-                    MicroHeading('col_info'),
-                    const SizedBox(height: BoardTokens.gapSmall),
-                    TextField(
-                      key: const Key('export-path'),
-                      controller: path,
-                      style: TextStyle(
-                        fontSize: BoardTokens.fsBody,
-                        color: palette.fg,
-                      ),
-                      decoration: const InputDecoration(
-                        hintText: '/tmp/kisaki-results',
-                      ),
-                    ),
-                    const SizedBox(height: BoardTokens.gap),
-                    Wrap(
-                      spacing: BoardTokens.gapSmall,
-                      children: <String>['json', 'csv'].map((String option) {
-                        final bool active = option == format;
-                        return GestureDetector(
-                          key: Key('export-format-$option'),
-                          onTap: () => setDialogState(() => format = option),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: BoardTokens.gap,
-                              vertical: 5,
-                            ),
-                            decoration: BoxDecoration(
-                              color: active ? palette.primary : palette.raised,
-                              borderRadius: BorderRadius.circular(
-                                BoardTokens.radius,
-                              ),
-                              border: Border.all(
-                                color: active
-                                    ? palette.primary
-                                    : palette.border,
-                              ),
-                            ),
-                            child: Text(
-                              option.toUpperCase(),
-                              style: TextStyle(
-                                fontSize: BoardTokens.fsCaption,
-                                fontWeight: FontWeight.w700,
-                                color: active
-                                    ? palette.fgInverted
-                                    : palette.fgMuted,
-                              ),
-                            ),
+                const SizedBox(height: BoardTokens.gapSmall),
+                // The count is the readback: the reader sees which rows the choice resolves to
+                // before anything reaches the engine.
+                Text(
+                  Labels.of(
+                    'export-scope-count',
+                    args: <String, Object>{'count': scopeRows},
+                  ),
+                  key: const Key('export-scope-count'),
+                  style: palette.text.bodySmall?.copyWith(
+                    color: palette.fgMuted,
+                  ),
+                ),
+                const SizedBox(height: BoardTokens.gap),
+                MicroHeading(Labels.of('export-path-title')),
+                const SizedBox(height: BoardTokens.gapSmall),
+                TextField(
+                  key: const Key('export-path'),
+                  controller: _path,
+                  style: TextStyle(
+                    fontSize: BoardTokens.fsBody,
+                    color: palette.fg,
+                  ),
+                  decoration: const InputDecoration(
+                    hintText: '/tmp/kisaki-results',
+                  ),
+                ),
+                const SizedBox(height: BoardTokens.gap),
+                MicroHeading(Labels.of('export-format-title')),
+                const SizedBox(height: BoardTokens.gapSmall),
+                Wrap(
+                  spacing: BoardTokens.gapSmall,
+                  children: _formats.map((String option) {
+                    final bool active = option == _format;
+                    return GestureDetector(
+                      key: Key('export-format-$option'),
+                      onTap: () => setState(() => _format = option),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: BoardTokens.gap,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: active ? palette.primary : palette.raised,
+                          borderRadius: BorderRadius.circular(
+                            BoardTokens.radius,
                           ),
-                        );
-                      }).toList(),
-                    ),
-                  ],
-                ),
-              ),
-              actions: <Widget>[
-                TextButton(
-                  onPressed: () => Navigator.of(dialogContext).pop(false),
-                  child: Text(Labels.of('confirm-cancel')),
-                ),
-                FilledButton(
-                  key: const Key('export-confirm'),
-                  onPressed: () =>
-                      Navigator.of(dialogContext)
-                          .pop(path.text.trim().isNotEmpty),
-                  child: Text(Labels.of('confirm-ok')),
+                          border: Border.all(
+                            color: active ? palette.primary : palette.border,
+                          ),
+                        ),
+                        child: Text(
+                          option.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: BoardTokens.fsCaption,
+                            fontWeight: FontWeight.w700,
+                            color: active
+                                ? palette.fgInverted
+                                : palette.fgMuted,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
                 ),
               ],
             ),
-      ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(Labels.of('confirm-cancel')),
+            ),
+            FilledButton(
+              key: const Key('export-confirm'),
+              // Like the reference: no path or an empty scope leaves nothing to save.
+              onPressed: _path.text.trim().isEmpty || scopeRows == 0
+                  ? null
+                  : () =>
+                        Navigator.of(context)
+                            .pop((path: _path.text.trim(), format: _format)),
+              child: Text(Labels.of('confirm-ok')),
+            ),
+          ],
+        );
+      },
     );
-    if (confirmed ?? false) {
-      await controller.exportResults(path.text.trim(), format: format);
-    }
-    path.dispose();
   }
 }
 
