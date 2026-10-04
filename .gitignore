@@ -62,3 +62,8 @@ temp/
 !kisaki_app/**/CMakeLists.txt
 !kisaki_app/test/
 !kisaki_app/test/**
+
+# Same reason for the extracted packages: without these two lines a package's tests are invisible to
+# git, so the package ships with its only proof left behind.
+!packages/**/test/
+!packages/**/test/**
