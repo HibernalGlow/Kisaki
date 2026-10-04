@@ -16,5 +16,15 @@ crossbeam-channel = "0.5"
 futures = "0.3"
 serde_json = "1.0"
 
+# Same optional codecs the Slint frontend exposes, so one build flag decides both. Left off by
+# default because each one needs a native library: a build without them still compiles everywhere,
+# it simply drops those formats from a scan - which codec_info() reports.
+[features]
+default = []
+heif = ["czkawka_core/heif"]
+libraw = ["czkawka_core/libraw"]
+libavif = ["czkawka_core/libavif"]
+xdg_portal_trash = ["czkawka_core/xdg_portal_trash"]
+
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }
