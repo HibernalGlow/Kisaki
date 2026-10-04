@@ -395,7 +395,11 @@ class BoardDropdown<T> extends StatelessWidget {
         isExpanded: true,
         items: <DropdownMenuItem<T>>[
           for (final T value in values)
-            DropdownMenuItem(value: value, child: Text(label(value))),
+            DropdownMenuItem<T>(
+              key: Key('$labelKey-option-${_optionId(value)}'),
+              value: value,
+              child: Text(label(value)),
+            ),
         ],
         onChanged: (T? value) {
           if (value != null) {
@@ -406,6 +410,11 @@ class BoardDropdown<T> extends StatelessWidget {
     );
   }
 }
+
+/// One option's stable id: an enum's name rather than `MoveConflictPolicy.rename`, so a key stays
+/// readable and a test can aim at an option instead of its painted label.
+String _optionId(Object? value) =>
+    value is Enum ? value.name : value.toString();
 
 /// Outlined section with a micro-heading: the Swiss card, hairline and no elevation.
 class SectionCard extends StatelessWidget {
