@@ -149,6 +149,18 @@ class _PathsTab extends StatelessWidget {
           const SizedBox(height: BoardTokens.gap),
           _Block(block: block),
         ],
+        if (controller.allowedExtensions.isNotEmpty &&
+            controller.excludedExtensions.isNotEmpty) ...<Widget>[
+          const SizedBox(height: BoardTokens.gapSmall),
+          Text(
+            Labels.of('hint-ext-allowed-priority'),
+            key: const Key('ext-priority-hint'),
+            style: TextStyle(
+              fontSize: BoardTokens.fsCaption,
+              color: BoardTheme.of(context).fgMuted,
+            ),
+          ),
+        ],
         const SizedBox(height: BoardTokens.gap),
         const Hairline(),
         const SizedBox(height: BoardTokens.gap),
