@@ -13,6 +13,7 @@ import 'card_layout.dart';
 import 'export_scope.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
+import 'file_host.dart';
 import 'floating_panel.dart';
 import 'group_organize.dart';
 import 'image_comparison.dart';
@@ -34,6 +35,7 @@ part 'board_analysis.dart';
 part 'board_card_layout.dart';
 part 'board_cursor.dart';
 part 'board_display.dart';
+part 'board_file_actions.dart';
 part 'board_floating_panel.dart';
 part 'board_operations.dart';
 part 'board_source_lists.dart';
@@ -61,9 +63,13 @@ class LaneLayout {
 
   static const double sourceDefault = 300;
   static const double resultsDefault = 420;
+  static const double analysisDefault = 300;
 
   double sourceWidth = sourceDefault;
   double resultsWidth = resultsDefault;
+
+  /// Only read when the analysis lane is not the last one on the board; the last lane flexes instead.
+  double analysisWidth = analysisDefault;
   bool sourceCollapsed = false;
   bool resultsCollapsed = false;
   bool analysisCollapsed = false;
@@ -71,14 +77,47 @@ class LaneLayout {
   /// One lane given the whole board, as the reference's solo lane. Null shows all three.
   String? soloLane;
 
+  /// Which lane comes first. The reference drags a lane onto its neighbour; the board moves it from the
+  /// layout dialog.
+  List<String> laneOrder = <String>['source', 'results', 'analysis'];
+
   void reset() {
     sourceWidth = sourceDefault;
     resultsWidth = resultsDefault;
+    analysisWidth = analysisDefault;
     sourceCollapsed = false;
     resultsCollapsed = false;
     analysisCollapsed = false;
     soloLane = null;
+    laneOrder = <String>['source', 'results', 'analysis'];
   }
+}
+
+/// The order repaired to hold each lane exactly once, so a dropped or duplicated lane cannot leave the
+/// board without one - the reference's own rule.
+List<String> normalizeLaneOrder(List<String> order) {
+  const List<String> defaults = <String>['source', 'results', 'analysis'];
+  final List<String> next = <String>[];
+  for (final String lane in order) {
+    if (defaults.contains(lane) && !next.contains(lane)) {
+      next.add(lane);
+    }
+  }
+  for (final String lane in defaults) {
+    if (!next.contains(lane)) {
+      next.add(lane);
+    }
+  }
+  return next;
+}
+
+/// Move `lane` to `targetIndex` among the others, clamped to the ends.
+List<String> reorderLanes(List<String> order, String lane, int targetIndex) {
+  final List<String> rest = normalizeLaneOrder(order)
+      .where((String id) => id != lane)
+      .toList();
+  final int index = targetIndex.clamp(0, rest.length);
+  return <String>[...rest.sublist(0, index), lane, ...rest.sublist(index)];
 }
 
 /// Single source of truth for the board, mirroring `src/state.rs` `AppStore`.
@@ -86,7 +125,11 @@ class LaneLayout {
 /// The table renders [visibleRows]; selection is keyed by path so it survives re-sorting
 /// and filtering, and a UI index never addresses the canonical rows directly.
 class BoardController extends ChangeNotifier {
-  BoardController({required this.engine, this.dark = true}) {
+  BoardController({
+    required this.engine,
+    this.dark = true,
+    FileHost? fileHost,
+  }) : _fileHost = fileHost ?? desktopFileHost() {
     _tools = engine.listTools();
     _info = engine.engineInfo();
     if (_tools.isNotEmpty) {
@@ -95,6 +138,9 @@ class BoardController extends ChangeNotifier {
   }
 
   final KisakiEngine engine;
+
+  /// What this build can do about files outside the board: open, reveal, both, or neither.
+  final FileHost _fileHost;
   bool dark;
   LaneLayout layout = LaneLayout();
 
@@ -277,6 +323,18 @@ class BoardController extends ChangeNotifier {
 
   void setResultsWidth(double width) {
     layout.resultsWidth = width;
+    notifyListeners();
+  }
+
+  void setAnalysisWidth(double width) {
+    layout.analysisWidth = width;
+    notifyListeners();
+  }
+
+  /// Put a lane at another place in the row, clamped to the ends, as the reference does when a lane is
+  /// dropped on its neighbour.
+  void moveLane(String lane, int targetIndex) {
+    layout.laneOrder = reorderLanes(layout.laneOrder, lane, targetIndex);
     notifyListeners();
   }
 

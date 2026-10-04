@@ -293,12 +293,13 @@ class _Lanes extends StatelessWidget {
       child: ResultsPanel(controller: controller),
     );
 
-    Lane analysisLane() => Lane(
+    Lane analysisLane({double? width}) => Lane(
       titleKey: 'lane-analysis',
       letter: 'A',
       collapsed: layout.analysisCollapsed,
       onToggle: () => controller.toggleLane('analysis'),
       actions: laneActions('analysis', panel: CardPanel.analysis),
+      width: width,
       child: CardStack(
         controller: controller,
         panel: CardPanel.analysis,
@@ -307,21 +308,85 @@ class _Lanes extends StatelessWidget {
       ),
     );
 
+    // The last lane in the reader's order takes whatever is left; the two before it keep their own
+    // width, with a handle between a lane and the next.
+    final List<String> order = normalizeLaneOrder(layout.laneOrder);
+    final double analysisLaneWidth = layout.analysisCollapsed
+        ? BoardTokens.laneCollapsedWidth
+        : layout.analysisWidth.clamp(
+            BoardTokens.resultsLaneMin,
+            BoardTokens.resultsLaneMax,
+          );
+
+    Widget slotAt(int index, {required bool flexed}) {
+      final String id = order[index];
+      if (id == 'analysis' && !controller.dockedAnalysisVisible) {
+        // The float took the lane, so the freed strip stays empty board rather than a second copy of
+        // the same figures.
+        return const SizedBox(key: Key('analysis-lane-hidden'));
+      }
+      final double? width = flexed
+          ? null
+          : switch (id) {
+              // A board too narrow for the reader's widths holds every fixed lane at its minimum, so
+              // the flexed lane is never asked to absorb a negative remainder.
+              'source' => fits ? sourceWidth : BoardTokens.sourceLaneMin,
+              'results' => fits ? resultsWidth : BoardTokens.resultsLaneMin,
+              _ => fits ? analysisLaneWidth : BoardTokens.resultsLaneMin,
+            };
+      return switch (id) {
+        'source' => sourceLane(width: width),
+        'results' => resultsLane(width: width),
+        _ => analysisLane(width: width),
+      };
+    }
+
+    List<Widget> handleAfter(int index) {
+      final String id = order[index];
+      final bool collapsed = switch (id) {
+        'source' => layout.sourceCollapsed,
+        'results' => layout.resultsCollapsed,
+        _ => layout.analysisCollapsed,
+      };
+      if (collapsed) {
+        return const <Widget>[];
+      }
+      final Widget handle = switch (id) {
+        'source' => LaneDragHandle(
+          read: () => controller.layout.sourceWidth,
+          apply: controller.setSourceWidth,
+          resetTo: LaneLayout.sourceDefault,
+          minWidth: BoardTokens.sourceLaneMin,
+          maxWidth: BoardTokens.sourceLaneMax,
+        ),
+        'results' => LaneDragHandle(
+          read: () => controller.layout.resultsWidth,
+          apply: controller.setResultsWidth,
+          resetTo: LaneLayout.resultsDefault,
+          minWidth: BoardTokens.resultsLaneMin,
+          maxWidth: BoardTokens.resultsLaneMax,
+        ),
+        _ => LaneDragHandle(
+          read: () => controller.layout.analysisWidth,
+          apply: controller.setAnalysisWidth,
+          resetTo: LaneLayout.analysisDefault,
+          minWidth: BoardTokens.resultsLaneMin,
+          maxWidth: BoardTokens.resultsLaneMax,
+        ),
+      };
+      return <Widget>[
+        const SizedBox(width: _handleWidth),
+        handle,
+        const SizedBox(width: _handleWidth),
+      ];
+    }
+
     if (solo != null) {
       // One lane holds the whole board, and the other two leave it entirely.
       return Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          Expanded(
-            child: switch (solo) {
-              'source' => sourceLane(),
-              'results' => resultsLane(),
-              _ =>
-                controller.dockedAnalysisVisible
-                    ? analysisLane()
-                    : const SizedBox(key: Key('analysis-lane-hidden')),
-            },
-          ),
+          Expanded(child: slotAt(order.indexOf(solo), flexed: true)),
         ],
       );
     }
@@ -329,37 +394,11 @@ class _Lanes extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        sourceLane(width: fits ? sourceWidth : BoardTokens.sourceLaneMin),
-        if (!layout.sourceCollapsed) ...<Widget>[
-          const SizedBox(width: _handleWidth),
-          LaneDragHandle(
-            read: () => controller.layout.sourceWidth,
-            apply: controller.setSourceWidth,
-            resetTo: LaneLayout.sourceDefault,
-            minWidth: BoardTokens.sourceLaneMin,
-            maxWidth: BoardTokens.sourceLaneMax,
-          ),
-          const SizedBox(width: _handleWidth),
-        ],
-        resultsLane(width: fits ? resultsWidth : BoardTokens.resultsLaneMin),
-        if (!layout.resultsCollapsed) ...<Widget>[
-          const SizedBox(width: _handleWidth),
-          LaneDragHandle(
-            read: () => controller.layout.resultsWidth,
-            apply: controller.setResultsWidth,
-            resetTo: LaneLayout.resultsDefault,
-            minWidth: BoardTokens.resultsLaneMin,
-            maxWidth: BoardTokens.resultsLaneMax,
-          ),
-          const SizedBox(width: _handleWidth),
-        ],
-        Expanded(
-          child: controller.dockedAnalysisVisible
-              ? analysisLane()
-              // The float took the lane, so the freed strip stays empty board rather than a second
-              // copy of the same figures.
-              : const SizedBox(key: Key('analysis-lane-hidden')),
-        ),
+        slotAt(0, flexed: false),
+        ...handleAfter(0),
+        slotAt(1, flexed: false),
+        ...handleAfter(1),
+        Expanded(child: slotAt(2, flexed: true)),
       ],
     );
   }

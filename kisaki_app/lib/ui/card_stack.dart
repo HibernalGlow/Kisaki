@@ -384,6 +384,11 @@ class _CardManager extends StatelessWidget {
               const SizedBox(height: BoardTokens.gap),
               for (final CardDefinition definition in cardRegistry)
                 _CardRow(controller: controller, definition: definition),
+              const SizedBox(height: BoardTokens.gap),
+              MicroHeading(Labels.of('layout-lanes')),
+              const SizedBox(height: BoardTokens.gapSmall),
+              for (final String lane in controller.layout.laneOrder)
+                _LaneRow(controller: controller, lane: lane),
             ],
           ),
         ),
@@ -400,6 +405,63 @@ class _CardManager extends StatelessWidget {
             labelKey: 'action-close',
             dense: true,
             onPressed: () => Navigator.of(context).pop(),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// One lane's place in the row. The reference drags a lane onto its neighbour; the dialog moves it one
+/// step at a time so the keyboard reaches the same result.
+class _LaneRow extends StatelessWidget {
+  const _LaneRow({required this.controller, required this.lane});
+
+  final BoardController controller;
+  final String lane;
+
+  @override
+  Widget build(BuildContext context) {
+    final BoardPalette palette = BoardTheme.of(context);
+    final List<String> order = controller.layout.laneOrder;
+    final int index = order.indexOf(lane);
+    return Padding(
+      key: Key('lane-order-row-$lane'),
+      padding: const EdgeInsets.only(bottom: BoardTokens.gapSmall),
+      child: Row(
+        children: <Widget>[
+          Expanded(
+            child: Text(
+              Labels.of('lane-$lane'),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(
+                fontSize: BoardTokens.fsLabel,
+                fontWeight: FontWeight.w600,
+                color: palette.fg,
+              ),
+            ),
+          ),
+          BoardAction(
+            key: Key('lane-earlier-$lane'),
+            labelKey: 'layout-move-earlier',
+            icon: Icons.arrow_back_rounded,
+            dense: true,
+            iconOnly: true,
+            onPressed: index == 0
+                ? null
+                : () => controller.moveLane(lane, index - 1),
+          ),
+          const SizedBox(width: BoardTokens.gapSmall),
+          BoardAction(
+            key: Key('lane-later-$lane'),
+            labelKey: 'layout-move-later',
+            icon: Icons.arrow_forward_rounded,
+            dense: true,
+            iconOnly: true,
+            onPressed: index == order.length - 1
+                ? null
+                : () => controller.moveLane(lane, index + 1),
           ),
         ],
       ),
