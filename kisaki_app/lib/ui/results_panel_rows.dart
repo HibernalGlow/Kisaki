@@ -295,18 +295,14 @@ class _GroupStrip extends StatelessWidget {
           // Colour is never the only signal, so the group number is printed.
           Text(
             '${Labels.of('col-group')} ${row.groupIndex + 1}',
-            style: TextStyle(
-              fontSize: BoardTokens.fsCaption,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.6,
-              color: palette.fgMuted,
-            ),
+            style: palette.microLabel(),
           ),
           const SizedBox(width: BoardTokens.gap),
           Text(
             '${row.groupSize}',
             style: TextStyle(
               fontSize: BoardTokens.fsCaption,
+              height: BoardTokens.lhCaption / BoardTokens.fsCaption,
               color: palette.fgFaint,
             ),
           ),
@@ -377,6 +373,7 @@ class _ResultRow extends StatelessWidget {
               '${row.groupIndex + 1}',
               style: TextStyle(
                 fontSize: BoardTokens.fsLabel,
+                height: BoardTokens.lhLabel / BoardTokens.fsLabel,
                 color: palette.fgFaint,
               ),
             ),
@@ -408,7 +405,8 @@ class _ResultRow extends StatelessWidget {
                           overflow: TextOverflow.ellipsis,
                           style: TextStyle(
                             fontSize: BoardTokens.fsBody,
-                            fontWeight: FontWeight.w600,
+                            height: BoardTokens.lhBody / BoardTokens.fsBody,
+                            fontWeight: FontWeight.w700,
                             color: selected ? palette.primary : palette.fg,
                           ),
                         ),
@@ -428,7 +426,10 @@ class _ResultRow extends StatelessWidget {
                                     overflow: TextOverflow.ellipsis,
                                     style: TextStyle(
                                       fontSize: BoardTokens.fsBody,
-                                      fontWeight: FontWeight.w600,
+                                      height:
+                                          BoardTokens.lhBody /
+                                          BoardTokens.fsBody,
+                                      fontWeight: FontWeight.w700,
                                       color: selected
                                           ? palette.primary
                                           : palette.fg,
@@ -448,6 +449,8 @@ class _ResultRow extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: BoardTokens.fsCaption,
+                              height:
+                                  BoardTokens.lhCaption / BoardTokens.fsCaption,
                               color: palette.fgFaint,
                             ),
                           ),
@@ -482,6 +485,7 @@ class _ResultRow extends StatelessWidget {
                     ? palette.tableFigure()
                     : TextStyle(
                         fontSize: BoardTokens.fsLabel,
+                        height: BoardTokens.lhLabel / BoardTokens.fsLabel,
                         color: palette.fg,
                       ),
               ),
@@ -629,6 +633,7 @@ class _RefBadge extends StatelessWidget {
         Labels.of('badge-reference'),
         style: TextStyle(
           fontSize: BoardTokens.fsCaption,
+          height: BoardTokens.lhCaption / BoardTokens.fsCaption,
           fontWeight: FontWeight.w700,
           color: palette.warn,
         ),

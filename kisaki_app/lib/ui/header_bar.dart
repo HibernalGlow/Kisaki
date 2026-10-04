@@ -82,10 +82,9 @@ class _ScannerPicker extends StatelessWidget {
           horizontal: BoardTokens.gap,
           vertical: 6,
         ),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: palette.raised,
-          borderRadius: BorderRadius.circular(BoardTokens.radius),
-          border: Border.all(color: palette.border),
+          shape: BoardShape.panel(palette.border),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -100,7 +99,7 @@ class _ScannerPicker extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
                 style: TextStyle(
                   fontSize: BoardTokens.fsLabel,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                   color: palette.fg,
                 ),
               ),
@@ -131,10 +130,9 @@ class _ScanControl extends StatelessWidget {
           horizontal: BoardTokens.gap * 1.5,
           vertical: 6,
         ),
-        decoration: BoxDecoration(
+        decoration: ShapeDecoration(
           color: running ? palette.dangerSoft : palette.primary,
-          borderRadius: BorderRadius.circular(BoardTokens.radius),
-          border: Border.all(color: running ? palette.danger : palette.primary),
+          shape: BoardShape.panel(running ? palette.danger : palette.primary),
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,

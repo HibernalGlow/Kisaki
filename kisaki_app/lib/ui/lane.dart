@@ -4,10 +4,13 @@ import '../l10n/labels.dart';
 import '../theme/board_theme.dart';
 import 'widgets/primitives.dart';
 
-/// One board column: header strip with a micro-heading plus a collapse control.
+/// One board column: a numbered step header plus its content.
 ///
 /// Collapsed lanes show a single letter - the product draws no icons and Slint has no
 /// vertical text, so the Flutter port keeps the same rule instead of slicing a title.
+///
+/// The `step` marker is the board's answer to "which stage is in progress": the number is printed
+/// whether or not the lane is live, and only the colour and the top rule say which one is.
 class Lane extends StatelessWidget {
   const Lane({
     required this.titleKey,
@@ -17,6 +20,8 @@ class Lane extends StatelessWidget {
     required this.child,
     this.width,
     this.actions = const <Widget>[],
+    this.step,
+    this.active = false,
     super.key,
   });
 
@@ -27,6 +32,8 @@ class Lane extends StatelessWidget {
   final Widget child;
   final double? width;
   final List<Widget> actions;
+  final String? step;
+  final bool active;
 
   @override
   Widget build(BuildContext context) {
@@ -37,18 +44,17 @@ class Lane extends StatelessWidget {
         onTap: onToggle,
         child: Container(
           width: BoardTokens.laneCollapsedWidth,
-          decoration: BoxDecoration(
+          decoration: ShapeDecoration(
             color: palette.card,
-            border: Border.all(color: palette.hairline),
-            borderRadius: BorderRadius.circular(BoardTokens.radius),
+            shape: BoardShape.panel(palette.hairline),
           ),
           alignment: Alignment.topCenter,
           padding: const EdgeInsets.only(top: BoardTokens.gap),
           child: Text(
             letter,
             style: TextStyle(
-              fontSize: BoardTokens.fsTitle,
-              fontWeight: FontWeight.w700,
+              fontSize: BoardTokens.fsLabel,
+              fontWeight: BoardTokens.weightEmphasis,
               color: palette.fgMuted,
             ),
           ),
@@ -59,31 +65,67 @@ class Lane extends StatelessWidget {
     return Container(
       key: Key('lane-$letter'),
       width: width,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: palette.card,
-        border: Border.all(color: palette.hairline),
-        borderRadius: BorderRadius.circular(BoardTokens.radius),
+        shape: BoardShape.panel(palette.hairline),
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
+          // The rule and the title share one 44px strip, so marking the live step costs the board no
+          // height at all - the strip reserves the rule inside itself.
           SizedBox(
             height: BoardTokens.laneHeaderHeight,
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: BoardTokens.pad),
-              child: Row(
-                children: <Widget>[
-                  Expanded(child: KeyHeading(titleKey)),
-                  ...actions,
-                  IconButton(
-                    icon: const Icon(Icons.remove_rounded, size: 16),
-                    visualDensity: VisualDensity.compact,
-                    tooltip: Labels.of(titleKey),
-                    onPressed: onToggle,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                SizedBox(
+                  height: BoardTokens.stepRuleThickness,
+                  child: ColoredBox(
+                    key: Key('lane-rule-$letter'),
+                    color: active ? palette.primary : palette.card,
                   ),
-                ],
-              ),
+                ),
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: BoardTokens.pad,
+                    ),
+                    child: Row(
+                      children: <Widget>[
+                        if (step != null)
+                          Text(
+                            step!,
+                            key: Key('lane-step-$letter'),
+                            style: palette.stepLabel(
+                              color: active ? palette.primary : palette.fgMuted,
+                            ),
+                          ),
+                        if (step != null)
+                          const SizedBox(width: BoardTokens.gapSmall),
+                        Expanded(child: KeyHeading(titleKey)),
+                        ...actions,
+                        IconButton(
+                          icon: const Icon(Icons.remove_rounded, size: 16),
+                          // The strip's height comes from the touch row, so its own control stays
+                          // dense and the actions keep their place in a narrow lane.
+                          style: IconButton.styleFrom(
+                            fixedSize: const Size.square(
+                              BoardTokens.laneHeaderHeight -
+                                  BoardTokens.stepRuleThickness -
+                                  BoardTokens.gap,
+                            ),
+                            padding: EdgeInsets.zero,
+                          ),
+                          tooltip: Labels.of(titleKey),
+                          onPressed: onToggle,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
           const Hairline(),

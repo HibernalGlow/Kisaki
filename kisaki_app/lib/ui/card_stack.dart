@@ -87,10 +87,9 @@ class _LayoutCard extends StatelessWidget {
     return Container(
       key: Key('card-${card.id.name}'),
       height: card.collapsed ? null : card.height,
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: palette.card,
-        borderRadius: BorderRadius.circular(BoardTokens.radius),
-        border: Border.all(color: palette.border),
+        shape: BoardShape.panel(palette.border),
       ),
       clipBehavior: Clip.hardEdge,
       child: Column(
@@ -437,7 +436,7 @@ class _LaneRow extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: BoardTokens.fsLabel,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: palette.fg,
               ),
             ),
@@ -495,7 +494,7 @@ class _CardRow extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                   style: TextStyle(
                     fontSize: BoardTokens.fsLabel,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                     color: palette.fg,
                   ),
                 ),

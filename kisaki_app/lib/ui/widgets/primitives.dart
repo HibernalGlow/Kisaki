@@ -20,12 +20,7 @@ class MicroHeading extends StatelessWidget {
           child: Text(
             text.toUpperCase(),
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
-              fontSize: BoardTokens.fsCaption,
-              fontWeight: FontWeight.w700,
-              letterSpacing: 0.7,
-              color: color ?? palette.fgMuted,
-            ),
+            style: palette.microLabel(color: color ?? palette.fgMuted),
           ),
         ),
         ?trailing,
@@ -80,10 +75,9 @@ class FlatCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final BoardPalette palette = BoardTheme.of(context);
     return Container(
-      decoration: BoxDecoration(
+      decoration: ShapeDecoration(
         color: filled ? palette.sunken : palette.card,
-        borderRadius: BorderRadius.circular(BoardTokens.radius),
-        border: Border.all(color: palette.hairline),
+        shape: BoardShape.panel(palette.hairline),
       ),
       padding: padding ?? const EdgeInsets.all(BoardTokens.pad),
       child: child,
@@ -242,7 +236,7 @@ class BoardAction extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: BoardTokens.fsLabel,
-                fontWeight: FontWeight.w600,
+                fontWeight: FontWeight.w700,
                 color: enabled ? (tone ?? palette.fg) : palette.fgFaint,
               ),
             ),
@@ -254,8 +248,10 @@ class BoardAction extends StatelessWidget {
       child: Container(
         padding: iconOnly
             ? const EdgeInsets.all(BoardTokens.gapSmall)
+            // A dense strip cannot carry a full gutter on both sides and still fit its siblings, so
+            // it keeps one step of horizontal padding.
             : EdgeInsets.symmetric(
-                horizontal: BoardTokens.gap,
+                horizontal: dense ? BoardTokens.gapSmall : BoardTokens.gap,
                 vertical: dense ? BoardTokens.gapSmall : 6,
               ),
         decoration: BoxDecoration(
