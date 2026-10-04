@@ -19,8 +19,9 @@ class KisakiRustLib {
   }
 
   static ExternalLibrary _open() {
-    final found =
-        _candidates().where((path) => File(path).existsSync()).toList();
+    final found = _candidates()
+        .where((path) => File(path).existsSync())
+        .toList();
     if (found.isEmpty) {
       throw StateError(
         'Kisaki could not find the Rust library. Build it with `cargo build -p kisaki_bridge` '
@@ -53,6 +54,9 @@ class KisakiRustLib {
     final executableDirectory = File(Platform.resolvedExecutable).parent.path;
     return [
       '$executableDirectory/$name',
+      // A packaged .app carries the bridge in Contents/Frameworks, copied there by the
+      // packaging script; dev runs fall through to the cargo target dirs below.
+      '$executableDirectory/../Frameworks/$name',
       // The bridge is a Cargo workspace member, so the shared target dir is the repo root's.
       '../target/debug/$name',
       '../target/release/$name',
