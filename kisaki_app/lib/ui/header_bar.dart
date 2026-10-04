@@ -51,21 +51,6 @@ class HeaderBar extends StatelessWidget {
           const SizedBox(width: BoardTokens.gapSmall),
           Flexible(
             child: BoardAction(
-              key: const Key('floating-analysis-toggle'),
-              labelKey: controller.floatingAnalysisOpen
-                  ? 'action-float-analysis-close'
-                  : 'action-float-analysis-open',
-              icon: Icons.style_outlined,
-              dense: true,
-              iconOnly: true,
-              onPressed: controller.floatingAnalysisAvailable
-                  ? controller.toggleFloatingPanel
-                  : null,
-            ),
-          ),
-          const SizedBox(width: BoardTokens.gapSmall),
-          Flexible(
-            child: BoardAction(
               labelKey: 'action-reset-layout',
               icon: Icons.restart_alt_rounded,
               dense: true,

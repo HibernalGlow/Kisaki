@@ -4,12 +4,10 @@ import 'package:flutter/services.dart';
 import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../state/card_layout.dart';
-import '../state/floating_panel.dart';
 import '../theme/board_theme.dart';
 import 'board_blocks.dart';
 import 'card_stack.dart';
 import 'filter_panel.dart';
-import 'floating_analysis_panel.dart';
 import 'header_bar.dart';
 import 'lane.dart';
 import 'overlays.dart';
@@ -168,42 +166,10 @@ class _KisakiBoardState extends State<KisakiBoard> {
                     final double width = constraints.maxWidth.isFinite
                         ? constraints.maxWidth
                         : BoardTokens.minWindowWidth;
-                    widget.controller.reportFloatingViewport(
-                      width,
-                      constraints.maxHeight.isFinite
-                          ? constraints.maxHeight
-                          : BoardTokens.minWindowHeight,
-                    );
-                    final FloatingRect rect =
-                        widget.controller.floatingPanel.rect;
-                    return Stack(
-                      children: <Widget>[
-                        _Lanes(
-                          controller: widget.controller,
-                          picker: widget.picker,
-                          available: width,
-                        ),
-                        if (widget.controller.floatingAnalysisOpen)
-                          Positioned(
-                            left: rect.x,
-                            top: rect.y,
-                            width: rect.width,
-                            height: rect.height,
-                            child: FloatingAnalysisPanel(
-                              controller: widget.controller,
-                              body: CardStack(
-                                controller: widget.controller,
-                                panel: CardPanel.analysis,
-                                renderCard: (BuildContext context, CardId id) =>
-                                    boardCard(
-                                      controller: widget.controller,
-                                      id: id,
-                                      picker: widget.picker,
-                                    ),
-                              ),
-                            ),
-                          ),
-                      ],
+                    return _Lanes(
+                      controller: widget.controller,
+                      picker: widget.picker,
+                      available: width,
                     );
                   },
                 ),
@@ -256,6 +222,15 @@ class _Lanes extends StatelessWidget {
     List<Widget> laneActions(String id, {CardPanel? panel}) => <Widget>[
       if (panel != null)
         CardDisplayToggle(controller: controller, panel: panel),
+      if (panel == CardPanel.analysis)
+        BoardAction(
+          key: const Key('cards-manage'),
+          labelKey: 'cards-manage',
+          icon: Icons.view_day_outlined,
+          dense: true,
+          iconOnly: true,
+          onPressed: () => CardManagerDialog.open(context, controller),
+        ),
       BoardAction(
         key: Key('lane-solo-$id'),
         labelKey: solo == id ? 'lane-unsolo' : 'lane-solo',
@@ -320,11 +295,6 @@ class _Lanes extends StatelessWidget {
 
     Widget slotAt(int index, {required bool flexed}) {
       final String id = order[index];
-      if (id == 'analysis' && !controller.dockedAnalysisVisible) {
-        // The float took the lane, so the freed strip stays empty board rather than a second copy of
-        // the same figures.
-        return const SizedBox(key: Key('analysis-lane-hidden'));
-      }
       final double? width = flexed
           ? null
           : switch (id) {

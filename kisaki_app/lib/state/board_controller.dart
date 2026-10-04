@@ -14,7 +14,6 @@ import 'export_scope.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
 import 'file_host.dart';
-import 'floating_panel.dart';
 import 'group_organize.dart';
 import 'image_comparison.dart';
 import 'row_projection.dart';
@@ -36,7 +35,6 @@ part 'board_card_layout.dart';
 part 'board_cursor.dart';
 part 'board_display.dart';
 part 'board_file_actions.dart';
-part 'board_floating_panel.dart';
 part 'board_operations.dart';
 part 'board_source_lists.dart';
 part 'board_scan_presets.dart';
@@ -206,12 +204,6 @@ class BoardController extends ChangeNotifier {
   final Map<String, double> _columnWidths = <String, double>{};
   bool _showThumbnails = true;
 
-  /// The analysis panel floated over the board, kept clamped to the board area it was last measured in.
-  FloatingViewport _floatingViewport = FloatingViewport.of(0, 0);
-  FloatingPanelState _floating = createDefaultFloatingPanel(
-    FloatingViewport.of(0, 0),
-  );
-
   /// Which lane every block sits in, in what order, and how tall it is.
   CardLayout _cards = createDefaultCardLayout();
 
@@ -315,7 +307,6 @@ class BoardController extends ChangeNotifier {
   void resetLayout() {
     layout.reset();
     _cards = createDefaultCardLayout();
-    _floating = createDefaultFloatingPanel(_floatingViewport);
     notifyListeners();
   }
 
