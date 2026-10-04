@@ -312,10 +312,14 @@ jobs:
   # The Windows counterpart of the job above. It cannot be proven from this workspace: cross
   # checking the bridge for x86_64-pc-windows-msvc reaches dart-sys, whose build script hands
   # dart_api_dl.c to the host compiler, so only a Windows runner with MSVC can get past it - measured
-  # here, not assumed. Until this has one green run it is limited to dispatch and the default branch,
-  # so a first-run failure cannot gate anybody else's work.
+  # here, not assumed. Until this has one green run it is limited to dispatch, the default branch and
+  # pull requests, so a first-run failure cannot gate anybody else's work. The `pull_request` half is
+  # what lets a branch that is not `master` produce that first run at all: `workflow_dispatch` needs
+  # the workflow file to live on the default branch, and personal work must not be piled onto it.
   flutter-windows:
-    if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master'
+    if: >-
+      github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' ||
+      github.ref == 'refs/heads/master'
     runs-on: windows-latest
     defaults:
       run:
@@ -341,6 +345,20 @@ jobs:
         run: |
           test -f build/windows/x64/runner/Release/kisaki.exe
           test -f build/windows/x64/runner/Release/kisaki_bridge.dll
+      # The Windows half of the brand checklist. The version resource is what Explorer, an
+      # installer and "Properties > Details" show, and nothing else in this file proves it was
+      # stamped into the binary: the expected values are the literals in
+      # kisaki_app/windows/runner/Runner.rc, so a template value left behind by the rename fails
+      # here rather than shipping.
+      - name: Check the executable metadata
+        shell: powershell
+        run: |
+          $info = (Get-Item -LiteralPath "kisaki_app\build\windows\x64\runner\Release\kisaki.exe").VersionInfo
+          if ($info.ProductName -ne "Kisaki") { throw "ProductName is '$($info.ProductName)', expected Kisaki" }
+          if ($info.FileDescription -ne "Kisaki") { throw "FileDescription is '$($info.FileDescription)', expected Kisaki" }
+          if ($info.OriginalFileName -ne "kisaki.exe") { throw "OriginalFileName is '$($info.OriginalFileName)', expected kisaki.exe" }
+          if ($info.CompanyName -ne "com.github.hibernerglow") { throw "CompanyName is '$($info.CompanyName)', expected com.github.hibernerglow" }
+          Write-Host "metadata: $($info.ProductName) / $($info.FileDescription) / $($info.CompanyName)"
       - name: Upload artifact
         if: github.ref == 'refs/heads/master'
         uses: actions/upload-artifact@v6
