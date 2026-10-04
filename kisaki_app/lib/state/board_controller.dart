@@ -9,6 +9,7 @@ import '../l10n/labels.dart';
 import '../util/format.dart';
 import 'activity_log.dart';
 import 'analysis_stats.dart';
+import 'card_layout.dart';
 import 'export_scope.dart';
 import 'filter_apply.dart';
 import 'filter_model.dart';
@@ -30,6 +31,7 @@ export 'row_projection.dart' show GroupSelection;
 
 part 'board_activity.dart';
 part 'board_analysis.dart';
+part 'board_card_layout.dart';
 part 'board_cursor.dart';
 part 'board_display.dart';
 part 'board_floating_panel.dart';
@@ -156,6 +158,9 @@ class BoardController extends ChangeNotifier {
   FloatingPanelState _floating = createDefaultFloatingPanel(
     FloatingViewport.of(0, 0),
   );
+
+  /// Which lane every block sits in, in what order, and how tall it is.
+  CardLayout _cards = createDefaultCardLayout();
   OrganizeOptions _organize = const OrganizeOptions();
   VideoOptions _video = const VideoOptions();
   OptimizeOutcome? _videoOutcome;
@@ -252,6 +257,7 @@ class BoardController extends ChangeNotifier {
 
   void resetLayout() {
     layout.reset();
+    _cards = createDefaultCardLayout();
     _floating = createDefaultFloatingPanel(_floatingViewport);
     notifyListeners();
   }

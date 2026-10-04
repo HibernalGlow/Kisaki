@@ -6,6 +6,7 @@ import '../l10n/labels.dart';
 import '../state/board_controller.dart';
 import '../state/floating_panel.dart';
 import '../theme/board_theme.dart';
+import 'card_stack.dart';
 import 'widgets/primitives.dart';
 
 /// The analysis lane lifted off the board so the numbers stay readable while the lanes use the width.
@@ -136,6 +137,8 @@ class _FloatingAnalysisPanelState extends State<FloatingAnalysisPanel> {
                   onPanUpdate: (DragUpdateDetails d) => _drag(null, d),
                   onPanEnd: (DragEndDetails _) => _finish(),
                   onClose: () => widget.controller.toggleFloatingPanel(),
+                  onManage: () =>
+                      CardManagerDialog.open(context, widget.controller),
                 ),
                 const Hairline(),
                 Expanded(child: widget.body),
@@ -257,6 +260,7 @@ class _Header extends StatelessWidget {
     required this.onPanUpdate,
     required this.onPanEnd,
     required this.onClose,
+    required this.onManage,
   });
 
   final BoardPalette palette;
@@ -267,6 +271,7 @@ class _Header extends StatelessWidget {
   final void Function(DragUpdateDetails details) onPanUpdate;
   final void Function(DragEndDetails details) onPanEnd;
   final VoidCallback onClose;
+  final VoidCallback onManage;
 
   @override
   Widget build(BuildContext context) {
@@ -318,6 +323,15 @@ class _Header extends StatelessWidget {
                         ),
                       ),
                     ),
+                    BoardAction(
+                      key: const Key('cards-manage'),
+                      labelKey: 'cards-manage',
+                      icon: Icons.view_day_outlined,
+                      dense: true,
+                      iconOnly: true,
+                      onPressed: onManage,
+                    ),
+                    const SizedBox(width: BoardTokens.gapSmall),
                     BoardAction(
                       key: const Key('floating-close'),
                       labelKey: 'floating-close',
