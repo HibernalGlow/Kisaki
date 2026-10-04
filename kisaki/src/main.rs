@@ -6,6 +6,7 @@ mod actions;
 mod build_info;
 mod callbacks;
 mod common;
+mod exif;
 mod fields;
 mod localizer_kisaki;
 mod paths;

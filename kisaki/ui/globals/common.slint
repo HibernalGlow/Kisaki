@@ -25,6 +25,13 @@ export enum Phase {
     Error,
 }
 
+// Which verb the confirmation overlay is standing behind, so `confirm_accepted` can dispatch
+// without guessing from the visible text.
+export enum PendingAction {
+    Delete,
+    StripExif,
+}
+
 export enum FieldKind {
     Bool,
     Number,

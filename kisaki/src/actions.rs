@@ -10,7 +10,7 @@ use slint::ComponentHandle;
 
 use crate::common::format_bytes;
 use crate::state::{RowData, SharedState};
-use crate::{AppState, MainWindow, Phase, ToolId, fli};
+use crate::{AppState, MainWindow, PendingAction, Phase, ToolId, fli};
 
 const PLAN_PREVIEW_ROWS: usize = 12;
 
@@ -71,6 +71,7 @@ pub fn ask_delete(app: &MainWindow, state: &SharedState) {
         }
     };
 
+    globals.set_pending_action(PendingAction::Delete);
     globals.set_confirm_title(fli!("confirm_delete_title").into());
     let body = if request.dry_run {
         fli!("confirm_dry_run_body", count = request.count, size = format_bytes(request.bytes))
@@ -91,6 +92,14 @@ pub fn confirm_rejected(app: &MainWindow) {
 pub fn confirm_accepted(app: &MainWindow, state: &SharedState, stop_flag: &AtomicBool) {
     let globals = app.global::<AppState>();
     globals.set_confirm_open(false);
+
+    // The overlay carries which verb it was opened for, so it always falls back to delete.
+    let pending = globals.get_pending_action();
+    globals.set_pending_action(PendingAction::Delete);
+    if pending == PendingAction::StripExif {
+        crate::exif::run(app, state);
+        return;
+    }
 
     let (targets, dry_run, to_trash, folders) = {
         let store = state.lock().expect("App state mutex poisoned");

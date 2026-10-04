@@ -1,4 +1,4 @@
-import { ColumnDef, FieldDef, Metrics, PathRow, Phase, ResultRow, ToolEntry, ToolId } from "common.slint";
+import { ColumnDef, FieldDef, Metrics, PathRow, PendingAction, Phase, ResultRow, ToolEntry, ToolId } from "common.slint";
 
 // Transient application state. Persisted settings live in Rust and are pushed
 // in here at start-up; the UI never writes to disk directly.
@@ -50,6 +50,7 @@ export global AppState {
     in-out property <bool> confirm_open: false;
     in-out property <string> confirm_title: "";
     in-out property <string> confirm_body: "";
+    in-out property <PendingAction> pending_action: PendingAction.Delete;
 
     // Progress and status
     in-out property <int> progress_all: 0;
