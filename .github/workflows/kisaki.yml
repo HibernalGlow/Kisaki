@@ -309,17 +309,13 @@ jobs:
           path: kisaki_app/build/linux/x64/release/bundle
           if-no-files-found: error
 
-  # The Windows counterpart of the job above. It cannot be proven from this workspace: cross
+  # The Windows counterpart of the job above. It could not be proven from this workspace: cross
   # checking the bridge for x86_64-pc-windows-msvc reaches dart-sys, whose build script hands
   # dart_api_dl.c to the host compiler, so only a Windows runner with MSVC can get past it - measured
-  # here, not assumed. Until this has one green run it is limited to dispatch, the default branch and
-  # pull requests, so a first-run failure cannot gate anybody else's work. The `pull_request` half is
-  # what lets a branch that is not `master` produce that first run at all: `workflow_dispatch` needs
-  # the workflow file to live on the default branch, and personal work must not be piled onto it.
+  # there, not assumed. It has: the first green run was the push to master (workflow run 37203337196,
+  # 2026-10-04), bundle layout and executable metadata included, so the job no longer carries a
+  # condition of its own.
   flutter-windows:
-    if: >-
-      github.event_name == 'workflow_dispatch' || github.event_name == 'pull_request' ||
-      github.ref == 'refs/heads/master'
     runs-on: windows-latest
     defaults:
       run:
