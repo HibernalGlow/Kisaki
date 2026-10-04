@@ -166,7 +166,14 @@ class _Legend extends StatelessWidget {
               style: palette.text.bodySmall,
             ),
           ),
-          Text(trailing, style: palette.tableFigure(color: palette.fgMuted)),
+          Flexible(
+            child: Text(
+              trailing,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: palette.tableFigure(color: palette.fgMuted),
+            ),
+          ),
         ],
       ),
     );
@@ -211,9 +218,14 @@ class _Meter extends StatelessWidget {
                   style: palette.text.bodySmall,
                 ),
               ),
-              Text(
-                trailing,
-                style: palette.tableFigure(color: palette.fgMuted),
+              Flexible(
+                child: Text(
+                  trailing,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  textAlign: TextAlign.end,
+                  style: palette.tableFigure(color: palette.fgMuted),
+                ),
               ),
             ],
           ),

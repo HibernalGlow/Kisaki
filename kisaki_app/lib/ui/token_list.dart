@@ -131,18 +131,22 @@ class _TokenListEditorState extends State<TokenListEditor> {
               ),
             ),
             const SizedBox(width: BoardTokens.gapSmall),
-            BoardAction(
-              key: Key('token-add-${widget.label ?? widget.placeholder}'),
-              labelKey: 'action-add-manual',
-              dense: true,
-              onPressed: _submit,
+            Flexible(
+              child: BoardAction(
+                key: Key('token-add-${widget.label ?? widget.placeholder}'),
+                labelKey: 'action-add-manual',
+                dense: true,
+                onPressed: _submit,
+              ),
             ),
             if (widget.onManualEntry != null) ...<Widget>[
               const SizedBox(width: BoardTokens.gapSmall),
-              BoardAction(
-                labelKey: 'action-clear',
-                dense: true,
-                onPressed: widget.onClear,
+              Flexible(
+                child: BoardAction(
+                  labelKey: 'action-clear',
+                  dense: true,
+                  onPressed: widget.onClear,
+                ),
               ),
             ],
           ],
