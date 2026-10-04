@@ -57,9 +57,9 @@ kisaki/
 └── src/
     ├── main.rs           # bootstrap order, window creation, run loop
     ├── callbacks.rs      # every Callabler registration
-    ├── scan.rs           # worker thread, common settings, result conversion
-    ├── scan_grouped.rs   # duplicate / similar images / similar videos / music
-    ├── scan_flat.rs      # the other ten tools
+    ├── scan.rs           # worker thread, common settings, ScanCtx and Outcome
+    │   ├── scan_grouped.rs # duplicate / similar images / similar videos / music
+    │   └── scan_flat.rs    # the other ten tools
     ├── results.rs        # filter, sort, metrics, model building
     ├── state.rs          # AppStore + SharedModels, the thread-safe source of truth
     ├── tools.rs          # 14-tool registry, column specs, option schemas
@@ -67,7 +67,10 @@ kisaki/
     ├── paths.rs          # included / excluded / reference lists, rfd pickers
     ├── actions.rs        # delete, trash, dry run, export, open
     ├── settings.rs       # kisaki_settings.json
+    ├── build_info.rs     # compiled-in codecs shown in the caption, runtime probes
+    ├── common.rs         # byte, timestamp and sort-key formatting
     ├── progress.rs       # progress channel receiver
+    ├── localizer_kisaki.rs # fli! macro, plus the runtime-key lookup for table-driven labels
     └── translations.rs   # Fluent wiring, generated Translations setters
 ```
 
