@@ -72,7 +72,7 @@ cargo test -p kisaki_bridge                                     # 122 tests
 cargo clippy -p kisaki_bridge --all-targets -- -D warnings
 cargo fmt -p kisaki_bridge -- --check                           # stable, as CI runs it
 flutter analyze
-flutter test                                                      # 172 tests
+flutter test                                                      # 361 tests, measured 2026-10-04
 ```
 
 `test/bridge_smoke_test.dart` loads the compiled dylib and drives real work through it: scans a temp
