@@ -8,6 +8,7 @@
 
 import 'api/actions.dart';
 import 'api/info.dart';
+import 'api/presentation.dart';
 import 'api/scan.dart';
 import 'api/schema.dart';
 import 'api/types.dart';
@@ -77,6 +78,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   TranscodeOptions dco_decode_box_autoadd_transcode_options(dynamic raw);
+
+  @protected
+  CodecInfo dco_decode_codec_info(dynamic raw);
 
   @protected
   ColumnDef dco_decode_column_def(dynamic raw);
@@ -214,6 +218,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ProgressUpdate dco_decode_progress_update(dynamic raw);
 
   @protected
+  (double, double, bool) dco_decode_record_f_64_f_64_bool(dynamic raw);
+
+  @protected
   RenameItem dco_decode_rename_item(dynamic raw);
 
   @protected
@@ -341,6 +348,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   TranscodeOptions sse_decode_box_autoadd_transcode_options(
     SseDeserializer deserializer,
   );
+
+  @protected
+  CodecInfo sse_decode_codec_info(SseDeserializer deserializer);
 
   @protected
   ColumnDef sse_decode_column_def(SseDeserializer deserializer);
@@ -484,6 +494,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   ProgressUpdate sse_decode_progress_update(SseDeserializer deserializer);
+
+  @protected
+  (double, double, bool) sse_decode_record_f_64_f_64_bool(
+    SseDeserializer deserializer,
+  );
 
   @protected
   RenameItem sse_decode_rename_item(SseDeserializer deserializer);
@@ -644,6 +659,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     TranscodeOptions self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_codec_info(CodecInfo self, SseSerializer serializer);
 
   @protected
   void sse_encode_column_def(ColumnDef self, SseSerializer serializer);
@@ -822,6 +840,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   @protected
   void sse_encode_progress_update(
     ProgressUpdate self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_record_f_64_f_64_bool(
+    (double, double, bool) self,
     SseSerializer serializer,
   );
 

@@ -13,3 +13,8 @@ import 'types.dart';
 /// crate itself, not from this crate, because a field named after the engine must not quietly become
 /// the frontend's version number the day the two stop being bumped together.
 EngineInfo engineInfo() => RustLib.instance.api.crateApiInfoEngineInfo();
+
+/// Reports which codecs the engine was compiled with. This is the only way a frontend can tell that
+/// a scan skipped files: with `heif_build` false, `check_if_can_display_image` rejects `.heic` before
+/// the scan collects it, so no message and no failure ever reach the board.
+CodecInfo codecInfo() => RustLib.instance.api.crateApiInfoCodecInfo();
