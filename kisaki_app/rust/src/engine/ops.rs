@@ -8,7 +8,8 @@ use std::thread;
 use czkawka_core::common::fs_ops::{remove_folder_if_contains_only_empty_folders, remove_single_file, remove_single_folder};
 use czkawka_core::common::model::ToolType;
 
-use crate::api::types::{DeleteOutcome, DeleteRequest, ExportRequest, ScanRow, ToolSpec};
+use crate::api::types::{DeleteOutcome, DeleteRequest, ExportRequest, ScanRow};
+use crate::engine::registry::ToolView;
 use crate::engine::{registry, runner};
 
 /// What a delete run decides to do with one requested row.
@@ -262,7 +263,7 @@ fn human_size(bytes: i64) -> String {
 /// their own private result fields, which cannot be rebuilt from rows crossing the FFI, so the
 /// document is written from the rows themselves in the same grouped or flat shape.
 pub fn export(request: ExportRequest) -> Result<String, String> {
-    let spec = registry::spec(&request.tool).ok_or_else(|| format!("Unknown scanner '{}'", request.tool))?;
+    let spec = registry::view(&request.tool).ok_or_else(|| format!("Unknown scanner '{}'", request.tool))?;
     let format = parse_format(&request.format, &request.tool)?;
     if request.rows.is_empty() {
         return Err(format!("Scanner '{}' has no rows to export", request.tool));
@@ -427,7 +428,7 @@ fn json_string(text: &str) -> String {
     out
 }
 
-fn csv_document(request: &ExportRequest, spec: &ToolSpec) -> String {
+fn csv_document(request: &ExportRequest, spec: &ToolView) -> String {
     let headers = csv_headers(request, spec);
     let cell_width = headers.len().saturating_sub(if request.grouped { 7 } else { 6 });
     let mut text = headers.join(",");
@@ -450,7 +451,7 @@ fn csv_document(request: &ExportRequest, spec: &ToolSpec) -> String {
 
 /// Column keys come from the tool spec, so an export names its own extra cells instead of
 /// inventing headers the analysis lane cannot recognise.
-fn csv_headers(request: &ExportRequest, spec: &ToolSpec) -> Vec<String> {
+fn csv_headers(request: &ExportRequest, spec: &ToolView) -> Vec<String> {
     let keys: Vec<String> = spec.columns.iter().map(|column| column.key.clone()).collect();
     let width = keys.len().max(request.rows.iter().map(|row| row.cells.len()).max().unwrap_or(0));
     let cells: Vec<String> = keys
@@ -705,7 +706,7 @@ mod tests {
         let mut row_data = row("na,me", 10, 0, false);
         row_data.cells = vec!["1.5 KiB".to_string(), "2024-01-01".to_string()];
         let request = export_request(vec![row_data], "/tmp/a.csv", "csv", true);
-        let spec = registry::spec("duplicate_files").expect("known scanner");
+        let spec = registry::view("duplicate_files").expect("known scanner");
         let text = csv_document(&request, &spec);
 
         assert_eq!(

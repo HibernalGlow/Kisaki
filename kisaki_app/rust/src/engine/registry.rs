@@ -1,38 +1,39 @@
 use czkawka_core::common::model::ToolType;
 
-use crate::api::types::{ColumnDef, FieldDef, FieldValue, ToolSpec};
+use crate::api::types::{FieldDef, FieldValue};
 use crate::engine::options;
 
 /// Const-friendly column shape; `.into()` is not callable in a `const`, so the FFI-facing
 /// `ColumnDef` is built when the registry is read.
+/// What the engine knows about one results column: an identity and a translation key. How wide or
+/// aligned it is belongs to the toolkit, so `api::presentation` supplies that.
 struct ColumnSpec {
     key: &'static str,
     label_key: &'static str,
-    flex: f64,
-    min_width: f64,
-    align_right: bool,
 }
 
-const fn column(key: &'static str, label_key: &'static str, flex: f64, min_width: f64, align_right: bool) -> ColumnSpec {
-    ColumnSpec {
-        key,
-        label_key,
-        flex,
-        min_width,
-        align_right,
-    }
+const fn column(key: &'static str, label_key: &'static str) -> ColumnSpec {
+    ColumnSpec { key, label_key }
 }
 
-impl ColumnSpec {
-    fn to_def(&self) -> ColumnDef {
-        ColumnDef {
-            key: self.key.to_string(),
-            label_key: self.label_key.to_string(),
-            flex: self.flex,
-            min_width: self.min_width,
-            align_right: self.align_right,
-        }
-    }
+/// One results column as the engine sees it: identity and translation key only.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ColumnKey {
+    pub key: String,
+    pub label_key: String,
+}
+
+/// What a scanner is, free of any toolkit decision, so scanning and exporting can be driven by a
+/// different front end without reshaping the registry.
+#[derive(Debug, Clone, PartialEq)]
+pub struct ToolView {
+    pub id: String,
+    pub glyph: String,
+    pub label_key: String,
+    pub grouped: bool,
+    pub supports_reference: bool,
+    pub columns: Vec<ColumnKey>,
+    pub field_ids: Vec<String>,
 }
 
 struct Entry {
@@ -45,29 +46,29 @@ struct Entry {
     field_ids: &'static [&'static str],
 }
 
-const COL_SIZE: ColumnSpec = column("size", "col_size", 0.5, 84.0, true);
-const COL_MODIFIED: ColumnSpec = column("modified", "col_modified", 1.0, 140.0, false);
+const COL_SIZE: ColumnSpec = column("size", "col_size");
+const COL_MODIFIED: ColumnSpec = column("modified", "col_modified");
 const COL_DATES: &[ColumnSpec] = &[COL_MODIFIED];
 const COL_SIZE_DATE: &[ColumnSpec] = &[COL_SIZE, COL_MODIFIED];
 
-const COL_DIFFERENCE: ColumnSpec = column("difference", "col_difference", 0.7, 90.0, false);
-const COL_RESOLUTION: ColumnSpec = column("resolution", "col_resolution", 0.7, 90.0, false);
-const COL_DURATION: ColumnSpec = column("duration", "col_duration", 0.6, 70.0, false);
-const COL_CODEC: ColumnSpec = column("codec", "col_codec", 0.7, 70.0, false);
-const COL_BITRATE: ColumnSpec = column("bitrate", "col_bitrate", 0.6, 76.0, true);
-const COL_TITLE: ColumnSpec = column("title", "col_title", 1.2, 120.0, false);
-const COL_ARTIST: ColumnSpec = column("artist", "col_artist", 1.0, 100.0, false);
-const COL_YEAR: ColumnSpec = column("year", "col_year", 0.4, 50.0, false);
-const COL_LENGTH: ColumnSpec = column("length", "col_length", 0.5, 60.0, true);
-const COL_GENRE: ColumnSpec = column("genre", "col_genre", 0.8, 70.0, false);
-const COL_DESTINATION: ColumnSpec = column("destination", "col_destination", 1.4, 140.0, false);
-const COL_ERRORS: ColumnSpec = column("errors", "col_errors", 1.6, 160.0, false);
-const COL_CURRENT_EXT: ColumnSpec = column("current_extension", "col_current_extension", 0.7, 70.0, false);
-const COL_PROPER_GROUP: ColumnSpec = column("proper_group", "col_proper_group", 0.8, 80.0, false);
-const COL_PROPER_EXT: ColumnSpec = column("proper_extension", "col_proper_extension", 0.8, 80.0, false);
-const COL_NEW_NAME: ColumnSpec = column("new_name", "col_new_name", 1.4, 150.0, false);
-const COL_TAGS: ColumnSpec = column("tags", "col_tags", 1.8, 180.0, false);
-const COL_INFO: ColumnSpec = column("info", "col_info", 1.2, 120.0, false);
+const COL_DIFFERENCE: ColumnSpec = column("difference", "col_difference");
+const COL_RESOLUTION: ColumnSpec = column("resolution", "col_resolution");
+const COL_DURATION: ColumnSpec = column("duration", "col_duration");
+const COL_CODEC: ColumnSpec = column("codec", "col_codec");
+const COL_BITRATE: ColumnSpec = column("bitrate", "col_bitrate");
+const COL_TITLE: ColumnSpec = column("title", "col_title");
+const COL_ARTIST: ColumnSpec = column("artist", "col_artist");
+const COL_YEAR: ColumnSpec = column("year", "col_year");
+const COL_LENGTH: ColumnSpec = column("length", "col_length");
+const COL_GENRE: ColumnSpec = column("genre", "col_genre");
+const COL_DESTINATION: ColumnSpec = column("destination", "col_destination");
+const COL_ERRORS: ColumnSpec = column("errors", "col_errors");
+const COL_CURRENT_EXT: ColumnSpec = column("current_extension", "col_current_extension");
+const COL_PROPER_GROUP: ColumnSpec = column("proper_group", "col_proper_group");
+const COL_PROPER_EXT: ColumnSpec = column("proper_extension", "col_proper_extension");
+const COL_NEW_NAME: ColumnSpec = column("new_name", "col_new_name");
+const COL_TAGS: ColumnSpec = column("tags", "col_tags");
+const COL_INFO: ColumnSpec = column("info", "col_info");
 
 const NO_FIELDS: &[&str] = &[];
 
@@ -276,32 +277,31 @@ fn find(tool: &str) -> Option<&'static Entry> {
     TOOLS.iter().find(|entry| entry.id == tool)
 }
 
-pub fn tools() -> Vec<ToolSpec> {
-    TOOLS
-        .iter()
-        .map(|entry| ToolSpec {
-            id: entry.id.to_string(),
-            glyph: entry.glyph.to_string(),
-            label_key: entry.label_key.to_string(),
-            grouped: entry.grouped,
-            supports_reference: entry.tool_type.may_use_reference_paths(),
-            columns: entry.columns.iter().map(ColumnSpec::to_def).collect(),
-            field_ids: entry.field_ids.iter().map(|id| id.to_string()).collect(),
-        })
-        .collect()
+pub fn views() -> Vec<ToolView> {
+    TOOLS.iter().map(view_of).collect()
 }
 
-pub fn spec(tool: &str) -> Option<ToolSpec> {
-    let entry = find(tool)?;
-    Some(ToolSpec {
+pub fn view(tool: &str) -> Option<ToolView> {
+    find(tool).map(view_of)
+}
+
+fn view_of(entry: &Entry) -> ToolView {
+    ToolView {
         id: entry.id.to_string(),
         glyph: entry.glyph.to_string(),
         label_key: entry.label_key.to_string(),
         grouped: entry.grouped,
         supports_reference: entry.tool_type.may_use_reference_paths(),
-        columns: entry.columns.iter().map(ColumnSpec::to_def).collect(),
+        columns: entry
+            .columns
+            .iter()
+            .map(|column| ColumnKey {
+                key: column.key.to_string(),
+                label_key: column.label_key.to_string(),
+            })
+            .collect(),
         field_ids: entry.field_ids.iter().map(|id| id.to_string()).collect(),
-    })
+    }
 }
 
 pub fn tool_type(tool: &str) -> Option<ToolType> {
@@ -329,7 +329,7 @@ mod tests {
 
     #[test]
     fn every_registered_scanner_is_exposed_once() {
-        let ids: Vec<String> = tools().into_iter().map(|spec| spec.id).collect();
+        let ids: Vec<String> = views().into_iter().map(|spec| spec.id).collect();
         assert_eq!(ids.len(), czkawka_core::TOOLS_NUMBER, "engine declares a different tool count");
         let unique: std::collections::HashSet<&String> = ids.iter().collect();
         assert_eq!(unique.len(), ids.len(), "duplicate tool id in the registry");
@@ -339,7 +339,7 @@ mod tests {
     /// the scanner silently ignores, so the two tables must stay in step.
     #[test]
     fn every_field_id_resolves_to_a_definition_and_a_default() {
-        for spec in tools() {
+        for spec in views() {
             let defs = fields(&spec.id);
             let defaults = defaults(&spec.id);
             assert_eq!(defs.len(), spec.field_ids.len(), "{}: field definitions missing", spec.id);
@@ -355,7 +355,7 @@ mod tests {
 
     #[test]
     fn reference_support_comes_from_the_engine_not_a_local_guess() {
-        let supporting: Vec<String> = tools().into_iter().filter(|spec| spec.supports_reference).map(|spec| spec.id).collect();
+        let supporting: Vec<String> = views().into_iter().filter(|spec| spec.supports_reference).map(|spec| spec.id).collect();
         assert_eq!(
             supporting,
             vec![
@@ -369,9 +369,8 @@ mod tests {
 
     #[test]
     fn columns_align_with_their_display_labels() {
-        let spec = spec("similar_images").expect("similar_images must be registered");
+        let spec = view("similar_images").expect("similar_images must be registered");
         let keys: Vec<&str> = spec.columns.iter().map(|column| column.key.as_str()).collect();
         assert_eq!(keys, vec!["difference", "size", "resolution", "modified"]);
-        assert!(spec.columns.iter().all(|column| column.flex > 0.0 && column.min_width > 0.0));
     }
 }

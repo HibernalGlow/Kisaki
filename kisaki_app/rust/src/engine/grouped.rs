@@ -22,12 +22,13 @@ use czkawka_core::tools::similar_videos::{
     DEFAULT_VID_HASH_DURATION, DEFAULT_VIDEO_PERCENTAGE_FOR_THUMBNAIL, DEFAULT_WINDOW_COUNT, MAX_TOLERANCE, SimilarVideos, SimilarVideosParameters, VideosEntry,
 };
 
-use crate::api::types::{FieldPayload, ScanRequest, ToolSpec};
+use crate::api::types::{FieldPayload, ScanRequest};
+use crate::engine::registry::ToolView;
 use crate::engine::runner::ProgressSender;
 use crate::engine::{EngineOutcome, EngineRow, FieldStore, config};
 
 /// Scanners whose output is a set of groups: duplicates, similar images, similar videos, music.
-pub fn run(spec: &ToolSpec, request: &ScanRequest, store: &FieldStore, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+pub fn run(spec: &ToolView, request: &ScanRequest, store: &FieldStore, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let options = Options::new(request, store);
     match spec.id.as_str() {
         "duplicate_files" => run_duplicates(spec, request, &options, sender, stop),
@@ -38,7 +39,7 @@ pub fn run(spec: &ToolSpec, request: &ScanRequest, store: &FieldStore, sender: P
     }
 }
 
-fn run_duplicates(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+fn run_duplicates(spec: &ToolView, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let params = DuplicateFinderParameters::new(
         check_method(options)?,
         hash_type(options)?,
@@ -102,7 +103,7 @@ fn duplicate_row(entry: &DuplicateEntry) -> EngineRow {
     )
 }
 
-fn run_similar_images(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+fn run_similar_images(spec: &ToolView, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let hash_size = image_hash_size(options)?;
     let params = SimilarImagesParameters::new(
         return_similarity_from_similarity_preset(similarity_preset(options)?, hash_size),
@@ -164,7 +165,7 @@ fn image_row(entry: &ImagesEntry, hash_size: u8) -> EngineRow {
     )
 }
 
-fn run_similar_videos(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+fn run_similar_videos(spec: &ToolView, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     // Every parameter the engine takes is exposed; each value is clamped into the range
     // SimilarVideosParameters::new asserts on, because an assert there panics the scan thread.
     let params = SimilarVideosParameters::new(
@@ -257,7 +258,7 @@ fn video_row(entry: &VideosEntry) -> EngineRow {
     )
 }
 
-fn run_same_music(spec: &ToolSpec, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
+fn run_same_music(spec: &ToolView, request: &ScanRequest, options: &Options<'_>, sender: ProgressSender, stop: Arc<AtomicBool>) -> Result<EngineOutcome, String> {
     let params = SameMusicParameters::new(
         music_similarity(options),
         options.flag("mus_approximate", true),
@@ -369,7 +370,7 @@ fn build_grouped(groups: Vec<Group>) -> Vec<EngineRow> {
 
 /// Packs the rows into the engine outcome, refusing to hand Dart a row that does not fill the
 /// declared columns.
-fn grouped_outcome(spec: &ToolSpec, rows: Vec<EngineRow>, stopped: bool, messages: String, critical: Option<String>) -> Result<EngineOutcome, String> {
+fn grouped_outcome(spec: &ToolView, rows: Vec<EngineRow>, stopped: bool, messages: String, critical: Option<String>) -> Result<EngineOutcome, String> {
     if let Some(row) = rows.iter().find(|row| row.cells.len() != spec.columns.len() || row.sort_keys.len() != spec.columns.len()) {
         return Err(format!(
             "Scanner '{}' built a row with {} cells for '{}' but declares {} columns",
