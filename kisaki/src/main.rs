@@ -3,6 +3,7 @@
 #![allow(clippy::indexing_slicing)]
 
 mod actions;
+mod build_info;
 mod callbacks;
 mod common;
 mod fields;
@@ -68,6 +69,7 @@ fn main() {
     let state = AppStore::new_shared(fields, &settings);
 
     prepare_initial_gui(&app, &state, &settings);
+    build_info::install(&app);
 
     progress::connect_progress(&app, progress_receiver);
     callbacks::connect_all(&app, &state, progress_sender, &stop_flag);
