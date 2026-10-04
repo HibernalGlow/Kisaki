@@ -84,6 +84,13 @@ fn extension_plan(from: &Path, proper: &HashMap<PathBuf, String>) -> Plan {
 
 /// The engine reports paths with symlinks resolved, so a selection that spells the same file
 /// differently - "/tmp" against "/private/tmp" on macOS - is still recognised.
+/// The one spelling a scan result and a user selection are compared under.
+///
+/// The engine reports paths it canonicalized itself, while a selection arrives exactly as the host
+/// wrote it. On Windows the two differ by a verbatim prefix, by case and by the 8.3 short form, so
+/// matching a raw selection string against an engine key answers "the engine did not ask about this
+/// file" for every one of them. Both sides come through here; a path that cannot be canonicalized
+/// stays as given, so a missing file is still reported as missing.
 pub(crate) fn resolved(path: &Path) -> PathBuf {
     fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
@@ -108,7 +115,7 @@ fn extension_of(request: &ScanRequest, store: &FieldStore, paths: &[String]) -> 
     Ok(tool
         .get_bad_extensions_files()
         .iter()
-        .map(|entry| (entry.path.clone(), entry.proper_extension.clone()))
+        .map(|entry| (resolved(&entry.path), entry.proper_extension.clone()))
         .collect())
 }
 

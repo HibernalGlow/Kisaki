@@ -517,16 +517,19 @@ mod tests {
         let moved = write(&set, "one.png", b"payload");
         let original = root.join("loose/one.png");
 
-        // Written by hand in the exact spelling the reference implementation uses.
+        // Written by hand in the exact spelling the reference implementation uses. The paths go
+        // through the JSON writer rather than into the template raw, because a Windows path is full
+        // of backslashes and `\U` is not a legal JSON escape - the parser under test is right to
+        // reject that, so the fixture has to be the well-formed thing the real frontend writes.
         let journal = root.join(".simiu-undo-20261003-195200.json");
         fs::write(
             &journal,
             format!(
-                "{{\n  \"version\": 1,\n  \"createdAt\": \"2026-10-03T19:52:00.000Z\",\n  \"root\": \"{root}\",\n  \"operations\": [{{ \"mode\": \"move\", \"src\": \"{original}\", \"dst\": \"{moved}\" }}],\n  \"createdDirectories\": [\"{set}\"]\n}}\n",
-                root = root.display(),
-                original = original.display(),
-                moved = moved.display(),
-                set = set.display(),
+                "{{\n  \"version\": 1,\n  \"createdAt\": \"2026-10-03T19:52:00.000Z\",\n  \"root\": {root},\n  \"operations\": [{{ \"mode\": \"move\", \"src\": {original}, \"dst\": {moved} }}],\n  \"createdDirectories\": [{set}]\n}}\n",
+                root = serde_json::to_string(&root.to_string_lossy()).expect("json string"),
+                original = serde_json::to_string(&original.to_string_lossy()).expect("json string"),
+                moved = serde_json::to_string(&moved.to_string_lossy()).expect("json string"),
+                set = serde_json::to_string(&set.to_string_lossy()).expect("json string"),
             ),
         )
         .expect("write the reference journal");

@@ -85,7 +85,7 @@ fn scan_tags(request: &ScanRequest, store: &FieldStore, paths: &[String]) -> Res
         .iter()
         .map(|entry| {
             let tags = entry.exif_tags.iter().map(|tag| (tag.code, tag.group.clone())).collect();
-            (entry.path.clone(), Found { tags, error: entry.error.clone() })
+            (fix::resolved(&entry.path), Found { tags, error: entry.error.clone() })
         })
         .collect())
 }
