@@ -302,15 +302,17 @@ mod tests {
     #[test]
     fn two_files_cleaning_to_the_same_name_leave_the_second_one_alone() {
         let dir = scratch("collision");
-        // The allowed character set drops both punctuation marks, so the two names collide.
+        // The allowed character set drops both punctuation marks, so the two names collide. Both
+        // marks are legal in a Windows file name, unlike the shell glob `?` this fixture used
+        // before - writing it failed with error 123 (invalid filename) rather than testing anything.
         let first = write(&dir, "a!.txt", "1");
-        let second = write(&dir, "a?.txt", "2");
+        let second = write(&dir, "a#.txt", "2");
 
         let outcome = rename(&request("bad_names", &[first, second], false)).expect("run");
         assert_eq!((outcome.renamed, outcome.failed), (1, 1), "unexpected: {:?}", outcome.items);
         assert!(outcome.items[1].detail.contains("already takes this name"), "unexpected: {}", outcome.items[1].detail);
         assert!(dir.join("a.txt").exists(), "the first cleaned name must be on disk");
-        assert!(dir.join("a?.txt").exists(), "the colliding file must keep its own name");
+        assert!(dir.join("a#.txt").exists(), "the colliding file must keep its own name");
 
         fs::remove_dir_all(&dir).expect("remove scratch directory");
     }
