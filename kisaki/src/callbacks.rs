@@ -247,6 +247,13 @@ fn connect_file_actions(app: &MainWindow, state: &SharedState, stop_flag: &Arc<A
     });
 
     let weak = app.as_weak();
+    let shared = Arc::clone(state);
+    app.global::<Callabler>().on_strip_exif(move || {
+        let app = weak.upgrade().expect("MainWindow dropped while callback is still live");
+        crate::exif::ask(&app, &shared);
+    });
+
+    let weak = app.as_weak();
     app.global::<Callabler>().on_confirm_rejected(move || {
         let app = weak.upgrade().expect("MainWindow dropped while callback is still live");
         crate::actions::confirm_rejected(&app);

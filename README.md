@@ -40,9 +40,9 @@ Two decisions are load-bearing:
   palettes derive from a single `Theme.dark` flag.
 - **Three swimlanes.** A header bar carries the scanner picker, scan/stop, the live progress rail, the
   theme toggle and the layout reset. Below it sit Source (paths plus schema-driven algorithm options),
-  Results (the table) and Analysis (metrics, dry-run and trash toggles, delete, export). Lanes are
-  drag-resizable, double-click resets to 300 px, and each collapses to a 48 px strip that shows a
-  single letter.
+  Results (the table) and Analysis (metrics, dry-run and trash toggles, delete, strip EXIF, export).
+  Lanes are drag-resizable, double-click resets to 300 px, and each collapses to a 48 px strip that
+  shows a single letter.
 - **Measured.** Window 1280 x 800 preferred and 940 x 560 minimum, 32 px lane headers, 6 px corners,
   Source clamped to 220..560, Analysis to 210..520, Results at least 360 wide, and the three overlays
   stacked at z 100, 200 and 300.
@@ -127,13 +127,15 @@ and `.freezed.dart` files it was not asked to rebuild. The gates for this half a
 Delete and export default to **dry run**, which produces a per-item plan and touches no files. Dry run
 has to be turned off before anything is written, and the confirmation dialog states which mode is
 active. Deletion goes through `czkawka_core`'s file operations, so "move to trash" behaves as it does
-in every other Czkawka frontend.
+in every other Czkawka frontend. Strip EXIF cannot damage an original: it writes
+`name.czkawka_cleaned_exif.ext` beside the file, removes only the tags the engine already reported
+after your ignore list, and under dry run it reports which files carry tags without writing anything.
 
 ## Not here yet
 
 Result thumbnails and image preview, the four-mode image comparison dialog, the smart selection
 assistant, the multi-dimensional filter panel (only the text filter is wired), the Simiu set mode, and
-the video-optimize and EXIF execution dialogs. These are planned page-by-page additions, not gaps in
+the video-optimize execution dialog. These are planned page-by-page additions, not gaps in
 the scan engine.
 
 ## The rest of the family
