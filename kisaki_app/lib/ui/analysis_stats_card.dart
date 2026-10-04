@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../engine/models.dart';
 import '../l10n/labels.dart';
 import '../state/analysis_stats.dart';
 import '../state/board_controller.dart';
@@ -30,6 +31,8 @@ class AnalysisStatsCard extends StatelessWidget {
             .take(8)
             .toList();
         final List<SimilarityStat> similarities = controller.similarityStats;
+        final CodecInfo? codec = controller.codec;
+        final EngineInfo? info = controller.info;
         return SectionCard(
           title: Labels.of('analysis-title'),
           children: <Widget>[
@@ -93,6 +96,38 @@ class AnalysisStatsCard extends StatelessWidget {
                   palette: palette,
                   barWeight: _barWeight,
                 ),
+            const SizedBox(height: BoardTokens.gap),
+            const Hairline(),
+            const SizedBox(height: BoardTokens.gapSmall),
+            MicroHeading(Labels.of('build-decoders')),
+            const SizedBox(height: BoardTokens.gapSmall),
+            Text(
+              codec?.caption ?? '-',
+              key: const Key('codec-caption'),
+              style: TextStyle(
+                fontSize: BoardTokens.fsBody,
+                fontWeight: FontWeight.w600,
+                color: codec != null && !codec.heif
+                    ? palette.warn
+                    : palette.fg,
+              ),
+            ),
+            Text(
+              Labels.of('build-decoders-note'),
+              style: TextStyle(
+                fontSize: BoardTokens.fsCaption,
+                color: palette.fgMuted,
+              ),
+            ),
+            Text(
+              '${info?.coreVersion ?? '-'} | ${info?.os ?? '-'} | '
+              '${info?.threadLimit ?? 0} | ${codec?.diagnostic ?? '-'}',
+              key: const Key('build-runtime-line'),
+              style: TextStyle(
+                fontSize: BoardTokens.fsCaption,
+                color: palette.fgFaint,
+              ),
+            ),
           ],
         );
       },

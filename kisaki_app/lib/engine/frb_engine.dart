@@ -37,6 +37,17 @@ class FrbEngine implements KisakiEngine {
   }
 
   @override
+  m.CodecInfo codecInfo() {
+    final g.CodecInfo info = g_info.codecInfo();
+    return m.CodecInfo(
+      heif: info.heifBuild,
+      libraw: info.librawBuild,
+      libavif: info.libavifBuild,
+      diagnostic: info.diagnostic,
+    );
+  }
+
+  @override
   Stream<m.ScanEvent> startScan(m.ScanRequest request) =>
       g_scan.startScan(request: _scanRequest(request)).map(_event);
 

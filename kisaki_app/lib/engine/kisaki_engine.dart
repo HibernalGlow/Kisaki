@@ -14,6 +14,8 @@ abstract interface class KisakiEngine {
 
   EngineInfo engineInfo();
 
+  CodecInfo codecInfo();
+
   Stream<ScanEvent> startScan(ScanRequest request);
 
   bool requestStop();
