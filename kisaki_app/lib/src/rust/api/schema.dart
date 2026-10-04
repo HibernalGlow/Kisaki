@@ -9,6 +9,8 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
 import 'types.dart';
 
+// These functions are ignored because they are not marked as `pub`: `to_def`, `to_spec`
+
 /// All scanners, in the order the tool menu and results table expect.
 List<ToolSpec> listTools() => RustLib.instance.api.crateApiSchemaListTools();
 
