@@ -159,6 +159,12 @@ jobs:
         run: cargo build -p kisaki_bridge
       - name: Test
         run: cargo test -p kisaki_bridge
+      # The optional native codecs are off by default, which silently drops HEIC from a scan, so the
+      # codec path and its disclosure get compiled and tested here too - the packages above provide
+      # libheif, libraw and dav1d, and the same command passes on a macOS dev machine.
+      - name: Test with the codec features
+        if: matrix.os == 'ubuntu-22.04'
+        run: cargo test -p kisaki_bridge --features heif,libraw,libavif
       - name: Formatting
         if: matrix.os == 'ubuntu-22.04'
         run: cargo fmt -p kisaki_bridge -- --check
