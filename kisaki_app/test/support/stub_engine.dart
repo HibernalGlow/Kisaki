@@ -132,6 +132,19 @@ class StubEngine implements KisakiEngine {
     threadLimit: 8,
   );
 
+  /// The three decoders the stub claims. A test flips them to prove the caption follows the flags.
+  bool heifBuild = true;
+  bool rawBuild = false;
+  bool avifBuild = true;
+
+  @override
+  CodecInfo codecInfo() => CodecInfo(
+    heif: heifBuild,
+    libraw: rawBuild,
+    libavif: avifBuild,
+    diagnostic: 'Kisaki stub build',
+  );
+
   @override
   Stream<ScanEvent> startScan(ScanRequest request) {
     requests.add(request);

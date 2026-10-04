@@ -490,6 +490,33 @@ class EngineInfo {
   final int threadLimit;
 }
 
+/// Which optional decoders this build of the engine was compiled with.
+///
+/// A decoder that is not compiled in is not an error: the engine drops those extensions before a
+/// scan collects them, so a folder of iPhone photos comes back clean. This is the only readback that
+/// tells the reader the scan could not have seen those files at all.
+class CodecInfo {
+  const CodecInfo({
+    required this.heif,
+    required this.libraw,
+    required this.libavif,
+    required this.diagnostic,
+  });
+
+  final bool heif;
+  final bool libraw;
+  final bool libavif;
+
+  /// The engine's own build line, kept for the activity log.
+  final String diagnostic;
+
+  /// `heif+ raw- avif+`: one glyph per decoder, readable without a legend.
+  String get caption =>
+      'heif${heif ? '+' : '-'} '
+      'raw${libraw ? '+' : '-'} '
+      'avif${libavif ? '+' : '-'}';
+}
+
 /// How a file reaches its set folder: relocated, duplicated, or a second name for the same bytes.
 enum SimiuMode { move, copy, link }
 

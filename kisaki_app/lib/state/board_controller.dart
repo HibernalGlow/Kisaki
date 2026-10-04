@@ -127,6 +127,7 @@ class BoardController extends ChangeNotifier {
     : _fileHost = fileHost ?? desktopFileHost() {
     _tools = engine.listTools();
     _info = engine.engineInfo();
+    _codec = engine.codecInfo();
     if (_tools.isNotEmpty) {
       _applyTool(_tools.first.id);
     }
@@ -140,6 +141,7 @@ class BoardController extends ChangeNotifier {
   LaneLayout layout = LaneLayout();
 
   EngineInfo? _info;
+  CodecInfo? _codec;
   List<ToolSpec> _tools = <ToolSpec>[];
   ToolSpec? _tool;
   List<FieldDef> _fields = <FieldDef>[];
@@ -227,6 +229,9 @@ class BoardController extends ChangeNotifier {
   StreamSubscription<ScanEvent>? _scanSubscription;
 
   EngineInfo? get info => _info;
+
+  /// Which decoders this build carries, straight from the engine.
+  CodecInfo? get codec => _codec;
   List<ToolSpec> get tools => List<ToolSpec>.unmodifiable(_tools);
   ToolSpec? get tool => _tool;
   List<FieldDef> get fields => List<FieldDef>.unmodifiable(_fields);
