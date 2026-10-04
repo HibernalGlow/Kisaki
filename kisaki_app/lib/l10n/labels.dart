@@ -561,6 +561,9 @@ class Labels {
     'plan_more': '... and { \$count } more',
     'result-rescan': 'Scan again',
     'row-menu-clear-group': 'Clear this group',
+    'row-menu-copy-files': 'Copy the file itself',
+    'row-menu-copy-files-unsupported':
+        'This host cannot put a file object on the clipboard',
     'row-menu-copy-name': 'Copy the file name',
     'row-menu-copy-path': 'Copy the full path',
     'row-menu-select-group': 'Select the whole group',
@@ -624,6 +627,8 @@ class Labels {
     'status-ready': 'Kisaki is ready.',
     'status_cancelled': 'Scan stopped',
     'status_copied': 'Copied { \$path } to the clipboard.',
+    'status_copied_files': 'Copied { \$path } to the clipboard for pasting.',
+    'status_copy_files_failed': 'Could not copy { \$path }: { \$error }',
     'status_deleting': 'Applying file operations...',
     'status_dry_run_only': 'Dry run only - no files were changed',
     'status_exif_cleaning': 'Cleaning EXIF metadata...',
