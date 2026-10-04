@@ -68,11 +68,43 @@ sealed class FieldPayload {
   const FieldPayload();
 
   FieldKind get kind;
+
+  /// The one value every payload carries, whatever its shape.
+  Object get value;
+
+  // An option block is compared to a saved preset all the time, and identity comparison would let a
+  // restored payload look different from the one that was written.
+  @override
+  bool operator ==(Object other) {
+    if (other.runtimeType != runtimeType || other is! FieldPayload) {
+      return false;
+    }
+    final Object mine = value;
+    final Object theirs = other.value;
+    if (mine is List<String> && theirs is List<String>) {
+      if (mine.length != theirs.length) {
+        return false;
+      }
+      for (int index = 0; index < mine.length; index++) {
+        if (mine[index] != theirs[index]) {
+          return false;
+        }
+      }
+      return true;
+    }
+    return mine == theirs;
+  }
+
+  @override
+  int get hashCode => value is List<String>
+      ? Object.hash(kind, Object.hashAll(value as List<String>))
+      : Object.hash(kind, value);
 }
 
 final class FieldPayloadFlag extends FieldPayload {
   const FieldPayloadFlag(this.value);
 
+  @override
   final bool value;
 
   @override
@@ -82,6 +114,7 @@ final class FieldPayloadFlag extends FieldPayload {
 final class FieldPayloadChoice extends FieldPayload {
   const FieldPayloadChoice(this.value);
 
+  @override
   final String value;
 
   @override
@@ -91,6 +124,7 @@ final class FieldPayloadChoice extends FieldPayload {
 final class FieldPayloadInteger extends FieldPayload {
   const FieldPayloadInteger(this.value);
 
+  @override
   final int value;
 
   @override
@@ -100,6 +134,7 @@ final class FieldPayloadInteger extends FieldPayload {
 final class FieldPayloadText extends FieldPayload {
   const FieldPayloadText(this.value);
 
+  @override
   final String value;
 
   @override
@@ -109,6 +144,7 @@ final class FieldPayloadText extends FieldPayload {
 final class FieldPayloadTokens extends FieldPayload {
   const FieldPayloadTokens(this.value);
 
+  @override
   final List<String> value;
 
   @override
