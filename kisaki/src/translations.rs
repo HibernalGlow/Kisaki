@@ -125,6 +125,16 @@ fn translate_items(app: &MainWindow) {
     translation.set_metric_total(fli!("metric-total").into());
     translation.set_placeholder_filter(fli!("placeholder-filter").into());
     translation.set_placeholder_manual(fli!("placeholder-manual").into());
+    translation.set_select_by_date(fli!("select-by-date").into());
+    translation.set_select_by_path(fli!("select-by-path").into());
+    translation.set_select_by_size(fli!("select-by-size").into());
+    translation.set_select_heading(fli!("select-heading").into());
+    translation.set_select_invert(fli!("select-invert").into());
+    translation.set_select_invert_group(fli!("select-invert-group").into());
+    translation.set_select_max(fli!("select-max").into());
+    translation.set_select_min(fli!("select-min").into());
+    translation.set_select_pick_all_but_one(fli!("select-pick-all-but-one").into());
+    translation.set_select_pick_one(fli!("select-pick-one").into());
     translation.set_status_ready(fli!("status-ready").into());
     translation.set_tab_algorithm(fli!("tab-algorithm").into());
     translation.set_tab_paths(fli!("tab-paths").into());

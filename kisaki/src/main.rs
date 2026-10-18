@@ -13,6 +13,7 @@ mod paths;
 mod progress;
 mod results;
 mod scan;
+mod select;
 mod settings;
 mod state;
 mod tools;
@@ -97,6 +98,8 @@ fn prepare_initial_gui(app: &MainWindow, state: &SharedState, settings: &KisakiS
     let mut store = lock(state);
     paths::sync_to_gui(app, &store);
     results::refresh(app, &mut store);
+    let grouped = tools::spec(store.tool).is_some_and(|spec| spec.grouped);
+    app.global::<AppState>().set_can_group_select(grouped);
 }
 
 fn store_fields(state: &SharedState) -> fields::FieldStore {

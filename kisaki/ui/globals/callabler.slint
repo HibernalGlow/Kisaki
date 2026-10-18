@@ -1,4 +1,6 @@
 // Every callback here is registered exactly once in kisaki/src/callbacks.rs.
+import { SelectRule } from "common.slint";
+
 export global Callabler {
     // Navigation
     callback tool_selected(index: int);
@@ -28,6 +30,7 @@ export global Callabler {
     callback row_toggled(index: int);
     callback group_toggled(index: int);
     callback toggle_all_rows();
+    callback select_rows(rule: SelectRule);
     callback column_sorted(index: int);
     callback filter_changed(value: string);
     callback row_opened(index: int);

@@ -1,7 +1,7 @@
 import { ScrollView } from "std-widgets.slint";
 import { Palette, Theme } from "../globals/theme.slint";
 import { AppState } from "../globals/app_state.slint";
-import { ToolId } from "../globals/common.slint";
+import { SelectCriterion, SelectExtreme, SelectRule, ToolId } from "../globals/common.slint";
 import { Callabler } from "../globals/callabler.slint";
 import { Translations } from "../globals/translations.slint";
 import { ButtonVariant, Capsule, MetricTile, ToggleRow } from "../components/atoms.slint";
@@ -90,6 +90,105 @@ export component AnalysisBody inherits Rectangle {
                     }
                 }
 
+                // Bulk selection, so a group of duplicates does not have to be clicked one by one.
+                Text {
+                    text: Translations.select_heading;
+                    color: Palette.fg_faint;
+                    font-size: Theme.fs_caption;
+                }
+                HorizontalLayout {
+                    spacing: Theme.gap_small;
+                    alignment: start;
+
+                    Capsule {
+                        text: Translations.select_by_size;
+                        variant: AppState.selection_criterion == SelectCriterion.Size ? ButtonVariant.Primary : ButtonVariant.Neutral;
+                        enabled: AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            AppState.selection_criterion = SelectCriterion.Size;
+                        }
+                    }
+                    Capsule {
+                        text: Translations.select_by_date;
+                        variant: AppState.selection_criterion == SelectCriterion.Date ? ButtonVariant.Primary : ButtonVariant.Neutral;
+                        enabled: AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            AppState.selection_criterion = SelectCriterion.Date;
+                        }
+                    }
+                    Capsule {
+                        text: Translations.select_by_path;
+                        variant: AppState.selection_criterion == SelectCriterion.PathLength ? ButtonVariant.Primary : ButtonVariant.Neutral;
+                        enabled: AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            AppState.selection_criterion = SelectCriterion.PathLength;
+                        }
+                    }
+                }
+                HorizontalLayout {
+                    spacing: Theme.gap_small;
+                    alignment: start;
+
+                    Capsule {
+                        text: Translations.select_max;
+                        variant: AppState.selection_extreme == SelectExtreme.Largest ? ButtonVariant.Primary : ButtonVariant.Neutral;
+                        enabled: AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            AppState.selection_extreme = SelectExtreme.Largest;
+                        }
+                    }
+                    Capsule {
+                        text: Translations.select_min;
+                        variant: AppState.selection_extreme == SelectExtreme.Smallest ? ButtonVariant.Primary : ButtonVariant.Neutral;
+                        enabled: AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            AppState.selection_extreme = SelectExtreme.Smallest;
+                        }
+                    }
+                    Capsule {
+                        text: Translations.select_pick_one;
+                        enabled: AppState.has_results && AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            Callabler.select_rows(SelectRule.PickOne);
+                        }
+                    }
+                    Capsule {
+                        text: Translations.select_pick_all_but_one;
+                        enabled: AppState.has_results && AppState.can_group_select;
+                        cap_height: 32px;
+                        clicked => {
+                            Callabler.select_rows(SelectRule.PickAllButOne);
+                        }
+                    }
+                }
+                HorizontalLayout {
+                    spacing: Theme.gap_small;
+                    alignment: start;
+
+                    Capsule {
+                        text: Translations.select_invert;
+                        enabled: AppState.has_results && !AppState.running;
+                        cap_height: 32px;
+                        clicked => {
+                            Callabler.select_rows(SelectRule.Invert);
+                        }
+                    }
+                    Capsule {
+                        text: Translations.select_invert_group;
+                        enabled: AppState.has_results && AppState.can_group_select && !AppState.running;
+                        cap_height: 32px;
+                        clicked => {
+                            Callabler.select_rows(SelectRule.InvertGroup);
+                        }
+                    }
+                }
+
                 Capsule {
                     text: Translations.action_delete;
                     variant: ButtonVariant.Danger;
@@ -99,7 +198,6 @@ export component AnalysisBody inherits Rectangle {
                         Callabler.delete_selected();
                     }
                 }
-                // The side-file verb only means something for the files the EXIF scan listed.
                 // Only the files the EXIF scan listed can be stripped, so the verb stays disabled
                 // for every other tool rather than disappearing mid-session.
                 Capsule {

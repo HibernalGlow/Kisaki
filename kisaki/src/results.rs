@@ -93,7 +93,8 @@ pub fn sort_rows(rows: &[RowData], mut indices: Vec<usize>, column: i32, ascendi
     indices
 }
 
-/// Flat results are fully reclaimable; grouped ones keep the largest member of each group.
+/// Flat results are fully reclaimable; a plain group keeps its largest member and a group that
+/// contains a reference row keeps that reference, matching the core's `lost_space` accounting.
 pub fn reclaimable_bytes(rows: &[&RowData], grouped: bool, has_references: bool) -> u64 {
     if has_references {
         return rows.iter().filter(|row| !row.is_reference).map(|row| row.size_bytes).sum();

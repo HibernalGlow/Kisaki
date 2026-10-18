@@ -8,7 +8,7 @@ use slint::{ComponentHandle, ModelRc};
 
 use crate::fields::FieldValue;
 use crate::state::{AppStore, SharedState};
-use crate::{AppState, Callabler, MainWindow, Theme, fli};
+use crate::{AppState, Callabler, MainWindow, SelectCriterion, SelectExtreme, SelectRule, Theme, fli};
 
 /// Registers every callback declared in `ui/globals/callabler.slint`, exactly once each.
 pub fn connect_all(app: &MainWindow, state: &SharedState, progress_sender: Sender<ProgressData>, stop_flag: &Arc<AtomicBool>) {
@@ -38,6 +38,7 @@ fn connect_navigation(app: &MainWindow, state: &SharedState) {
         app.global::<AppState>().set_tool_menu_open(false);
         crate::translations::set_active_label(&app, spec.id);
         app.global::<AppState>().set_columns(crate::tools::columns(spec.id));
+        app.global::<AppState>().set_can_group_select(spec.grouped);
         sync_fields(&app, &shared);
 
         let mut store = shared.lock().expect("App state mutex poisoned");
@@ -199,8 +200,34 @@ fn connect_table(app: &MainWindow, state: &SharedState) {
     let shared = Arc::clone(state);
     app.global::<Callabler>().on_toggle_all_rows(move || {
         let app = weak.upgrade().expect("MainWindow dropped while callback is still live");
-        let mut guard = shared.lock().expect("App state mutex poisoned");
-        guard.toggle_visible();
+        // A named guard would still be held when refresh_table locks again, deadlocking the loop.
+        shared.lock().expect("App state mutex poisoned").toggle_visible();
+        refresh_table(&app, &shared);
+    });
+
+    let weak = app.as_weak();
+    let shared = Arc::clone(state);
+    app.global::<Callabler>().on_select_rows(move |rule| {
+        let app = weak.upgrade().expect("MainWindow dropped while callback is still live");
+        let globals = app.global::<AppState>();
+        let criterion = match globals.get_selection_criterion() {
+            SelectCriterion::Size => crate::select::Criterion::Size,
+            SelectCriterion::Date => crate::select::Criterion::Date,
+            SelectCriterion::PathLength => crate::select::Criterion::PathLength,
+        };
+        let extreme = match globals.get_selection_extreme() {
+            SelectExtreme::Largest => crate::select::Extreme::Largest,
+            SelectExtreme::Smallest => crate::select::Extreme::Smallest,
+        };
+        let mode = match rule {
+            SelectRule::Invert => crate::select::Mode::Invert,
+            SelectRule::InvertGroup => crate::select::Mode::InvertInGroup,
+            SelectRule::PickOne => crate::select::Mode::Pick(criterion, extreme),
+            SelectRule::PickAllButOne => crate::select::Mode::Spare(criterion, extreme),
+        };
+        let mut store = shared.lock().expect("App state mutex poisoned");
+        crate::select::run(&mut store, mode);
+        drop(store);
         refresh_table(&app, &shared);
     });
 

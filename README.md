@@ -40,7 +40,8 @@ Two decisions are load-bearing:
   palettes derive from a single `Theme.dark` flag.
 - **Three swimlanes.** A header bar carries the scanner picker, scan/stop, the live progress rail, the
   theme toggle and the layout reset. Below it sit Source (paths plus schema-driven algorithm options),
-  Results (the table) and Analysis (metrics, dry-run and trash toggles, delete, strip EXIF, export).
+  Results (the table) and Analysis (metrics, dry-run and trash toggles, bulk and per-group
+  selection, delete, strip EXIF, export).
   Lanes are drag-resizable, double-click resets to 300 px, and each collapses to a 48 px strip that
   shows a single letter.
 - **Measured.** Window 1280 x 800 preferred and 940 x 560 minimum, 32 px lane headers, 6 px corners,
@@ -133,8 +134,9 @@ after your ignore list, and under dry run it reports which files carry tags with
 
 ## Not here yet
 
-Result thumbnails and image preview, the four-mode image comparison dialog, the smart selection
-assistant, the multi-dimensional filter panel (only the text filter is wired), the Simiu set mode, and
+Result thumbnails and image preview, the four-mode image comparison dialog, the reference's
+custom-column selection assistant (the per-group size, date and path rules are wired), the
+multi-dimensional filter panel (only the text filter is wired), the Simiu set mode, and
 the video-optimize execution dialog. These are planned page-by-page additions, not gaps in
 the scan engine.
 

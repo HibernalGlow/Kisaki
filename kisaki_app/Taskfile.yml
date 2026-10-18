@@ -1,0 +1,128 @@
+version: '3'
+
+# Developer loop for the Flutter frontend (go-task). Install: brew install go-task
+#   task dev       hot-reload run on macOS - press `r` to reload Dart, `R` to restart
+#   task rust      rebuild the debug bridge dylib
+#   task r         same loop on the release bridge
+#   task b         flutter build macos --release without running it
+#   task bundle    standalone .app with the bridge inside it (task bundle PROFILE=debug)
+#   task codegen   regenerate the FRB bindings after editing rust/src/api
+#   task a         flutter analyze --fatal-infos
+#   task t         flutter test
+#
+# Why the dylib has to be copied into the bundle. macos/Runner/DebugProfile.entitlements keeps
+# com.apple.security.app-sandbox = true (the same value the Flutter template ships), so a debug run
+# cannot dlopen from the repo target dir: measured 2026-10-04, launching the bundle with
+# KISAKI_RUST_LIB=<repo>/target/debug/libkisaki_bridge.dylib failed with
+# "(file system sandbox blocked open())". The only location the sandbox allows is inside the bundle,
+# which is why every run task injects the freshly built dylib into Contents/Frameworks first. Note
+# that ROSSI sets app-sandbox to false in the same file; if this app ever needs to read paths the
+# user did not pick through a panel, that switch - not this workaround - is the thing to change.
+#
+# Two smaller gotchas the tasks encode:
+# 1. The bridge is a Cargo workspace member, so its artifact is the repo-root target/, not
+#    kisaki_app/rust/target/.
+# 2. Codegen writes frb_generated.rs with its own import order. The rustfmt config sits at the
+#    workspace root, so the path is ../.rustfmt.toml from here, and `rustup run nightly cargo fmt`
+#    is not a substitute - on this machine it still executes the stable binary.
+
+vars:
+  FLUTTER: flutter
+  ROOT: '{{.TASKFILE_DIR}}/..'
+  APP_NAME: libkisaki_bridge.dylib
+  DEBUG_APP: '{{.TASKFILE_DIR}}/build/macos/Build/Products/Debug/Kisaki.app'
+  RELEASE_APP: '{{.TASKFILE_DIR}}/build/macos/Build/Products/Release/Kisaki.app'
+  DEBUG_LIB: '{{.ROOT}}/target/debug/libkisaki_bridge.dylib'
+  RELEASE_LIB: '{{.ROOT}}/target/release/libkisaki_bridge.dylib'
+  PROFILE: release
+
+env:
+  # CocoaPods aborts under a non-UTF-8 locale on this Ruby toolchain, and flutter shells out to it.
+  LANG: en_US.UTF-8
+  LC_ALL: en_US.UTF-8
+  # Do NOT set DEVELOPER_DIR here: `xcode-select -p` already points at Xcode.app, and pointing the
+  # dev dir at Xcode 27 selects an arm64-only libxcrun, which fails with "need arm64e".
+
+tasks:
+  default:
+    desc: List all tasks
+    cmds:
+      - task --list
+
+  rust:
+    desc: Build the debug bridge dylib into the workspace target dir
+    dir: '{{.ROOT}}'
+    cmds:
+      - cargo build -p kisaki_bridge
+
+  rust-release:
+    desc: Build the release bridge dylib into the workspace target dir
+    dir: '{{.ROOT}}'
+    cmds:
+      - cargo build -p kisaki_bridge --release
+
+  inject:
+    desc: Put the debug bridge inside the Debug bundle and re-sign it
+    deps: [rust]
+    preconditions:
+      - test -d {{.DEBUG_APP}}
+    cmds:
+      - /bin/mkdir -p {{.DEBUG_APP}}/Contents/Frameworks
+      - /bin/cp -f {{.DEBUG_LIB}} {{.DEBUG_APP}}/Contents/Frameworks/{{.APP_NAME}}
+      - codesign --force --sign - {{.DEBUG_APP}}/Contents/Frameworks/{{.APP_NAME}}
+
+  inject-release:
+    desc: Put the release bridge inside the Release bundle and re-sign it
+    deps: [rust-release]
+    preconditions:
+      - test -d {{.RELEASE_APP}}
+    cmds:
+      - /bin/mkdir -p {{.RELEASE_APP}}/Contents/Frameworks
+      - /bin/cp -f {{.RELEASE_LIB}} {{.RELEASE_APP}}/Contents/Frameworks/{{.APP_NAME}}
+      - codesign --force --sign - {{.RELEASE_APP}}/Contents/Frameworks/{{.APP_NAME}}
+
+  dev:
+    desc: Hot-reload loop on macOS against the debug bridge
+    deps: [inject]
+    cmds:
+      - '{{.FLUTTER}} run -d macos'
+
+  r:
+    desc: Hot-reload loop on macOS against the release bridge
+    deps: [inject-release]
+    cmds:
+      - '{{.FLUTTER}} run --release -d macos'
+
+  b:
+    desc: flutter build macos --release only, no run
+    deps: [rust-release]
+    cmds:
+      - '{{.FLUTTER}} build macos --release'
+
+  bundle:
+    desc: Build a standalone .app with the bridge copied in and re-signed (PROFILE=debug|release)
+    cmds:
+      - bash {{.TASKFILE_DIR}}/packaging/macos_bundle.sh {{.PROFILE}}
+
+  codegen:
+    desc: Regenerate FRB bindings, reformat them, rebuild the bridge, rerun build_runner
+    cmds:
+      - '"$HOME/.cargo/bin/flutter_rust_bridge_codegen" generate'
+      - '"$(rustup which --toolchain nightly rustfmt)" --edition 2024 --config-path ../.rustfmt.toml rust/src/frb_generated.rs'
+      - cargo fmt -p kisaki_bridge
+      - cargo build -p kisaki_bridge
+      # Never with --build-filter: outputs outside the filter are deleted as stale.
+      - '{{.FLUTTER}} pub run build_runner build'
+
+  a:
+    desc: Static analysis for lib/ and test/
+    cmds:
+      - '{{.FLUTTER}} analyze --fatal-infos'
+
+  t:
+    desc: Dart suite; flutter_tester is unsandboxed, so it can load the dylib straight from target
+    deps: [rust]
+    env:
+      KISAKI_RUST_LIB: '{{.DEBUG_LIB}}'
+    cmds:
+      - '{{.FLUTTER}} test'

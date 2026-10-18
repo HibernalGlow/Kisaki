@@ -12,6 +12,8 @@ from typing import Iterator, List, Tuple
 
 TOKENS = ("APP_NAME", "com.example")
 SKIPPED_DIRS = {".dart_tool", ".symlinks", "build", "ephemeral"}
+# Prose is deliberately not scanned: the READMEs name these tokens to explain why they must not
+# appear in a shipped file, and only a regenerated platform folder can bring them back.
 TEXT_SUFFIXES = {
     ".cc",
     ".cmake",
@@ -19,7 +21,6 @@ TEXT_SUFFIXES = {
     ".dart",
     ".entitlements",
     ".h",
-    ".md",
     ".manifest",
     ".plist",
     ".rc",

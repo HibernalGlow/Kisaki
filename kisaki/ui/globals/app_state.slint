@@ -1,4 +1,4 @@
-import { ColumnDef, FieldDef, Metrics, PathRow, PendingAction, Phase, ResultRow, ToolEntry, ToolId } from "common.slint";
+import { ColumnDef, FieldDef, Metrics, PathRow, PendingAction, Phase, ResultRow, SelectCriterion, SelectExtreme, ToolEntry, ToolId } from "common.slint";
 
 // Transient application state. Persisted settings live in Rust and are pushed
 // in here at start-up; the UI never writes to disk directly.
@@ -51,6 +51,12 @@ export global AppState {
     in-out property <string> confirm_title: "";
     in-out property <string> confirm_body: "";
     in-out property <PendingAction> pending_action: PendingAction.Delete;
+
+    // Which measure and which end the group rules work on, and whether the shown rows are grouped
+    // at all. Rust owns the third because only it knows the tool's row shape.
+    in-out property <SelectCriterion> selection_criterion: SelectCriterion.Size;
+    in-out property <SelectExtreme> selection_extreme: SelectExtreme.Largest;
+    in-out property <bool> can_group_select: false;
 
     // Progress and status
     in-out property <int> progress_all: 0;

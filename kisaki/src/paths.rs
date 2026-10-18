@@ -150,7 +150,7 @@ mod tests {
     use super::*;
 
     fn store_with(included: &[(&str, bool)]) -> AppStore {
-        let mut store = AppStore::new(crate::fields::default_fields(), crate::settings::KisakiSettings::default());
+        let mut store = AppStore::new(crate::fields::default_fields(), &crate::settings::KisakiSettings::default());
         for (path, reference) in included {
             store.included.push(PathEntry {
                 path: PathBuf::from(path),

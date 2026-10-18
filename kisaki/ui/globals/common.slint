@@ -25,6 +25,28 @@ export enum Phase {
     Error,
 }
 
+// Bulk selection rules the header checkbox cannot express. Which rows they touch is decided in
+// kisaki/src/select.rs.
+export enum SelectRule {
+    Invert,
+    InvertGroup,
+    PickOne,
+    PickAllButOne,
+}
+
+// The number a group rule compares rows by. Every row already carries all three, so no rule has
+// to know a column position.
+export enum SelectCriterion {
+    Size,
+    Date,
+    PathLength,
+}
+
+export enum SelectExtreme {
+    Largest,
+    Smallest,
+}
+
 // Which verb the confirmation overlay is standing behind, so `confirm_accepted` can dispatch
 // without guessing from the visible text.
 export enum PendingAction {

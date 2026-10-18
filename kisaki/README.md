@@ -62,6 +62,7 @@ kisaki/
     │   ├── scan_grouped.rs # duplicate / similar images / similar videos / music
     │   └── scan_flat.rs    # the other ten tools
     ├── results.rs        # filter, sort, metrics, model building
+    ├── select.rs         # bulk and per-group selection rules
     ├── state.rs          # AppStore + SharedModels, the thread-safe source of truth
     ├── tools.rs          # 14-tool registry, column specs, option schemas
     ├── fields.rs         # per-tool option ids, defaults, enum mapping
